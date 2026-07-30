@@ -1,0 +1,261 @@
+/* Mission */
+.onama-mission {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.onama-mission__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.onama-mission__title {
+  font-size: clamp(var(--font-size-2xl), 3.5vw, var(--font-size-3xl));
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+  margin-top: var(--space-2);
+}
+
+.onama-mission__text p {
+  color: var(--color-text);
+  line-height: 1.8;
+}
+
+.onama-mission__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.onama-mission__card {
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-8);
+  box-shadow: var(--shadow-md);
+}
+
+.onama-mission__card--primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.onama-mission__card--secondary {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.onama-mission__card--accent {
+  background: var(--color-bg-light);
+  color: var(--color-text);
+  border-left: 4px solid var(--color-accent2);
+}
+
+.onama-mission__card-label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+  margin-bottom: var(--space-3);
+}
+
+.onama-mission__card--accent .onama-mission__card-label {
+  color: var(--color-accent2);
+  opacity: 1;
+}
+
+.onama-mission__card p {
+  font-size: var(--font-size-base);
+  line-height: 1.7;
+}
+
+/* Timeline */
+.onama-timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-block: var(--space-4);
+}
+
+.onama-timeline::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-neutral);
+  transform: translateX(-50%);
+}
+
+.onama-timeline__item {
+  display: grid;
+  grid-template-columns: 1fr 20px 1fr;
+  gap: var(--space-6);
+  align-items: center;
+  margin-bottom: var(--space-10);
+}
+
+.onama-timeline__item .onama-timeline__content {
+  grid-column: 1;
+  text-align: right;
+}
+
+.onama-timeline__item .onama-timeline__dot {
+  grid-column: 2;
+}
+
+.onama-timeline__item--right .onama-timeline__content {
+  grid-column: 3;
+  text-align: left;
+  grid-row: 1;
+}
+
+.onama-timeline__item--right .onama-timeline__dot {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.onama-timeline__content {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.onama-timeline__dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px var(--color-secondary);
+  flex-shrink: 0;
+  justify-self: center;
+}
+
+.onama-timeline__year {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.onama-timeline__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.onama-timeline__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+/* Team */
+.onama-team__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+}
+
+.onama-team__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+}
+
+.onama-team__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--color-bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.onama-team__name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.onama-team__role {
+  margin: 0;
+}
+
+.onama-team__bio {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+/* CTA */
+.onama-cta__actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .onama-team__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .onama-mission {
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+  }
+
+  .onama-timeline::before {
+    left: 20px;
+  }
+
+  .onama-timeline__item {
+    grid-template-columns: 40px 1fr;
+    gap: var(--space-4);
+  }
+
+  .onama-timeline__item .onama-timeline__content {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .onama-timeline__item .onama-timeline__dot {
+    grid-column: 1;
+  }
+
+  .onama-timeline__item--right .onama-timeline__content {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: left;
+  }
+
+  .onama-timeline__item--right .onama-timeline__dot {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .onama-team__grid {
+    grid-template-columns: 1fr;
+  }
+}
