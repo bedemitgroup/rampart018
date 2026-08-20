@@ -33,7 +33,7 @@ public class NewsController : ControllerBase
         if (!IsModerator)
             query = query.Where(n => n.IsPublished);
 
-        var news = await query.OrderByDescending(n => n.CreatedAt).ToListAsync();
+        var news = await query.OrderBy(n => n.DisplayOrder).ThenByDescending(n => n.CreatedAt).ToListAsync();
 
         var result = news.Select(n => new NewsListItemResponse(
             n.Id, n.Slug, n.Title, n.Excerpt, n.Category, n.ImageUrl,
@@ -146,6 +146,46 @@ public class NewsController : ControllerBase
         _db.News.Remove(news);
         await _db.SaveChangesAsync();
         return Ok(new { message = "News deleted." });
+    }
+
+    /// <summary>Move a news article up or down in the display order. Returns the full reordered list.</summary>
+    [HttpPut("{id}/move")]
+    [Authorize(Roles = "Moderator,Admin")]
+    [ProducesResponseType(typeof(IEnumerable<NewsListItemResponse>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Move(int id, [FromBody] MoveNewsRequest request)
+    {
+        if (request.Direction != "up" && request.Direction != "down")
+            return BadRequest(new { message = "Direction must be 'up' or 'down'." });
+
+        var ordered = await _db.News
+            .OrderBy(n => n.DisplayOrder)
+            .ThenByDescending(n => n.CreatedAt)
+            .ToListAsync();
+
+        for (int i = 0; i < ordered.Count; i++)
+            ordered[i].DisplayOrder = i;
+
+        var index = ordered.FindIndex(n => n.Id == id);
+        if (index == -1) return NotFound();
+
+        var targetIndex = request.Direction == "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= ordered.Count)
+            return BadRequest(new { message = "Vest je već na kraju u tom pravcu." });
+
+        (ordered[index].DisplayOrder, ordered[targetIndex].DisplayOrder) =
+            (ordered[targetIndex].DisplayOrder, ordered[index].DisplayOrder);
+
+        await _db.SaveChangesAsync();
+
+        var result = ordered
+            .OrderBy(n => n.DisplayOrder)
+            .Select(n => new NewsListItemResponse(
+                n.Id, n.Slug, n.Title, n.Excerpt, n.Category, n.ImageUrl,
+                n.AuthorName, n.CreatedAt, n.IsPublished));
+
+        return Ok(result);
     }
 
     /// <summary>Upload an image to attach to a news article. Returns its public URL.</summary>

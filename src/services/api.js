@@ -40,6 +40,7 @@ export const api = {
   createNews: (data) => request('/api/news', { method: 'POST', body: JSON.stringify(data) }),
   updateNews: (id, data) => request(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteNews: (id) => request(`/api/news/${id}`, { method: 'DELETE' }),
+  moveNews: (id, direction) => request(`/api/news/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

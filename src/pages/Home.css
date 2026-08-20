@@ -451,7 +451,9 @@
     margin-top: var(--space-4);
   }
 
+  /* Glavna vest uvek prva na uskim ekranima, bez obzira na redosled u kodu */
   .home-grid__center {
+    order: -1;
     padding: 0;
   }
 

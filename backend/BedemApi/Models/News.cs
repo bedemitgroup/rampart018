@@ -16,4 +16,5 @@ public class News
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsPublished { get; set; } = true;
+    public int DisplayOrder { get; set; }
 }

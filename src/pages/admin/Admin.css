@@ -88,6 +88,7 @@
 .admin-news__table th,
 .admin-news__table td {
   text-align: left;
+  vertical-align: middle;
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-bg-light);
   font-size: var(--font-size-sm);
@@ -120,8 +121,34 @@
   color: var(--color-neutral);
 }
 
+.admin-news__move-cell {
+  white-space: nowrap;
+}
+
+.admin-news__move-btn {
+  background: none;
+  border: 1px solid var(--color-bg-light);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  line-height: 1;
+  padding: 2px 6px;
+  margin-right: 4px;
+}
+
+.admin-news__move-btn:hover:not(:disabled) {
+  background: var(--color-bg-light);
+}
+
+.admin-news__move-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .admin-news__actions {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-3);
   white-space: nowrap;
 }

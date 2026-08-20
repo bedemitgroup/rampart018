@@ -160,6 +160,8 @@
   font-size: clamp(var(--font-size-base), 1.3vw, 1.1rem);
   line-height: 1.85;
   color: var(--color-text);
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .vest-body p {

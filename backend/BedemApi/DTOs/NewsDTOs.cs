@@ -1,5 +1,7 @@
 namespace BedemApi.DTOs;
 
+public record MoveNewsRequest(string Direction);
+
 public record CreateNewsRequest(string Title, string Excerpt, string Body, string Category, string AuthorName, string? ImageUrl, string? SourceUrl, bool IsPublished);
 
 public record UpdateNewsRequest(string Title, string Excerpt, string Body, string Category, string AuthorName, string? ImageUrl, string? SourceUrl, bool IsPublished);

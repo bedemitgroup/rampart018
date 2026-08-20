@@ -13,6 +13,7 @@ export default function AdminNews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [moveError, setMoveError] = useState('');
 
   useEffect(() => { loadNews(); }, []);
 
@@ -40,6 +41,16 @@ export default function AdminNews() {
     }
   }
 
+  async function handleMove(id, direction) {
+    setMoveError('');
+    try {
+      const updated = await api.moveNews(id, direction);
+      setNews(updated);
+    } catch (err) {
+      setMoveError(err.message);
+    }
+  }
+
   return (
     <div className="admin-news">
       <div className="admin-news__header">
@@ -48,6 +59,7 @@ export default function AdminNews() {
       </div>
 
       {deleteError && <p className="admin-news__error">{deleteError}</p>}
+      {moveError && <p className="admin-news__error">{moveError}</p>}
       {loading && <p className="admin-news__loading">Učitavanje...</p>}
       {error && <p className="admin-news__error">{error}</p>}
 
@@ -59,6 +71,7 @@ export default function AdminNews() {
         <table className="admin-news__table">
           <thead>
             <tr>
+              <th></th>
               <th>Naslov</th>
               <th>Kategorija</th>
               <th>Autor</th>
@@ -68,8 +81,28 @@ export default function AdminNews() {
             </tr>
           </thead>
           <tbody>
-            {news.map(n => (
+            {news.map((n, index) => (
               <tr key={n.id}>
+                <td className="admin-news__move-cell">
+                  <button
+                    className="admin-news__move-btn"
+                    disabled={index === 0}
+                    onClick={() => handleMove(n.id, 'up')}
+                    aria-label="Pomeri gore"
+                    title="Pomeri gore"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    className="admin-news__move-btn"
+                    disabled={index === news.length - 1}
+                    onClick={() => handleMove(n.id, 'down')}
+                    aria-label="Pomeri dole"
+                    title="Pomeri dole"
+                  >
+                    ↓
+                  </button>
+                </td>
                 <td className="admin-news__title-cell">{n.title}</td>
                 <td>{n.category}</td>
                 <td>{n.authorName}</td>
@@ -79,14 +112,16 @@ export default function AdminNews() {
                     {n.isPublished ? 'Objavljeno' : 'Nacrt'}
                   </span>
                 </td>
-                <td className="admin-news__actions">
-                  <Link to={`/admin/news/${n.id}/edit`} className="admin-news__action-btn">Izmeni</Link>
-                  <button
-                    className="admin-news__action-btn admin-news__action-btn--delete"
-                    onClick={() => handleDelete(n.id, n.title)}
-                  >
-                    Obriši
-                  </button>
+                <td>
+                  <span className="admin-news__actions">
+                    <Link to={`/admin/news/${n.id}/edit`} className="admin-news__action-btn">Izmeni</Link>
+                    <button
+                      className="admin-news__action-btn admin-news__action-btn--delete"
+                      onClick={() => handleDelete(n.id, n.title)}
+                    >
+                      Obriši
+                    </button>
+                  </span>
                 </td>
               </tr>
             ))}
