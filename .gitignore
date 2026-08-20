@@ -19,8 +19,12 @@ npm-debug.log*
 # IDE
 .vscode/
 .idea/
+.vs/
 *.suo
 *.user
+
+# Copilot instructions (local)
+backend/BedemApi/.github/copilot-instructions.md
 
 # OS
 .DS_Store
