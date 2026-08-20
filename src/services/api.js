@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000';
+export const BASE = 'http://localhost:5000';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('bedem_token');
@@ -12,6 +12,18 @@ async function request(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
+async function uploadRequest(path, formData) {
+  const token = localStorage.getItem('bedem_token');
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: formData });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || 'Greška na serveru');
+  }
+  return res.json();
+}
+
 export const api = {
   login: (data) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   register: (data) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
@@ -23,4 +35,14 @@ export const api = {
   getVotes: (slug) => request(`/api/votes/vest/${slug}`),
   voteVest: (data) => request('/api/votes/vest', { method: 'POST', body: JSON.stringify(data) }),
   voteComment: (data) => request('/api/votes/comment', { method: 'POST', body: JSON.stringify(data) }),
+  getNews: () => request('/api/news'),
+  getNewsBySlug: (slug) => request(`/api/news/${slug}`),
+  createNews: (data) => request('/api/news', { method: 'POST', body: JSON.stringify(data) }),
+  updateNews: (id, data) => request(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteNews: (id) => request(`/api/news/${id}`, { method: 'DELETE' }),
+  uploadNewsImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return uploadRequest('/api/news/upload-image', formData);
+  },
 };

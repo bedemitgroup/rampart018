@@ -63,6 +63,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("Frontend");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 

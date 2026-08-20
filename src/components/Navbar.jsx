@@ -73,6 +73,9 @@ export default function Navbar() {
                       <span className="navbar__role-badge">{user.role}</span>
                     )}
                   </span>
+                  {(user.role === 'Admin' || user.role === 'Moderator') && (
+                    <Link to="/admin/news" className="btn btn--outline navbar__btn">Admin</Link>
+                  )}
                   <button className="btn btn--outline navbar__btn" onClick={logout}>
                     Odjava
                   </button>
@@ -152,6 +155,11 @@ export default function Navbar() {
                   <span className="navbar__role-badge">{user.role}</span>
                 )}
               </div>
+              {(user.role === 'Admin' || user.role === 'Moderator') && (
+                <Link to="/admin/news" className="btn btn--outline navbar__drawer-btn" onClick={closeMenu}>
+                  Admin
+                </Link>
+              )}
               <button
                 className="btn btn--outline navbar__drawer-btn"
                 onClick={() => { logout(); closeMenu(); }}

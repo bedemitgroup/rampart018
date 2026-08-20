@@ -1,18 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { vesti } from '../data/vesti';
+import { api, BASE } from '../services/api';
 import './Home.css';
-
-const featuredArticle = vesti[0];
-const leftArticles   = [vesti[1], vesti[2], vesti[3]];
-const rightArticles  = [vesti[4], vesti[5], {
-  slug: null,
-  category: 'Mediji',
-  categoryColor: 'primary',
-  date: '10. jul 2026.',
-  title: 'Bedem u N1: razgovor o novom zakonu o udruženjima',
-  excerpt: 'Predsednica Bedema gostovala je u emisiji Pressing i govorila o predloženim izmenama.',
-}];
-const secondaryArticles = [vesti[3], vesti[4], vesti[5], vesti[1]];
 
 const categoryColors = {
   primary:   'var(--color-primary)',
@@ -20,27 +9,48 @@ const categoryColors = {
   accent:    'var(--color-accent)',
   accent2:   'var(--color-accent2)',
 };
+const colorKeys = Object.keys(categoryColors);
 
-function CategoryTag({ label, color }) {
+function categoryColorFor(category) {
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) hash = (hash * 31 + category.charCodeAt(i)) | 0;
+  return colorKeys[Math.abs(hash) % colorKeys.length];
+}
+
+function CategoryTag({ label }) {
   return (
-    <span className="news-category" style={{ color: categoryColors[color] || categoryColors.primary }}>
+    <span className="news-category" style={{ color: categoryColors[categoryColorFor(label)] }}>
       {label}
     </span>
   );
 }
 
 function ArticleTitle({ article, className }) {
-  if (article.slug) {
-    return (
-      <Link to={`/vest/${article.slug}`} className={`news-title-link ${className || ''}`}>
-        {article.title}
-      </Link>
-    );
-  }
-  return <span className={className}>{article.title}</span>;
+  return (
+    <Link to={`/vest/${article.slug}`} className={`news-title-link ${className || ''}`}>
+      {article.title}
+    </Link>
+  );
+}
+
+function formatDate(isoString) {
+  const d = new Date(isoString);
+  const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'];
+  return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}.`;
 }
 
 export default function Home() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.getNews()
+      .then(setNews)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="home">
       {/* Breaking bar */}
@@ -54,94 +64,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Main news grid */}
       <main className="container home-main">
-        <div className="home-grid">
+        {loading && <p className="home-status">Učitavanje vesti...</p>}
+        {error && <p className="home-status home-status--error">{error}</p>}
+        {!loading && !error && news.length === 0 && (
+          <p className="home-status">Trenutno nema objavljenih vesti.</p>
+        )}
 
-          {/* Left column */}
-          <aside className="home-grid__left">
-            <div className="home-col-label">Vesti</div>
-            {leftArticles.map((a) => (
-              <article key={a.title} className="news-item news-item--side">
-                <div className="news-item__body">
-                  <CategoryTag label={a.category} color={a.categoryColor} />
-                  <ArticleTitle article={a} className="news-item__title news-item__title--sm" />
-                  <p className="news-item__excerpt news-item__excerpt--sm">{a.excerpt}</p>
-                  <span className="news-item__date">{a.date}</span>
-                </div>
-                <div className="news-item__thumb" />
-                <div className="news-item__divider" />
-              </article>
-            ))}
-          </aside>
-
-          {/* Center — featured */}
-          <section className="home-grid__center">
-            <article className="news-featured">
-              <Link to={`/vest/${featuredArticle.slug}`} className="news-featured__image-link">
-                <div className="news-featured__image">
-                  <div className="news-featured__image-placeholder">
-                    <span className="news-featured__image-icon">🏛</span>
-                    <span className="news-featured__image-caption">
-                      Protest ispred Višeg suda u Beogradu
-                    </span>
-                  </div>
-                </div>
-              </Link>
-              <div className="news-featured__body">
-                <CategoryTag label={featuredArticle.category} color={featuredArticle.categoryColor} />
-                <Link to={`/vest/${featuredArticle.slug}`} className="news-featured__title-link">
-                  <h1 className="news-featured__title">{featuredArticle.title}</h1>
-                </Link>
-                <p className="news-featured__excerpt">{featuredArticle.excerpt}</p>
-                <div className="news-featured__meta">
-                  <span className="news-featured__author">{featuredArticle.author}</span>
-                  <span className="news-featured__sep">·</span>
-                  <span className="news-featured__date">{featuredArticle.date}</span>
-                  <span className="news-featured__sep">·</span>
-                  <span className="news-featured__read">{featuredArticle.readTime}</span>
-                </div>
-              </div>
-            </article>
-          </section>
-
-          {/* Right column */}
-          <aside className="home-grid__right">
-            <div className="home-col-label">Upozorenja i događaji</div>
-            {rightArticles.map((a) => (
-              <article key={a.title} className="news-item news-item--side">
-                <div className="news-item__body">
-                  <CategoryTag label={a.category} color={a.categoryColor} />
-                  <ArticleTitle article={a} className="news-item__title news-item__title--sm" />
-                  <p className="news-item__excerpt news-item__excerpt--sm">{a.excerpt}</p>
-                  <span className="news-item__date">{a.date}</span>
-                </div>
-                <div className="news-item__thumb" />
-                <div className="news-item__divider" />
-              </article>
-            ))}
-          </aside>
-        </div>
-
-        {/* Divider */}
-        <div className="home-section-divider">
-          <span>Više aktuelnosti</span>
-        </div>
-
-        {/* Secondary grid */}
-        <div className="home-secondary">
-          {secondaryArticles.map((a) => (
-            <article key={a.slug} className="news-card">
-              <div className="news-card__image-placeholder" />
-              <div className="news-card__body">
-                <CategoryTag label={a.category} color={a.categoryColor} />
-                <ArticleTitle article={a} className="news-card__title" />
-                <p className="news-card__excerpt">{a.excerpt}</p>
-                <span className="news-card__date">{a.date}</span>
-              </div>
-            </article>
-          ))}
-        </div>
+        {!loading && !error && news.length > 0 && (
+          <NewsGrid news={news} />
+        )}
 
         {/* Stats bar */}
         <div className="home-stats">
@@ -173,5 +105,119 @@ export default function Home() {
         </div>
       </section>
     </div>
+  );
+}
+
+function NewsGrid({ news }) {
+  const featuredArticle = news[0];
+  const leftArticles = news.slice(1, 4);
+  const rightArticles = news.slice(4, 7);
+  const secondaryArticles = news.slice(1, 5);
+
+  return (
+    <>
+      <div className="home-grid">
+        {/* Left column */}
+        {leftArticles.length > 0 && (
+          <aside className="home-grid__left">
+            <div className="home-col-label">Vesti</div>
+            {leftArticles.map((a) => (
+              <article key={a.id} className="news-item news-item--side">
+                <div className="news-item__body">
+                  <CategoryTag label={a.category} />
+                  <ArticleTitle article={a} className="news-item__title news-item__title--sm" />
+                  <p className="news-item__excerpt news-item__excerpt--sm">{a.excerpt}</p>
+                  <span className="news-item__date">{formatDate(a.createdAt)}</span>
+                </div>
+                {a.imageUrl ? (
+                  <img className="news-item__thumb" src={`${BASE}${a.imageUrl}`} alt="" />
+                ) : (
+                  <div className="news-item__thumb" />
+                )}
+                <div className="news-item__divider" />
+              </article>
+            ))}
+          </aside>
+        )}
+
+        {/* Center — featured */}
+        <section className="home-grid__center">
+          <article className="news-featured">
+            <Link to={`/vest/${featuredArticle.slug}`} className="news-featured__image-link">
+              <div className="news-featured__image">
+                {featuredArticle.imageUrl ? (
+                  <img className="news-featured__image-real" src={`${BASE}${featuredArticle.imageUrl}`} alt={featuredArticle.title} />
+                ) : (
+                  <div className="news-featured__image-placeholder">
+                    <span className="news-featured__image-icon">🏛</span>
+                  </div>
+                )}
+              </div>
+            </Link>
+            <div className="news-featured__body">
+              <CategoryTag label={featuredArticle.category} />
+              <Link to={`/vest/${featuredArticle.slug}`} className="news-featured__title-link">
+                <h1 className="news-featured__title">{featuredArticle.title}</h1>
+              </Link>
+              <p className="news-featured__excerpt">{featuredArticle.excerpt}</p>
+              <div className="news-featured__meta">
+                <span className="news-featured__author">{featuredArticle.authorName}</span>
+                <span className="news-featured__sep">·</span>
+                <span className="news-featured__date">{formatDate(featuredArticle.createdAt)}</span>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        {/* Right column */}
+        {rightArticles.length > 0 && (
+          <aside className="home-grid__right">
+            <div className="home-col-label">Ostale vesti</div>
+            {rightArticles.map((a) => (
+              <article key={a.id} className="news-item news-item--side">
+                <div className="news-item__body">
+                  <CategoryTag label={a.category} />
+                  <ArticleTitle article={a} className="news-item__title news-item__title--sm" />
+                  <p className="news-item__excerpt news-item__excerpt--sm">{a.excerpt}</p>
+                  <span className="news-item__date">{formatDate(a.createdAt)}</span>
+                </div>
+                {a.imageUrl ? (
+                  <img className="news-item__thumb" src={`${BASE}${a.imageUrl}`} alt="" />
+                ) : (
+                  <div className="news-item__thumb" />
+                )}
+                <div className="news-item__divider" />
+              </article>
+            ))}
+          </aside>
+        )}
+      </div>
+
+      {secondaryArticles.length > 0 && (
+        <>
+          <div className="home-section-divider">
+            <span>Više aktuelnosti</span>
+          </div>
+
+          <div className="home-secondary">
+            {secondaryArticles.map((a) => (
+              <article key={a.id} className="news-card">
+                {a.imageUrl ? (
+                  <img className="news-card__image-placeholder" src={`${BASE}${a.imageUrl}`} alt="" />
+                ) : (
+                  <div className="news-card__image-placeholder" />
+                )}
+                <div className="news-card__body">
+                  <CategoryTag label={a.category} />
+                  <ArticleTitle article={a} className="news-card__title" />
+                  <p className="news-card__excerpt">{a.excerpt}</p>
+                  <span className="news-card__date">{formatDate(a.createdAt)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </>
   );
 }

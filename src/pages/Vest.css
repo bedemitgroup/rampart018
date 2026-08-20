@@ -117,6 +117,32 @@
   justify-content: center;
 }
 
+.vest-image-real {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: var(--radius-md, 6px);
+  display: block;
+}
+
+.vest-source {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  margin-top: var(--space-4);
+}
+
+.vest-source a {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.vest-status {
+  text-align: center;
+  color: var(--color-neutral);
+  padding: var(--space-16) 0;
+  font-size: var(--font-size-lg);
+}
+
 .vest-image-icon {
   font-size: 4rem;
   opacity: 0.3;

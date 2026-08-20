@@ -3,6 +3,7 @@ using System;
 using BedemApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BedemApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820090756_AddNews")]
+    partial class AddNews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,10 +70,6 @@ namespace BedemApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AuthorName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("AuthorUserId")
                         .HasColumnType("integer");
 
@@ -97,9 +96,6 @@ namespace BedemApi.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("SourceUrl")
                         .HasColumnType("text");
 
                     b.Property<string>("Title")
@@ -168,7 +164,7 @@ namespace BedemApi.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
                             IsActive = true,
-                            PasswordHash = "$2a$11$t5Yhp2PS8EDHZbYABqPgGe5./FzsOrSbGACPREgh67uFU6/m3jej.",
+                            PasswordHash = "$2a$11$2ztmYFbVmXy/xR8rVUH7yOGGWvr2HvfobxpxfRxspaTRxYGJr316q",
                             Role = "Admin",
                             Username = "admin"
                         });

@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Vote> Votes => Set<Vote>();
+    public DbSet<News> News => Set<News>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +58,17 @@ public class AppDbContext : DbContext
             e.HasIndex(v => new { v.UserId, v.VestSlug })
              .IsUnique()
              .HasFilter("\"CommentId\" IS NULL AND \"VestSlug\" != ''");
+        });
+
+        // News -> User (author)
+        modelBuilder.Entity<News>(e =>
+        {
+            e.HasIndex(n => n.Slug).IsUnique();
+
+            e.HasOne(n => n.AuthorUser)
+             .WithMany()
+             .HasForeignKey(n => n.AuthorUserId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Seed admin user

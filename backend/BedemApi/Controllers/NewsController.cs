@@ -1,0 +1,207 @@
+using System.Security.Claims;
+using System.Text.RegularExpressions;
+using BedemApi.Data;
+using BedemApi.DTOs;
+using BedemApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace BedemApi.Controllers;
+
+[ApiController]
+[Route("api/news")]
+public class NewsController : ControllerBase
+{
+    private readonly AppDbContext _db;
+
+    public NewsController(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    private bool IsModerator => User.Identity?.IsAuthenticated == true &&
+        (User.IsInRole("Moderator") || User.IsInRole("Admin"));
+
+    /// <summary>List news. Moderators/Admins also see unpublished drafts.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<NewsListItemResponse>), 200)]
+    public async Task<IActionResult> GetAll()
+    {
+        var query = _db.News.AsQueryable();
+
+        if (!IsModerator)
+            query = query.Where(n => n.IsPublished);
+
+        var news = await query.OrderByDescending(n => n.CreatedAt).ToListAsync();
+
+        var result = news.Select(n => new NewsListItemResponse(
+            n.Id, n.Slug, n.Title, n.Excerpt, n.Category, n.ImageUrl,
+            n.AuthorName, n.CreatedAt, n.IsPublished));
+
+        return Ok(result);
+    }
+
+    /// <summary>Get a single news article by slug.</summary>
+    [HttpGet("{slug}")]
+    [ProducesResponseType(typeof(NewsDetailResponse), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetBySlug(string slug)
+    {
+        var n = await _db.News.FirstOrDefaultAsync(x => x.Slug == slug);
+        if (n == null || (!n.IsPublished && !IsModerator)) return NotFound();
+
+        return Ok(new NewsDetailResponse(
+            n.Id, n.Slug, n.Title, n.Excerpt, n.Body, n.Category, n.ImageUrl,
+            n.AuthorName, n.SourceUrl, n.CreatedAt, n.UpdatedAt, n.IsPublished));
+    }
+
+    /// <summary>Create a new news article.</summary>
+    [HttpPost]
+    [Authorize(Roles = "Moderator,Admin")]
+    [ProducesResponseType(typeof(NewsDetailResponse), 201)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> Create([FromBody] CreateNewsRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title) ||
+            string.IsNullOrWhiteSpace(request.Excerpt) ||
+            string.IsNullOrWhiteSpace(request.Body) ||
+            string.IsNullOrWhiteSpace(request.Category) ||
+            string.IsNullOrWhiteSpace(request.AuthorName))
+            return BadRequest(new { message = "Title, Excerpt, Body, Category and AuthorName are required." });
+
+        var userId = int.Parse(User.FindFirstValue("userId")!);
+
+        var news = new News
+        {
+            Slug = await GenerateUniqueSlugAsync(request.Title),
+            Title = request.Title,
+            Excerpt = request.Excerpt,
+            Body = request.Body,
+            Category = request.Category,
+            AuthorName = request.AuthorName,
+            ImageUrl = request.ImageUrl,
+            SourceUrl = request.SourceUrl,
+            IsPublished = request.IsPublished,
+            AuthorUserId = userId
+        };
+
+        _db.News.Add(news);
+        await _db.SaveChangesAsync();
+
+        var response = new NewsDetailResponse(
+            news.Id, news.Slug, news.Title, news.Excerpt, news.Body, news.Category, news.ImageUrl,
+            news.AuthorName, news.SourceUrl, news.CreatedAt, news.UpdatedAt, news.IsPublished);
+
+        return CreatedAtAction(nameof(GetBySlug), new { slug = news.Slug }, response);
+    }
+
+    /// <summary>Update an existing news article. The slug never changes.</summary>
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Moderator,Admin")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateNewsRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title) ||
+            string.IsNullOrWhiteSpace(request.Excerpt) ||
+            string.IsNullOrWhiteSpace(request.Body) ||
+            string.IsNullOrWhiteSpace(request.Category) ||
+            string.IsNullOrWhiteSpace(request.AuthorName))
+            return BadRequest(new { message = "Title, Excerpt, Body, Category and AuthorName are required." });
+
+        var news = await _db.News.FirstOrDefaultAsync(x => x.Id == id);
+        if (news == null) return NotFound();
+
+        news.Title = request.Title;
+        news.Excerpt = request.Excerpt;
+        news.Body = request.Body;
+        news.Category = request.Category;
+        news.AuthorName = request.AuthorName;
+        news.ImageUrl = request.ImageUrl;
+        news.SourceUrl = request.SourceUrl;
+        news.IsPublished = request.IsPublished;
+        news.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        var response = new NewsDetailResponse(
+            news.Id, news.Slug, news.Title, news.Excerpt, news.Body, news.Category, news.ImageUrl,
+            news.AuthorName, news.SourceUrl, news.CreatedAt, news.UpdatedAt, news.IsPublished);
+
+        return Ok(response);
+    }
+
+    /// <summary>Delete a news article.</summary>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Moderator,Admin")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var news = await _db.News.FindAsync(id);
+        if (news == null) return NotFound();
+
+        _db.News.Remove(news);
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "News deleted." });
+    }
+
+    /// <summary>Upload an image to attach to a news article. Returns its public URL.</summary>
+    [HttpPost("upload-image")]
+    [Authorize(Roles = "Moderator,Admin")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> UploadImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "No file uploaded." });
+
+        var allowedExt = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExt.Contains(ext))
+            return BadRequest(new { message = "Unsupported file type." });
+
+        var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "news");
+        Directory.CreateDirectory(uploadsDir);
+
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(uploadsDir, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+            await file.CopyToAsync(stream);
+
+        return Ok(new { url = $"/uploads/news/{fileName}" });
+    }
+
+    private static readonly Dictionary<char, char> DiacriticsMap = new()
+    {
+        { 'č', 'c' }, { 'ć', 'c' }, { 'đ', 'd' }, { 'š', 's' }, { 'ž', 'z' }
+    };
+
+    private static string Slugify(string title)
+    {
+        var slug = title.ToLowerInvariant();
+        slug = new string(slug.Select(c => DiacriticsMap.TryGetValue(c, out var r) ? r : c).ToArray());
+        slug = Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+        slug = Regex.Replace(slug, @"\s+", "-").Trim('-');
+        return slug;
+    }
+
+    private async Task<string> GenerateUniqueSlugAsync(string title)
+    {
+        var baseSlug = Slugify(title);
+        if (string.IsNullOrEmpty(baseSlug)) baseSlug = "vest";
+
+        var slug = baseSlug;
+        var suffix = 2;
+        while (await _db.News.AnyAsync(n => n.Slug == slug))
+        {
+            slug = $"{baseSlug}-{suffix}";
+            suffix++;
+        }
+        return slug;
+    }
+}

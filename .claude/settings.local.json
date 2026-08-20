@@ -8,7 +8,10 @@
       "mcp__Claude_Preview__preview_start",
       "PowerShell(Get-Process -Name \"node\" | Where-Object { $_.Id -eq 18776 } | Stop-Process -Force; Start-Sleep -Seconds 1; Write-Output \"killed\")",
       "PowerShell($env:PATH = $env:PATH + \";$env:USERPROFILE\\\\.dotnet\\\\tools\"; Set-Location \"D:\\\\Bedem\\\\backend\\\\BedemApi\"; dotnet ef migrations add InitialCreate 2>&1)",
-      "Bash(node bedem-doc.js)"
+      "Bash(node bedem-doc.js)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet ef *)",
+      "Bash(docker compose *)"
     ]
   }
 }
