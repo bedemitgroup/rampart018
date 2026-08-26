@@ -10,8 +10,18 @@ function formatDate(isoString) {
   }).format(date);
 }
 
+function DetailRow({ label, children }) {
+  return (
+    <div className="admin-detail__row">
+      <div className="admin-detail__label">{label}</div>
+      <div className="admin-detail__value">{children}</div>
+    </div>
+  );
+}
+
 export default function AdminProblems() {
   const [reports, setReports] = useState([]);
+  const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -31,6 +41,78 @@ export default function AdminProblems() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (selectedReport) {
+    return (
+      <div className="admin-detail">
+        <div className="admin-detail__header">
+          <div>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              onClick={() => setSelectedReport(null)}
+            >
+              ← Nazad
+            </button>
+
+            <h1 className="admin__title">
+              Detalji prijave #{selectedReport.id}
+            </h1>
+          </div>
+        </div>
+
+        <div className="admin-detail__card">
+          <DetailRow label="ID">
+            {selectedReport.id}
+          </DetailRow>
+
+          <DetailRow label="Kategorija">
+            {selectedReport.category || '—'}
+          </DetailRow>
+
+          <DetailRow label="Datum prijave">
+            {formatDate(selectedReport.createdAt)}
+          </DetailRow>
+
+          <DetailRow label="Anonimna prijava">
+            {selectedReport.anonymous ? 'Da' : 'Ne'}
+          </DetailRow>
+
+          <DetailRow label="Ime i prezime">
+            {selectedReport.anonymous
+              ? 'Anonimno'
+              : selectedReport.name || '—'}
+          </DetailRow>
+
+          <DetailRow label="Email">
+            {selectedReport.email || '—'}
+          </DetailRow>
+
+          <DetailRow label="Telefon">
+            {selectedReport.phone || '—'}
+          </DetailRow>
+
+          <DetailRow label="Lokacija">
+            {selectedReport.location || '—'}
+          </DetailRow>
+
+          <div className="admin-detail__message">
+            <div className="admin-detail__label">
+              Opis problema
+            </div>
+
+            <div className="admin-detail__message-content">
+              {selectedReport.message || '—'}
+            </div>
+          </div>
+
+          <DetailRow label="Saglasnost">
+            {selectedReport.consent ? 'Da' : 'Ne'}
+          </DetailRow>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -82,10 +164,21 @@ export default function AdminProblems() {
 
           <tbody>
             {reports.map((report) => (
-              <tr key={report.id}>
+              <tr
+                key={report.id}
+                className="admin-news__clickable-row"
+                onClick={() => setSelectedReport(report)}
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setSelectedReport(report);
+                  }
+                }}
+              >
                 <td>{report.id}</td>
 
-                <td>{report.category}</td>
+                <td>{report.category || '—'}</td>
 
                 <td>
                   {report.anonymous
@@ -93,11 +186,7 @@ export default function AdminProblems() {
                     : report.name || '—'}
                 </td>
 
-                <td>
-                  {report.anonymous && !report.email
-                    ? '—'
-                    : report.email || '—'}
-                </td>
+                <td>{report.email || '—'}</td>
 
                 <td>{report.location || '—'}</td>
 
