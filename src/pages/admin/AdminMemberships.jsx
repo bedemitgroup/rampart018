@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 
 function formatDate(isoString) {
@@ -34,9 +34,17 @@ function DetailRow({ label, children }) {
   );
 }
 
+const initialFilters = {
+  search: '',
+  membershipType: '',
+  newsletter: '',
+  sort: 'nameAsc',
+};
+
 export default function AdminMemberships() {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [filters, setFilters] = useState(initialFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -58,6 +66,100 @@ export default function AdminMemberships() {
     } finally {
       setLoading(false);
     }
+  }
+
+  const membershipTypes = useMemo(() => {
+    return [...new Set(
+      applications
+        .map((application) => application.membershipType)
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, 'sr'));
+  }, [applications]);
+
+  const filteredApplications = useMemo(() => {
+    const search = filters.search.trim().toLowerCase();
+
+    const filtered = applications.filter((application) => {
+      if (search) {
+        const searchableText = [
+          application.id,
+          application.firstName,
+          application.lastName,
+          application.email,
+          application.phone,
+          application.city,
+          application.occupation,
+          application.membershipType,
+          application.motivation,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        if (!searchableText.includes(search)) {
+          return false;
+        }
+      }
+
+      if (
+        filters.membershipType &&
+        application.membershipType !== filters.membershipType
+      ) {
+        return false;
+      }
+
+      if (
+        filters.newsletter &&
+        String(application.newsletter) !== filters.newsletter
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      if (filters.sort === 'dateNewest') {
+        return (
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime()
+        );
+      }
+
+      if (filters.sort === 'dateOldest') {
+        return (
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
+        );
+      }
+
+      const nameA = `${a.firstName || ''} ${a.lastName || ''}`
+        .trim()
+        .toLocaleLowerCase('sr');
+
+      const nameB = `${b.firstName || ''} ${b.lastName || ''}`
+        .trim()
+        .toLocaleLowerCase('sr');
+
+      const comparison = nameA.localeCompare(nameB, 'sr');
+
+      return filters.sort === 'nameDesc'
+        ? -comparison
+        : comparison;
+    });
+  }, [applications, filters]);
+
+  function handleFilterChange(event) {
+    const { name, value } = event.target;
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function resetFilters() {
+    setFilters(initialFilters);
   }
 
   if (selectedApplication) {
@@ -175,6 +277,110 @@ export default function AdminMemberships() {
         </button>
       </div>
 
+      <div className="admin-filters">
+        <div className="admin-filters__group admin-filters__group--wide">
+          <label
+            className="admin-filters__label"
+            htmlFor="membership-search"
+          >
+            Pretraga
+          </label>
+
+          <input
+            id="membership-search"
+            name="search"
+            type="search"
+            className="form-input"
+            placeholder="Ime, prezime, email, telefon, grad..."
+            value={filters.search}
+            onChange={handleFilterChange}
+          />
+        </div>
+
+        <div className="admin-filters__group">
+          <label
+            className="admin-filters__label"
+            htmlFor="membership-type"
+          >
+            Tip članstva
+          </label>
+
+          <select
+            id="membership-type"
+            name="membershipType"
+            className="form-select"
+            value={filters.membershipType}
+            onChange={handleFilterChange}
+          >
+            <option value="">Svi tipovi</option>
+
+            {membershipTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="admin-filters__group">
+          <label
+            className="admin-filters__label"
+            htmlFor="membership-newsletter"
+          >
+            Newsletter
+          </label>
+
+          <select
+            id="membership-newsletter"
+            name="newsletter"
+            className="form-select"
+            value={filters.newsletter}
+            onChange={handleFilterChange}
+          >
+            <option value="">Svi</option>
+            <option value="true">Da</option>
+            <option value="false">Ne</option>
+          </select>
+        </div>
+
+        <div className="admin-filters__group">
+          <label
+            className="admin-filters__label"
+            htmlFor="membership-sort"
+          >
+            Sortiranje
+          </label>
+
+          <select
+            id="membership-sort"
+            name="sort"
+            className="form-select"
+            value={filters.sort}
+            onChange={handleFilterChange}
+          >
+            <option value="nameAsc">Ime A–Z</option>
+            <option value="nameDesc">Ime Z–A</option>
+            <option value="dateNewest">Najnoviji prvo</option>
+            <option value="dateOldest">Najstariji prvo</option>
+          </select>
+        </div>
+
+        <div className="admin-filters__actions">
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={resetFilters}
+          >
+            Resetuj filtere
+          </button>
+        </div>
+      </div>
+
+      <div className="admin-filters__summary">
+        Prikazano {filteredApplications.length} od{' '}
+        {applications.length} zahteva
+      </div>
+
       {loading && (
         <p className="admin-news__loading">
           Učitavanje zahteva...
@@ -193,60 +399,78 @@ export default function AdminMemberships() {
         </p>
       )}
 
-      {!loading && !error && applications.length > 0 && (
-        <table className="admin-news__table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Ime i prezime</th>
-              <th>Email</th>
-              <th>Telefon</th>
-              <th>Grad</th>
-              <th>Članstvo</th>
-              <th>Newsletter</th>
-              <th>Datum</th>
-            </tr>
-          </thead>
+      {!loading &&
+        !error &&
+        applications.length > 0 &&
+        filteredApplications.length === 0 && (
+          <p className="admin-news__empty">
+            Nema zahteva koji odgovaraju izabranim filterima.
+          </p>
+        )}
 
-          <tbody>
-            {applications.map((application) => (
-              <tr
-                key={application.id}
-                className="admin-news__clickable-row"
-                onClick={() => setSelectedApplication(application)}
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setSelectedApplication(application);
-                  }
-                }}
-              >
-                <td>{application.id}</td>
-
-                <td>
-                  {application.firstName || '—'}{' '}
-                  {application.lastName || ''}
-                </td>
-
-                <td>{application.email || '—'}</td>
-
-                <td>{application.phone || '—'}</td>
-
-                <td>{application.city || '—'}</td>
-
-                <td>{application.membershipType || '—'}</td>
-
-                <td>
-                  {application.newsletter ? 'Da' : 'Ne'}
-                </td>
-
-                <td>{formatDate(application.createdAt)}</td>
+      {!loading &&
+        !error &&
+        filteredApplications.length > 0 && (
+          <table className="admin-news__table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Ime i prezime</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>Grad</th>
+                <th>Članstvo</th>
+                <th>Newsletter</th>
+                <th>Datum</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+
+            <tbody>
+              {filteredApplications.map((application) => (
+                <tr
+                  key={application.id}
+                  className="admin-news__clickable-row"
+                  onClick={() =>
+                    setSelectedApplication(application)
+                  }
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === 'Enter' ||
+                      event.key === ' '
+                    ) {
+                      event.preventDefault();
+                      setSelectedApplication(application);
+                    }
+                  }}
+                >
+                  <td>{application.id}</td>
+
+                  <td>
+                    {application.firstName || '—'}{' '}
+                    {application.lastName || ''}
+                  </td>
+
+                  <td>{application.email || '—'}</td>
+
+                  <td>{application.phone || '—'}</td>
+
+                  <td>{application.city || '—'}</td>
+
+                  <td>{application.membershipType || '—'}</td>
+
+                  <td>
+                    {application.newsletter ? 'Da' : 'Ne'}
+                  </td>
+
+                  <td>
+                    {formatDate(application.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
     </div>
   );
 }

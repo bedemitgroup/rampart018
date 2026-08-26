@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 
 function formatDate(isoString) {
@@ -10,6 +10,18 @@ function formatDate(isoString) {
   }).format(date);
 }
 
+function toDateInputValue(isoString) {
+  if (!isoString) return '';
+
+  const date = new Date(isoString);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 function DetailRow({ label, children }) {
   return (
     <div className="admin-detail__row">
@@ -19,9 +31,19 @@ function DetailRow({ label, children }) {
   );
 }
 
+const initialFilters = {
+  search: '',
+  category: '',
+  anonymous: '',
+  dateFrom: '',
+  dateTo: '',
+  sort: 'newest',
+};
+
 export default function AdminProblems() {
   const [reports, setReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [filters, setFilters] = useState(initialFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -41,6 +63,95 @@ export default function AdminProblems() {
     } finally {
       setLoading(false);
     }
+  }
+
+  const categories = useMemo(() => {
+    return [...new Set(
+      reports
+        .map((report) => report.category)
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, 'sr'));
+  }, [reports]);
+
+  const filteredReports = useMemo(() => {
+    const search = filters.search.trim().toLowerCase();
+
+    const filtered = reports.filter((report) => {
+      if (search) {
+        const searchableText = [
+          report.id,
+          report.category,
+          report.name,
+          report.email,
+          report.phone,
+          report.location,
+          report.message,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        if (!searchableText.includes(search)) {
+          return false;
+        }
+      }
+
+      if (
+        filters.category &&
+        report.category !== filters.category
+      ) {
+        return false;
+      }
+
+      if (
+        filters.anonymous &&
+        String(report.anonymous) !== filters.anonymous
+      ) {
+        return false;
+      }
+
+      if (filters.dateFrom) {
+        const from = new Date(`${filters.dateFrom}T00:00:00`);
+        const createdAt = new Date(report.createdAt);
+
+        if (createdAt < from) {
+          return false;
+        }
+      }
+
+      if (filters.dateTo) {
+        const to = new Date(`${filters.dateTo}T23:59:59.999`);
+        const createdAt = new Date(report.createdAt);
+
+        if (createdAt > to) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+
+      return filters.sort === 'oldest'
+        ? dateA - dateB
+        : dateB - dateA;
+    });
+  }, [reports, filters]);
+
+  function handleFilterChange(event) {
+    const { name, value } = event.target;
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function resetFilters() {
+    setFilters(initialFilters);
   }
 
   if (selectedReport) {
@@ -130,6 +241,125 @@ export default function AdminProblems() {
         </button>
       </div>
 
+      <div className="admin-filters">
+        <div className="admin-filters__group admin-filters__group--wide">
+          <label className="admin-filters__label" htmlFor="problem-search">
+            Pretraga
+          </label>
+
+          <input
+            id="problem-search"
+            name="search"
+            type="search"
+            className="form-input"
+            placeholder="ID, kategorija, ime, email, telefon..."
+            value={filters.search}
+            onChange={handleFilterChange}
+          />
+        </div>
+
+        <div className="admin-filters__group">
+          <label className="admin-filters__label" htmlFor="problem-category">
+            Kategorija
+          </label>
+
+          <select
+            id="problem-category"
+            name="category"
+            className="form-select"
+            value={filters.category}
+            onChange={handleFilterChange}
+          >
+            <option value="">Sve kategorije</option>
+
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="admin-filters__group">
+          <label className="admin-filters__label" htmlFor="problem-anonymous">
+            Vrsta prijave
+          </label>
+
+          <select
+            id="problem-anonymous"
+            name="anonymous"
+            className="form-select"
+            value={filters.anonymous}
+            onChange={handleFilterChange}
+          >
+            <option value="">Svi</option>
+            <option value="true">Anonimne</option>
+            <option value="false">Neanonimne</option>
+          </select>
+        </div>
+
+        <div className="admin-filters__group">
+          <label className="admin-filters__label" htmlFor="problem-sort">
+            Sortiranje
+          </label>
+
+          <select
+            id="problem-sort"
+            name="sort"
+            className="form-select"
+            value={filters.sort}
+            onChange={handleFilterChange}
+          >
+            <option value="newest">Najnoviji prvo</option>
+            <option value="oldest">Najstariji prvo</option>
+          </select>
+        </div>
+
+        <div className="admin-filters__group">
+          <label className="admin-filters__label" htmlFor="problem-date-from">
+            Od datuma
+          </label>
+
+          <input
+            id="problem-date-from"
+            name="dateFrom"
+            type="date"
+            className="form-input"
+            value={filters.dateFrom}
+            onChange={handleFilterChange}
+          />
+        </div>
+
+        <div className="admin-filters__group">
+          <label className="admin-filters__label" htmlFor="problem-date-to">
+            Do datuma
+          </label>
+
+          <input
+            id="problem-date-to"
+            name="dateTo"
+            type="date"
+            className="form-input"
+            value={filters.dateTo}
+            onChange={handleFilterChange}
+          />
+        </div>
+
+        <div className="admin-filters__actions">
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={resetFilters}
+          >
+            Resetuj filtere
+          </button>
+        </div>
+      </div>
+
+      <div className="admin-filters__summary">
+        Prikazano {filteredReports.length} od {reports.length} prijava
+      </div>
+
       {loading && (
         <p className="admin-news__loading">
           Učitavanje prijava...
@@ -148,7 +378,13 @@ export default function AdminProblems() {
         </p>
       )}
 
-      {!loading && !error && reports.length > 0 && (
+      {!loading && !error && reports.length > 0 && filteredReports.length === 0 && (
+        <p className="admin-news__empty">
+          Nema prijava koje odgovaraju izabranim filterima.
+        </p>
+      )}
+
+      {!loading && !error && filteredReports.length > 0 && (
         <table className="admin-news__table">
           <thead>
             <tr>
@@ -163,7 +399,7 @@ export default function AdminProblems() {
           </thead>
 
           <tbody>
-            {reports.map((report) => (
+            {filteredReports.map((report) => (
               <tr
                 key={report.id}
                 className="admin-news__clickable-row"
