@@ -1,5 +1,7 @@
 import { useState } from 'react';
+
 import { api } from '../services/api';
+
 import './Problem.css';
 
 const categories = [
@@ -33,16 +35,27 @@ export default function Problem() {
     const errs = {};
 
     if (!form.anonymous && !form.name.trim()) {
-      errs.name = 'Ime je obavezno (ili označite "Šaljem anonimno")';
+      errs.name =
+        'Ime je obavezno (ili označite "Šaljem anonimno")';
     }
 
     if (!form.anonymous && !form.email.trim()) {
       errs.email = 'Email adresa je obavezna';
     } else if (
+      !form.anonymous &&
       form.email.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
     ) {
       errs.email = 'Unesite ispravnu email adresu';
+    }
+
+    if (
+      !form.anonymous &&
+      form.phone.trim() &&
+      !form.phone.trim().startsWith('+')
+    ) {
+      errs.phone =
+        'Broj telefona unesite sa pozivnim brojem, npr. +381 64 123 45 67';
     }
 
     if (!form.category) {
@@ -57,7 +70,8 @@ export default function Problem() {
     }
 
     if (!form.consent) {
-      errs.consent = 'Morate prihvatiti uslove obrade podataka';
+      errs.consent =
+        'Morate prihvatiti uslove obrade podataka';
     }
 
     return errs;
@@ -93,7 +107,9 @@ export default function Problem() {
       const data = await api.createProblemReport({
         name: form.anonymous ? null : form.name.trim(),
         email: form.anonymous ? null : form.email.trim(),
-        phone: form.phone.trim() || null,
+        phone: form.anonymous
+          ? null
+          : form.phone.trim() || null,
         category: form.category,
         location: form.location.trim() || null,
         message: form.message.trim(),
@@ -109,7 +125,8 @@ export default function Problem() {
 
       setErrors({
         submit:
-          error.message || 'Došlo je do greške. Pokušajte ponovo.',
+          error.message ||
+          'Došlo je do greške. Pokušajte ponovo.',
       });
     }
   };
@@ -124,7 +141,9 @@ export default function Problem() {
     <>
       <section className="page-hero page-hero--accent">
         <div className="container page-hero__content">
-          <span className="page-hero__badge">Prijavi problem</span>
+          <span className="page-hero__badge">
+            Prijavi problem
+          </span>
 
           <h1 className="page-hero__title">
             Podeli problem sa nama
@@ -146,6 +165,7 @@ export default function Problem() {
 
               <div>
                 <h3>Opišeš problem</h3>
+
                 <p>
                   Što detaljniji opis, to smo efikasniji. Možeš ostati anoniman.
                 </p>
@@ -159,6 +179,7 @@ export default function Problem() {
 
               <div>
                 <h3>Naš tim analizira</h3>
+
                 <p>
                   U roku od 48h procenjujemo prijavu i kontaktiramo te.
                 </p>
@@ -172,6 +193,7 @@ export default function Problem() {
 
               <div>
                 <h3>Preduzimamo akciju</h3>
+
                 <p>
                   Pravna pomoć, posredovanje ili javna akcija — zavisno od
                   slučaja.
@@ -241,6 +263,7 @@ export default function Problem() {
                 <p className="problem-success__text">
                   Naš tim će pregledati tvoju prijavu i preduzeti
                   odgovarajuće korake.
+
                   {!form.anonymous &&
                     ' Ako je ostavljena email adresa, možemo te kontaktirati u vezi sa prijavom.'}
                 </p>
@@ -290,88 +313,102 @@ export default function Problem() {
                 </div>
 
                 {!form.anonymous && (
-                  <div className="form-group">
-                    <label
-                      className="form-label"
-                      htmlFor="name"
-                    >
-                      Ime i prezime{' '}
-                      <span className="required-star">*</span>
-                    </label>
-
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      className={`form-input${
-                        errors.name ? ' form-input--error' : ''
-                      }`}
-                      placeholder="Petar Petrović"
-                      value={form.name}
-                      onChange={handleChange}
-                    />
-
-                    {errors.name && (
-                      <span className="form-error">
-                        {errors.name}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div className="problem-form__row">
-                  <div className="form-group">
-                    <label
-                      className="form-label"
-                      htmlFor="email"
-                    >
-                      Email adresa{' '}
-                      {!form.anonymous && (
+                  <>
+                    <div className="form-group">
+                      <label
+                        className="form-label"
+                        htmlFor="name"
+                      >
+                        Ime i prezime{' '}
                         <span className="required-star">*</span>
+                      </label>
+
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        className={`form-input${
+                          errors.name
+                            ? ' form-input--error'
+                            : ''
+                        }`}
+                        placeholder="Petar Petrović"
+                        value={form.name}
+                        onChange={handleChange}
+                      />
+
+                      {errors.name && (
+                        <span className="form-error">
+                          {errors.name}
+                        </span>
                       )}
-                    </label>
+                    </div>
 
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      className={`form-input${
-                        errors.email ? ' form-input--error' : ''
-                      }`}
-                      placeholder="vas@email.com"
-                      value={form.email}
-                      onChange={handleChange}
-                    />
+                    <div className="problem-form__row">
+                      <div className="form-group">
+                        <label
+                          className="form-label"
+                          htmlFor="email"
+                        >
+                          Email adresa{' '}
+                          <span className="required-star">*</span>
+                        </label>
 
-                    {errors.email && (
-                      <span className="form-error">
-                        {errors.email}
-                      </span>
-                    )}
-                  </div>
+                        <input
+                          id="email"
+                          name="email"
+                          type="email"
+                          className={`form-input${
+                            errors.email
+                              ? ' form-input--error'
+                              : ''
+                          }`}
+                          placeholder="vas@email.com"
+                          value={form.email}
+                          onChange={handleChange}
+                        />
 
-                  <div className="form-group">
-                    <label
-                      className="form-label"
-                      htmlFor="phone"
-                    >
-                      Telefon{' '}
-                      <span className="form-optional">
-                        (opciono)
-                      </span>
-                    </label>
+                        {errors.email && (
+                          <span className="form-error">
+                            {errors.email}
+                          </span>
+                        )}
+                      </div>
 
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      className="form-input"
-                      placeholder="+381 6x xxx xxxx"
-                      value={form.phone}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                      <div className="form-group">
+                        <label
+                          className="form-label"
+                          htmlFor="phone"
+                        >
+                          Telefon{' '}
+                          <span className="form-optional">
+                            (opciono, sa pozivnim brojem)
+                          </span>
+                        </label>
+
+                        <input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          className={`form-input${
+                            errors.phone
+                              ? ' form-input--error'
+                              : ''
+                          }`}
+                          placeholder="+381 64 123 45 67"
+                          value={form.phone}
+                          onChange={handleChange}
+                        />
+
+                        {errors.phone && (
+                          <span className="form-error">
+                            {errors.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="problem-form__row">
                   <div className="form-group">
@@ -387,7 +424,9 @@ export default function Problem() {
                       id="category"
                       name="category"
                       className={`form-select${
-                        errors.category ? ' form-input--error' : ''
+                        errors.category
+                          ? ' form-input--error'
+                          : ''
                       }`}
                       value={form.category}
                       onChange={handleChange}
@@ -446,13 +485,15 @@ export default function Problem() {
                     id="message"
                     name="message"
                     className={`form-textarea${
-                      errors.message ? ' form-input--error' : ''
+                      errors.message
+                        ? ' form-input--error'
+                        : ''
                     }`}
                     placeholder="Opišite problem što detaljnije: šta se dogodilo, kada, ko je uključen, kakve su posledice..."
                     rows={7}
                     value={form.message}
                     onChange={handleChange}
-                  ></textarea>
+                  />
 
                   <div className="problem-form__counter">
                     {form.message.length} karaktera{' '}

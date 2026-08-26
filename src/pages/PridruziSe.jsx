@@ -103,7 +103,10 @@ export default function PridruziSe() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       errs.email = 'Unesite ispravnu email adresu';
     }
-
+    if (form.phone.trim() && !form.phone.trim().startsWith('+')) {
+  errs.phone =
+    'Broj telefona unesite sa pozivnim brojem, npr. +381 64 123 45 67';
+}
     if (!form.city.trim()) {
       errs.city = 'Grad je obavezan';
     }
@@ -518,21 +521,29 @@ export default function PridruziSe() {
                     className="form-label"
                     htmlFor="phone"
                   >
-                    Telefon{' '}
-                    <span className="form-optional">
-                      (opciono)
-                    </span>
+                   Telefon{' '}
+<span className="form-optional">
+  (opciono, sa pozivnim brojem)
+</span>
                   </label>
 
                   <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    className="form-input"
-                    placeholder="+381 6x xxx xxxx"
-                    value={form.phone}
-                    onChange={handleChange}
-                  />
+  id="phone"
+  name="phone"
+  type="tel"
+  className={`form-input${
+    errors.phone ? ' form-input--error' : ''
+  }`}
+  placeholder="+381 64 123 45 67"
+  value={form.phone}
+  onChange={handleChange}
+/>
+
+{errors.phone && (
+  <span className="form-error">
+    {errors.phone}
+  </span>
+)}
                 </div>
               </div>
 

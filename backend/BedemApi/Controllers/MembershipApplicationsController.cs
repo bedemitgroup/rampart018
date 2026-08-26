@@ -2,9 +2,10 @@ using System.Text.Json;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
+using BedemApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace BedemApi.Controllers;
 
@@ -41,87 +42,109 @@ public class MembershipApplicationsController : ControllerBase
                 message = "Morate prihvatiti uslove."
             });
         }
+
         if (request.FirstName.Length > 100)
-{
-    return BadRequest(new
-    {
-        message = "Ime ne može biti duže od 100 karaktera."
-    });
-}
+        {
+            return BadRequest(new
+            {
+                message = "Ime ne može biti duže od 100 karaktera."
+            });
+        }
 
-if (request.LastName.Length > 100)
-{
-    return BadRequest(new
-    {
-        message = "Prezime ne može biti duže od 100 karaktera."
-    });
-}
+        if (request.LastName.Length > 100)
+        {
+            return BadRequest(new
+            {
+                message = "Prezime ne može biti duže od 100 karaktera."
+            });
+        }
 
-if (request.Email.Length > 320)
-{
-    return BadRequest(new
-    {
-        message = "Email adresa ne može biti duža od 320 karaktera."
-    });
-}
+        if (request.Email.Length > 320)
+        {
+            return BadRequest(new
+            {
+                message = "Email adresa ne može biti duža od 320 karaktera."
+            });
+        }
 
-if (request.Phone?.Length > 30)
-{
-    return BadRequest(new
-    {
-        message = "Telefon ne može biti duži od 30 karaktera."
-    });
-}
+        if (request.Phone?.Length > 30)
+        {
+            return BadRequest(new
+            {
+                message = "Telefon ne može biti duži od 30 karaktera."
+            });
+        }
 
-if (request.City.Length > 100)
-{
-    return BadRequest(new
-    {
-        message = "Grad ne može biti duži od 100 karaktera."
-    });
-}
+        if (request.City.Length > 100)
+        {
+            return BadRequest(new
+            {
+                message = "Grad ne može biti duži od 100 karaktera."
+            });
+        }
 
-if (request.Occupation?.Length > 100)
-{
-    return BadRequest(new
-    {
-        message = "Zanimanje ne može biti duže od 100 karaktera."
-    });
-}
+        if (request.Occupation?.Length > 100)
+        {
+            return BadRequest(new
+            {
+                message = "Zanimanje ne može biti duže od 100 karaktera."
+            });
+        }
 
-if (request.MembershipType.Length > 50)
-{
-    return BadRequest(new
-    {
-        message = "Tip članstva nije validan."
-    });
-}
+        if (request.MembershipType.Length > 50)
+        {
+            return BadRequest(new
+            {
+                message = "Tip članstva nije validan."
+            });
+        }
 
-if (request.Motivation?.Length > 5000)
-{
-    return BadRequest(new
-    {
-        message = "Motivacija ne može biti duža od 5.000 karaktera."
-    });
-}
+        if (request.Motivation?.Length > 5000)
+        {
+            return BadRequest(new
+            {
+                message = "Motivacija ne može biti duža od 5.000 karaktera."
+            });
+        }
 
-if (request.Skills?.Any(skill => skill.Length > 100) == true)
-{
-    return BadRequest(new
-    {
-        message = "Jedna od veština je predugačka."
-    });
-}
+        if (request.Skills?.Any(skill => skill.Length > 100) == true)
+        {
+            return BadRequest(new
+            {
+                message = "Jedna od veština je predugačka."
+            });
+        }
+
+        var normalizedEmail = ContactNormalizer.NormalizeEmail(request.Email);
+
+        if (!ContactNormalizer.IsValidEmail(normalizedEmail))
+        {
+            return BadRequest(new
+            {
+                message = "Unesite ispravnu email adresu."
+            });
+        }
+
+        if (!ContactNormalizer.TryNormalizePhone(
+                request.Phone,
+                out var normalizedPhone))
+        {
+            return BadRequest(new
+            {
+                message =
+                    "Unesite ispravan broj telefona u međunarodnom formatu, npr. +381 64 123 45 67."
+            });
+        }
 
         var application = new MembershipApplication
         {
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
-            Email = request.Email.Trim(),
-            Phone = request.Phone?.Trim(),
+            Email = normalizedEmail,
+            Phone = normalizedPhone,
             City = request.City.Trim(),
             Occupation = request.Occupation?.Trim(),
-            MembershipType = request.MembershipType,
+            MembershipType = request.MembershipType.Trim(),
             Motivation = request.Motivation?.Trim(),
             Skills = request.Skills == null
                 ? null
@@ -148,8 +171,8 @@ if (request.Skills?.Any(skill => skill.Length > 100) == true)
     }
 
     [HttpGet]
-[Authorize(Roles = "Admin,Moderator")]
-public async Task<IActionResult> GetAll()
+    [Authorize(Roles = "Admin,Moderator")]
+    public async Task<IActionResult> GetAll()
     {
         var applications = await _db.MembershipApplications
             .OrderByDescending(x => x.CreatedAt)
@@ -158,9 +181,9 @@ public async Task<IActionResult> GetAll()
         return Ok(applications);
     }
 
-  [HttpGet("{id}")]
-[Authorize(Roles = "Admin,Moderator")]
-public async Task<IActionResult> GetById(int id)
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Moderator")]
+    public async Task<IActionResult> GetById(int id)
     {
         var application = await _db.MembershipApplications
             .FindAsync(id);
