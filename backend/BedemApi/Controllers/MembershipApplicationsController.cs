@@ -4,6 +4,7 @@ using BedemApi.DTOs;
 using BedemApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BedemApi.Controllers;
 
@@ -40,6 +41,77 @@ public class MembershipApplicationsController : ControllerBase
                 message = "Morate prihvatiti uslove."
             });
         }
+        if (request.FirstName.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Ime ne može biti duže od 100 karaktera."
+    });
+}
+
+if (request.LastName.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Prezime ne može biti duže od 100 karaktera."
+    });
+}
+
+if (request.Email.Length > 320)
+{
+    return BadRequest(new
+    {
+        message = "Email adresa ne može biti duža od 320 karaktera."
+    });
+}
+
+if (request.Phone?.Length > 30)
+{
+    return BadRequest(new
+    {
+        message = "Telefon ne može biti duži od 30 karaktera."
+    });
+}
+
+if (request.City.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Grad ne može biti duži od 100 karaktera."
+    });
+}
+
+if (request.Occupation?.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Zanimanje ne može biti duže od 100 karaktera."
+    });
+}
+
+if (request.MembershipType.Length > 50)
+{
+    return BadRequest(new
+    {
+        message = "Tip članstva nije validan."
+    });
+}
+
+if (request.Motivation?.Length > 5000)
+{
+    return BadRequest(new
+    {
+        message = "Motivacija ne može biti duža od 5.000 karaktera."
+    });
+}
+
+if (request.Skills?.Any(skill => skill.Length > 100) == true)
+{
+    return BadRequest(new
+    {
+        message = "Jedna od veština je predugačka."
+    });
+}
 
         var application = new MembershipApplication
         {
@@ -76,7 +148,8 @@ public class MembershipApplicationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+[Authorize(Roles = "Admin,Moderator")]
+public async Task<IActionResult> GetAll()
     {
         var applications = await _db.MembershipApplications
             .OrderByDescending(x => x.CreatedAt)
@@ -85,8 +158,9 @@ public class MembershipApplicationsController : ControllerBase
         return Ok(applications);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+  [HttpGet("{id}")]
+[Authorize(Roles = "Admin,Moderator")]
+public async Task<IActionResult> GetById(int id)
     {
         var application = await _db.MembershipApplications
             .FindAsync(id);

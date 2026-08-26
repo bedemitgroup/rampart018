@@ -18,6 +18,23 @@ export default function AdminLayout() {
           <nav aria-label="Admin navigacija">
             <ul className="admin__nav">
               <li>
+                <li>
+  <NavLink
+    to="/admin/problems"
+    className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+  >
+    Prijave problema
+  </NavLink>
+</li>
+
+<li>
+  <NavLink
+    to="/admin/memberships"
+    className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+  >
+    Zahtevi za članstvo
+  </NavLink>
+</li>
                 <NavLink
                   to="/admin/news"
                   className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}

@@ -2,7 +2,7 @@ namespace BedemApi.DTOs;
 
 public record CreateProblemReportRequest(
     string? Name,
-    string Email,
+    string? Email,
     string? Phone,
     string Category,
     string? Location,

@@ -52,6 +52,17 @@ getMembershipApplications: () =>
 
 getMembershipApplication: (id) =>
   request(`/api/membership-applications/${id}`),
+getProblemReports: () =>
+  request('/api/problem-reports'),
+
+getProblemReport: (id) =>
+  request(`/api/problem-reports/${id}`),
+
+createProblemReport: (data) =>
+  request('/api/problem-reports', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

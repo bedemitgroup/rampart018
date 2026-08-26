@@ -6,7 +6,7 @@ public class ProblemReport
 
     public string? Name { get; set; }
 
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
 
     public string? Phone { get; set; }
 

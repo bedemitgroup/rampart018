@@ -12,6 +12,8 @@ import Vest from './pages/Vest';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminNews from './pages/admin/AdminNews';
 import AdminNewsForm from './pages/admin/AdminNewsForm';
+import AdminProblems from './pages/admin/AdminProblems';
+import AdminMemberships from './pages/admin/AdminMemberships';
 
 export default function App() {
   return (
@@ -27,12 +29,14 @@ export default function App() {
           <Route path="/problem" element={<Problem />} />
           <Route path="/pridruzi-se" element={<PridruziSe />} />
           <Route path="/vest/:slug" element={<Vest />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="news" replace />} />
-            <Route path="news" element={<AdminNews />} />
-            <Route path="news/new" element={<AdminNewsForm />} />
-            <Route path="news/:id/edit" element={<AdminNewsForm />} />
-          </Route>
+         <Route path="/admin" element={<AdminLayout />}>
+  <Route index element={<Navigate to="news" replace />} />
+  <Route path="news" element={<AdminNews />} />
+  <Route path="problems" element={<AdminProblems />} />
+  <Route path="memberships" element={<AdminMemberships />} />
+  <Route path="news/new" element={<AdminNewsForm />} />
+  <Route path="news/:id/edit" element={<AdminNewsForm />} />
+</Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

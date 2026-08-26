@@ -30,12 +30,12 @@ public class ProblemReportsController : ControllerBase
             });
         }
 
-        if (string.IsNullOrWhiteSpace(request.Email))
-        {
-            return BadRequest(new
-            {
-                message = "Email adresa je obavezna."
-            });
+        if (!request.Anonymous && string.IsNullOrWhiteSpace(request.Email))
+                {
+                    return BadRequest(new
+                            {
+                                     message = "Email adresa je obavezna."
+                            });
         }
 
         if (string.IsNullOrWhiteSpace(request.Category))
@@ -69,6 +69,53 @@ public class ProblemReportsController : ControllerBase
                 message = "Morate prihvatiti uslove obrade podataka."
             });
         }
+        if (request.Name?.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Ime ne može biti duže od 100 karaktera."
+    });
+}
+
+if (request.Email?.Length > 320)
+{
+    return BadRequest(new
+    {
+        message = "Email adresa ne može biti duža od 320 karaktera."
+    });
+}
+
+if (request.Phone?.Length > 30)
+{
+    return BadRequest(new
+    {
+        message = "Telefon ne može biti duži od 30 karaktera."
+    });
+}
+
+if (request.Category.Length > 100)
+{
+    return BadRequest(new
+    {
+        message = "Kategorija ne može biti duža od 100 karaktera."
+    });
+}
+
+if (request.Location?.Length > 200)
+{
+    return BadRequest(new
+    {
+        message = "Lokacija ne može biti duža od 200 karaktera."
+    });
+}
+
+if (request.Message.Length > 10000)
+{
+    return BadRequest(new
+    {
+        message = "Opis problema ne može biti duži od 10.000 karaktera."
+    });
+}
 
         var report = new ProblemReport
         {
@@ -76,7 +123,9 @@ public class ProblemReportsController : ControllerBase
                 ? null
                 : request.Name?.Trim(),
 
-            Email = request.Email.Trim(),
+           Email = string.IsNullOrWhiteSpace(request.Email)
+    ? null
+    : request.Email.Trim(),
 
             Phone = request.Phone?.Trim(),
 
@@ -108,7 +157,7 @@ public class ProblemReportsController : ControllerBase
     }
 
     [HttpGet]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Moderator")]
 public async Task<IActionResult> GetAll()
     {
         var reports = await _db.ProblemReports
@@ -119,7 +168,7 @@ public async Task<IActionResult> GetAll()
     }
 
    [HttpGet("{id}")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Moderator")]
 public async Task<IActionResult> GetById(int id)
     {
         var report = await _db.ProblemReports
