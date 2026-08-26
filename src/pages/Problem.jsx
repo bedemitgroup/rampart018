@@ -46,15 +46,55 @@ export default function Problem() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const errs = validate();
+
+  if (Object.keys(errs).length > 0) {
+    setErrors(errs);
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/problem-reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: form.anonymous ? null : form.name,
+        email: form.email,
+        phone: form.phone || null,
+        category: form.category,
+        location: form.location || null,
+        message: form.message,
+        anonymous: form.anonymous,
+        consent: form.consent,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      throw new Error(
+        errorData?.message || 'Došlo je do greške prilikom slanja prijave.'
+      );
     }
+
+    const data = await response.json();
+
+    console.log('Problem report created:', data);
+
     setSubmitted(true);
-  };
+  } catch (error) {
+    console.error('Problem report error:', error);
+
+    setErrors({
+      submit: error.message || 'Došlo je do greške. Pokušajte ponovo.',
+    });
+  }
+};
 
   const handleReset = () => {
     setForm(initialForm);
@@ -293,7 +333,11 @@ export default function Problem() {
                   </label>
                   {errors.consent && <span className="form-error">{errors.consent}</span>}
                 </div>
-
+{errors.submit && (
+  <div className="form-error" style={{ marginBottom: '1rem' }}>
+    {errors.submit}
+  </div>
+)}
                 <button type="submit" className="btn btn--accent btn--lg problem-form__submit">
                   Pošalji prijavu →
                 </button>
