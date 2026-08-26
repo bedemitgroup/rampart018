@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
+import ExportPdfModal from '../../components/admin/ExportPdfModal';
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -19,7 +20,9 @@ function parseSkills(skills) {
 
   try {
     const parsed = JSON.parse(skills);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
   } catch {
     return [skills];
   }
@@ -28,8 +31,13 @@ function parseSkills(skills) {
 function DetailRow({ label, children }) {
   return (
     <div className="admin-detail__row">
-      <div className="admin-detail__label">{label}</div>
-      <div className="admin-detail__value">{children}</div>
+      <div className="admin-detail__label">
+        {label}
+      </div>
+
+      <div className="admin-detail__value">
+        {children}
+      </div>
     </div>
   );
 }
@@ -42,11 +50,30 @@ const initialFilters = {
 };
 
 export default function AdminMemberships() {
-  const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [filters, setFilters] = useState(initialFilters);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [applications, setApplications] =
+    useState([]);
+
+  const [
+    selectedApplication,
+    setSelectedApplication,
+  ] = useState(null);
+
+  const [filters, setFilters] =
+    useState(initialFilters);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  const [exportOpen, setExportOpen] =
+    useState(false);
+
+  const [
+    detailExportOpen,
+    setDetailExportOpen,
+  ] = useState(false);
 
   useEffect(() => {
     loadApplications();
@@ -57,11 +84,14 @@ export default function AdminMemberships() {
     setError('');
 
     try {
-      const data = await api.getMembershipApplications();
+      const data =
+        await api.getMembershipApplications();
+
       setApplications(data);
     } catch (err) {
       setError(
-        err.message || 'Greška pri učitavanju zahteva za članstvo.'
+        err.message ||
+          'Greška pri učitavanju zahteva za članstvo.',
       );
     } finally {
       setLoading(false);
@@ -71,52 +101,65 @@ export default function AdminMemberships() {
   const membershipTypes = useMemo(() => {
     return [...new Set(
       applications
-        .map((application) => application.membershipType)
-        .filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b, 'sr'));
+        .map(
+          (application) =>
+            application.membershipType,
+        )
+        .filter(Boolean),
+    )].sort((a, b) =>
+      a.localeCompare(b, 'sr'),
+    );
   }, [applications]);
 
   const filteredApplications = useMemo(() => {
-    const search = filters.search.trim().toLowerCase();
+    const search = filters.search
+      .trim()
+      .toLowerCase();
 
-    const filtered = applications.filter((application) => {
-      if (search) {
-        const searchableText = [
-          application.id,
-          application.firstName,
-          application.lastName,
-          application.email,
-          application.phone,
-          application.city,
-          application.occupation,
-          application.membershipType,
-          application.motivation,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+    const filtered = applications.filter(
+      (application) => {
+        if (search) {
+          const searchableText = [
+            application.id,
+            application.firstName,
+            application.lastName,
+            application.email,
+            application.phone,
+            application.city,
+            application.occupation,
+            application.membershipType,
+            application.motivation,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
 
-        if (!searchableText.includes(search)) {
+          if (
+            !searchableText.includes(search)
+          ) {
+            return false;
+          }
+        }
+
+        if (
+          filters.membershipType &&
+          application.membershipType !==
+            filters.membershipType
+        ) {
           return false;
         }
-      }
 
-      if (
-        filters.membershipType &&
-        application.membershipType !== filters.membershipType
-      ) {
-        return false;
-      }
+        if (
+          filters.newsletter &&
+          String(application.newsletter) !==
+            filters.newsletter
+        ) {
+          return false;
+        }
 
-      if (
-        filters.newsletter &&
-        String(application.newsletter) !== filters.newsletter
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+        return true;
+      },
+    );
 
     return filtered.sort((a, b) => {
       if (filters.sort === 'dateNewest') {
@@ -133,15 +176,22 @@ export default function AdminMemberships() {
         );
       }
 
-      const nameA = `${a.firstName || ''} ${a.lastName || ''}`
-        .trim()
-        .toLocaleLowerCase('sr');
+      const nameA =
+        `${a.firstName || ''} ${
+          a.lastName || ''
+        }`
+          .trim()
+          .toLocaleLowerCase('sr');
 
-      const nameB = `${b.firstName || ''} ${b.lastName || ''}`
-        .trim()
-        .toLocaleLowerCase('sr');
+      const nameB =
+        `${b.firstName || ''} ${
+          b.lastName || ''
+        }`
+          .trim()
+          .toLocaleLowerCase('sr');
 
-      const comparison = nameA.localeCompare(nameB, 'sr');
+      const comparison =
+        nameA.localeCompare(nameB, 'sr');
 
       return filters.sort === 'nameDesc'
         ? -comparison
@@ -150,7 +200,8 @@ export default function AdminMemberships() {
   }, [applications, filters]);
 
   function handleFilterChange(event) {
-    const { name, value } = event.target;
+    const { name, value } =
+      event.target;
 
     setFilters((prev) => ({
       ...prev,
@@ -163,7 +214,9 @@ export default function AdminMemberships() {
   }
 
   if (selectedApplication) {
-    const skills = parseSkills(selectedApplication.skills);
+    const skills = parseSkills(
+      selectedApplication.skills,
+    );
 
     return (
       <div className="admin-detail">
@@ -172,15 +225,28 @@ export default function AdminMemberships() {
             <button
               type="button"
               className="btn btn--secondary"
-              onClick={() => setSelectedApplication(null)}
+              onClick={() =>
+                setSelectedApplication(null)
+              }
             >
               ← Nazad
             </button>
 
             <h1 className="admin__title">
-              Detalji zahteva #{selectedApplication.id}
+              Detalji zahteva #
+              {selectedApplication.id}
             </h1>
           </div>
+
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() =>
+              setDetailExportOpen(true)
+            }
+          >
+            Izvezi PDF
+          </button>
         </div>
 
         <div className="admin-detail__card">
@@ -189,43 +255,56 @@ export default function AdminMemberships() {
           </DetailRow>
 
           <DetailRow label="Ime">
-            {selectedApplication.firstName || '—'}
+            {selectedApplication.firstName ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Prezime">
-            {selectedApplication.lastName || '—'}
+            {selectedApplication.lastName ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Email">
-            {selectedApplication.email || '—'}
+            {selectedApplication.email ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Telefon">
-            {selectedApplication.phone || '—'}
+            {selectedApplication.phone ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Grad">
-            {selectedApplication.city || '—'}
+            {selectedApplication.city ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Zanimanje">
-            {selectedApplication.occupation || '—'}
+            {selectedApplication.occupation ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Tip članstva">
-            {selectedApplication.membershipType || '—'}
+            {selectedApplication.membershipType ||
+              '—'}
           </DetailRow>
 
           <DetailRow label="Newsletter">
-            {selectedApplication.newsletter ? 'Da' : 'Ne'}
+            {selectedApplication.newsletter
+              ? 'Da'
+              : 'Ne'}
           </DetailRow>
 
           <DetailRow label="Saglasnost">
-            {selectedApplication.consent ? 'Da' : 'Ne'}
+            {selectedApplication.consent
+              ? 'Da'
+              : 'Ne'}
           </DetailRow>
 
           <DetailRow label="Datum prijave">
-            {formatDate(selectedApplication.createdAt)}
+            {formatDate(
+              selectedApplication.createdAt,
+            )}
           </DetailRow>
 
           <div className="admin-detail__message">
@@ -234,7 +313,8 @@ export default function AdminMemberships() {
             </div>
 
             <div className="admin-detail__message-content">
-              {selectedApplication.motivation || '—'}
+              {selectedApplication.motivation ||
+                '—'}
             </div>
           </div>
 
@@ -246,11 +326,15 @@ export default function AdminMemberships() {
             <div className="admin-detail__message-content">
               {skills.length > 0 ? (
                 <ul>
-                  {skills.map((skill, index) => (
-                    <li key={`${skill}-${index}`}>
-                      {skill}
-                    </li>
-                  ))}
+                  {skills.map(
+                    (skill, index) => (
+                      <li
+                        key={`${skill}-${index}`}
+                      >
+                        {skill}
+                      </li>
+                    ),
+                  )}
                 </ul>
               ) : (
                 '—'
@@ -258,6 +342,108 @@ export default function AdminMemberships() {
             </div>
           </div>
         </div>
+
+        <ExportPdfModal
+          isOpen={detailExportOpen}
+          onClose={() =>
+            setDetailExportOpen(false)
+          }
+          title={`Zahtev za članstvo #${selectedApplication.id}`}
+          currentData={[
+            selectedApplication,
+          ]}
+          allData={[
+            selectedApplication,
+          ]}
+          filename={`zahtev-za-clanstvo-${selectedApplication.id}.pdf`}
+          detailMode
+          detailSections={[
+            {
+              label: 'ID',
+              value: (application) =>
+                application.id,
+            },
+            {
+              label: 'Ime',
+              value: (application) =>
+                application.firstName || '—',
+            },
+            {
+              label: 'Prezime',
+              value: (application) =>
+                application.lastName || '—',
+            },
+            {
+              label: 'Email',
+              value: (application) =>
+                application.email || '—',
+            },
+            {
+              label: 'Telefon',
+              value: (application) =>
+                application.phone || '—',
+            },
+            {
+              label: 'Grad',
+              value: (application) =>
+                application.city || '—',
+            },
+            {
+              label: 'Zanimanje',
+              value: (application) =>
+                application.occupation ||
+                '—',
+            },
+            {
+              label: 'Tip članstva',
+              value: (application) =>
+                application.membershipType ||
+                '—',
+            },
+            {
+              label: 'Newsletter',
+              value: (application) =>
+                application.newsletter
+                  ? 'Da'
+                  : 'Ne',
+            },
+            {
+              label: 'Saglasnost',
+              value: (application) =>
+                application.consent
+                  ? 'Da'
+                  : 'Ne',
+            },
+            {
+              label: 'Datum prijave',
+              value: (application) =>
+                formatDate(
+                  application.createdAt,
+                ),
+            },
+            {
+              label: 'Motivacija',
+              value: (application) =>
+                application.motivation ||
+                '—',
+              fullWidth: true,
+            },
+            {
+              label: 'Veštine',
+              value: (application) => {
+                const applicationSkills =
+                  parseSkills(
+                    application.skills,
+                  );
+
+                return applicationSkills.length
+                  ? applicationSkills.join(', ')
+                  : '—';
+              },
+              fullWidth: true,
+            },
+          ]}
+        />
       </div>
     );
   }
@@ -265,16 +451,34 @@ export default function AdminMemberships() {
   return (
     <div className="admin-news">
       <div className="admin-news__header">
-        <h1 className="admin__title">Zahtevi za članstvo</h1>
+        <h1 className="admin__title">
+          Zahtevi za članstvo
+        </h1>
 
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={loadApplications}
-          disabled={loading}
-        >
-          Osveži
-        </button>
+        <div>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={loadApplications}
+            disabled={loading}
+          >
+            Osveži
+          </button>
+
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() =>
+              setExportOpen(true)
+            }
+            disabled={
+              loading ||
+              applications.length === 0
+            }
+          >
+            Izvezi PDF
+          </button>
+        </div>
       </div>
 
       <div className="admin-filters">
@@ -312,13 +516,20 @@ export default function AdminMemberships() {
             value={filters.membershipType}
             onChange={handleFilterChange}
           >
-            <option value="">Svi tipovi</option>
+            <option value="">
+              Svi tipovi
+            </option>
 
-            {membershipTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+            {membershipTypes.map(
+              (type) => (
+                <option
+                  key={type}
+                  value={type}
+                >
+                  {type}
+                </option>
+              ),
+            )}
           </select>
         </div>
 
@@ -338,8 +549,12 @@ export default function AdminMemberships() {
             onChange={handleFilterChange}
           >
             <option value="">Svi</option>
-            <option value="true">Da</option>
-            <option value="false">Ne</option>
+            <option value="true">
+              Da
+            </option>
+            <option value="false">
+              Ne
+            </option>
           </select>
         </div>
 
@@ -358,10 +573,18 @@ export default function AdminMemberships() {
             value={filters.sort}
             onChange={handleFilterChange}
           >
-            <option value="nameAsc">Ime A–Z</option>
-            <option value="nameDesc">Ime Z–A</option>
-            <option value="dateNewest">Najnoviji prvo</option>
-            <option value="dateOldest">Najstariji prvo</option>
+            <option value="nameAsc">
+              Ime A–Z
+            </option>
+            <option value="nameDesc">
+              Ime Z–A
+            </option>
+            <option value="dateNewest">
+              Najnoviji prvo
+            </option>
+            <option value="dateOldest">
+              Najstariji prvo
+            </option>
           </select>
         </div>
 
@@ -377,7 +600,8 @@ export default function AdminMemberships() {
       </div>
 
       <div className="admin-filters__summary">
-        Prikazano {filteredApplications.length} od{' '}
+        Prikazano{' '}
+        {filteredApplications.length} od{' '}
         {applications.length} zahteva
       </div>
 
@@ -393,18 +617,21 @@ export default function AdminMemberships() {
         </p>
       )}
 
-      {!loading && !error && applications.length === 0 && (
-        <p className="admin-news__empty">
-          Trenutno nema zahteva za članstvo.
-        </p>
-      )}
+      {!loading &&
+        !error &&
+        applications.length === 0 && (
+          <p className="admin-news__empty">
+            Trenutno nema zahteva za članstvo.
+          </p>
+        )}
 
       {!loading &&
         !error &&
         applications.length > 0 &&
         filteredApplications.length === 0 && (
           <p className="admin-news__empty">
-            Nema zahteva koji odgovaraju izabranim filterima.
+            Nema zahteva koji odgovaraju
+            izabranim filterima.
           </p>
         )}
 
@@ -426,51 +653,146 @@ export default function AdminMemberships() {
             </thead>
 
             <tbody>
-              {filteredApplications.map((application) => (
-                <tr
-                  key={application.id}
-                  className="admin-news__clickable-row"
-                  onClick={() =>
-                    setSelectedApplication(application)
-                  }
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === 'Enter' ||
-                      event.key === ' '
-                    ) {
-                      event.preventDefault();
-                      setSelectedApplication(application);
+              {filteredApplications.map(
+                (application) => (
+                  <tr
+                    key={application.id}
+                    className="admin-news__clickable-row"
+                    onClick={() =>
+                      setSelectedApplication(
+                        application,
+                      )
                     }
-                  }}
-                >
-                  <td>{application.id}</td>
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key ===
+                          'Enter' ||
+                        event.key === ' '
+                      ) {
+                        event.preventDefault();
 
-                  <td>
-                    {application.firstName || '—'}{' '}
-                    {application.lastName || ''}
-                  </td>
+                        setSelectedApplication(
+                          application,
+                        );
+                      }
+                    }}
+                  >
+                    <td>
+                      {application.id}
+                    </td>
 
-                  <td>{application.email || '—'}</td>
+                    <td>
+                      {application.firstName ||
+                        '—'}{' '}
+                      {application.lastName ||
+                        ''}
+                    </td>
 
-                  <td>{application.phone || '—'}</td>
+                    <td>
+                      {application.email ||
+                        '—'}
+                    </td>
 
-                  <td>{application.city || '—'}</td>
+                    <td>
+                      {application.phone ||
+                        '—'}
+                    </td>
 
-                  <td>{application.membershipType || '—'}</td>
+                    <td>
+                      {application.city ||
+                        '—'}
+                    </td>
 
-                  <td>
-                    {application.newsletter ? 'Da' : 'Ne'}
-                  </td>
+                    <td>
+                      {application.membershipType ||
+                        '—'}
+                    </td>
 
-                  <td>
-                    {formatDate(application.createdAt)}
-                  </td>
-                </tr>
-              ))}
+                    <td>
+                      {application.newsletter
+                        ? 'Da'
+                        : 'Ne'}
+                    </td>
+
+                    <td>
+                      {formatDate(
+                        application.createdAt,
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         )}
+
+      <ExportPdfModal
+        isOpen={exportOpen}
+        onClose={() =>
+          setExportOpen(false)
+        }
+        title="Zahtevi za članstvo"
+        currentData={filteredApplications}
+        allData={applications}
+        filename="zahtevi-za-clanstvo.pdf"
+        columns={[
+          {
+            label: 'ID',
+            value: (application) =>
+              application.id,
+          },
+          {
+            label: 'Ime i prezime',
+            value: (application) => {
+              const name = [
+                application.firstName,
+                application.lastName,
+              ]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+
+              return name || '—';
+            },
+          },
+          {
+            label: 'Email',
+            value: (application) =>
+              application.email || '—',
+          },
+          {
+            label: 'Telefon',
+            value: (application) =>
+              application.phone || '—',
+          },
+          {
+            label: 'Grad',
+            value: (application) =>
+              application.city || '—',
+          },
+          {
+            label: 'Članstvo',
+            value: (application) =>
+              application.membershipType ||
+              '—',
+          },
+          {
+            label: 'Newsletter',
+            value: (application) =>
+              application.newsletter
+                ? 'Da'
+                : 'Ne',
+          },
+          {
+            label: 'Datum',
+            value: (application) =>
+              formatDate(
+                application.createdAt,
+              ),
+          },
+        ]}
+      />
     </div>
   );
 }

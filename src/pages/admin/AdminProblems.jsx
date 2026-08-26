@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
+import ExportPdfModal from '../../components/admin/ExportPdfModal';
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -8,18 +9,6 @@ function formatDate(isoString) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
-}
-
-function toDateInputValue(isoString) {
-  if (!isoString) return '';
-
-  const date = new Date(isoString);
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
 }
 
 function DetailRow({ label, children }) {
@@ -46,6 +35,9 @@ export default function AdminProblems() {
   const [filters, setFilters] = useState(initialFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [exportOpen, setExportOpen] = useState(false);
+  const [detailExportOpen, setDetailExportOpen] =
+    useState(false);
 
   useEffect(() => {
     loadReports();
@@ -59,7 +51,10 @@ export default function AdminProblems() {
       const data = await api.getProblemReports();
       setReports(data);
     } catch (err) {
-      setError(err.message || 'Greška pri učitavanju prijava.');
+      setError(
+        err.message ||
+          'Greška pri učitavanju prijava.',
+      );
     } finally {
       setLoading(false);
     }
@@ -69,12 +64,16 @@ export default function AdminProblems() {
     return [...new Set(
       reports
         .map((report) => report.category)
-        .filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b, 'sr'));
+        .filter(Boolean),
+    )].sort((a, b) =>
+      a.localeCompare(b, 'sr'),
+    );
   }, [reports]);
 
   const filteredReports = useMemo(() => {
-    const search = filters.search.trim().toLowerCase();
+    const search = filters.search
+      .trim()
+      .toLowerCase();
 
     const filtered = reports.filter((report) => {
       if (search) {
@@ -111,8 +110,13 @@ export default function AdminProblems() {
       }
 
       if (filters.dateFrom) {
-        const from = new Date(`${filters.dateFrom}T00:00:00`);
-        const createdAt = new Date(report.createdAt);
+        const from = new Date(
+          `${filters.dateFrom}T00:00:00`,
+        );
+
+        const createdAt = new Date(
+          report.createdAt,
+        );
 
         if (createdAt < from) {
           return false;
@@ -120,8 +124,13 @@ export default function AdminProblems() {
       }
 
       if (filters.dateTo) {
-        const to = new Date(`${filters.dateTo}T23:59:59.999`);
-        const createdAt = new Date(report.createdAt);
+        const to = new Date(
+          `${filters.dateTo}T23:59:59.999`,
+        );
+
+        const createdAt = new Date(
+          report.createdAt,
+        );
 
         if (createdAt > to) {
           return false;
@@ -132,8 +141,13 @@ export default function AdminProblems() {
     });
 
     return filtered.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
+      const dateA = new Date(
+        a.createdAt,
+      ).getTime();
+
+      const dateB = new Date(
+        b.createdAt,
+      ).getTime();
 
       return filters.sort === 'oldest'
         ? dateA - dateB
@@ -162,7 +176,9 @@ export default function AdminProblems() {
             <button
               type="button"
               className="btn btn--secondary"
-              onClick={() => setSelectedReport(null)}
+              onClick={() =>
+                setSelectedReport(null)
+              }
             >
               ← Nazad
             </button>
@@ -171,6 +187,16 @@ export default function AdminProblems() {
               Detalji prijave #{selectedReport.id}
             </h1>
           </div>
+
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() =>
+              setDetailExportOpen(true)
+            }
+          >
+            Izvezi PDF
+          </button>
         </div>
 
         <div className="admin-detail__card">
@@ -183,11 +209,15 @@ export default function AdminProblems() {
           </DetailRow>
 
           <DetailRow label="Datum prijave">
-            {formatDate(selectedReport.createdAt)}
+            {formatDate(
+              selectedReport.createdAt,
+            )}
           </DetailRow>
 
           <DetailRow label="Anonimna prijava">
-            {selectedReport.anonymous ? 'Da' : 'Ne'}
+            {selectedReport.anonymous
+              ? 'Da'
+              : 'Ne'}
           </DetailRow>
 
           <DetailRow label="Ime i prezime">
@@ -219,9 +249,77 @@ export default function AdminProblems() {
           </div>
 
           <DetailRow label="Saglasnost">
-            {selectedReport.consent ? 'Da' : 'Ne'}
+            {selectedReport.consent
+              ? 'Da'
+              : 'Ne'}
           </DetailRow>
         </div>
+
+        <ExportPdfModal
+          isOpen={detailExportOpen}
+          onClose={() =>
+            setDetailExportOpen(false)
+          }
+          title={`Prijava #${selectedReport.id}`}
+          currentData={[selectedReport]}
+          allData={[selectedReport]}
+          filename={`prijava-${selectedReport.id}.pdf`}
+          detailMode
+          detailSections={[
+            {
+              label: 'ID',
+              value: (report) => report.id,
+            },
+            {
+              label: 'Kategorija',
+              value: (report) =>
+                report.category || '—',
+            },
+            {
+              label: 'Datum prijave',
+              value: (report) =>
+                formatDate(report.createdAt),
+            },
+            {
+              label: 'Anonimna prijava',
+              value: (report) =>
+                report.anonymous ? 'Da' : 'Ne',
+            },
+            {
+              label: 'Ime i prezime',
+              value: (report) =>
+                report.anonymous
+                  ? 'Anonimno'
+                  : report.name || '—',
+            },
+            {
+              label: 'Email',
+              value: (report) =>
+                report.email || '—',
+            },
+            {
+              label: 'Telefon',
+              value: (report) =>
+                report.phone || '—',
+            },
+            {
+              label: 'Lokacija',
+              value: (report) =>
+                report.location || '—',
+            },
+            {
+              label: 'Opis problema',
+              value: (report) =>
+                report.message || '—',
+              fullWidth: true,
+            },
+            {
+              label: 'Saglasnost',
+              value: (report) =>
+                report.consent ? 'Da' : 'Ne',
+            },
+          ]}
+        />
       </div>
     );
   }
@@ -229,21 +327,42 @@ export default function AdminProblems() {
   return (
     <div className="admin-news">
       <div className="admin-news__header">
-        <h1 className="admin__title">Prijave problema</h1>
+        <h1 className="admin__title">
+          Prijave problema
+        </h1>
 
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={loadReports}
-          disabled={loading}
-        >
-          Osveži
-        </button>
+        <div>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={loadReports}
+            disabled={loading}
+          >
+            Osveži
+          </button>
+
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() =>
+              setExportOpen(true)
+            }
+            disabled={
+              loading ||
+              reports.length === 0
+            }
+          >
+            Izvezi PDF
+          </button>
+        </div>
       </div>
 
       <div className="admin-filters">
         <div className="admin-filters__group admin-filters__group--wide">
-          <label className="admin-filters__label" htmlFor="problem-search">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-search"
+          >
             Pretraga
           </label>
 
@@ -259,7 +378,10 @@ export default function AdminProblems() {
         </div>
 
         <div className="admin-filters__group">
-          <label className="admin-filters__label" htmlFor="problem-category">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-category"
+          >
             Kategorija
           </label>
 
@@ -270,10 +392,15 @@ export default function AdminProblems() {
             value={filters.category}
             onChange={handleFilterChange}
           >
-            <option value="">Sve kategorije</option>
+            <option value="">
+              Sve kategorije
+            </option>
 
             {categories.map((category) => (
-              <option key={category} value={category}>
+              <option
+                key={category}
+                value={category}
+              >
                 {category}
               </option>
             ))}
@@ -281,7 +408,10 @@ export default function AdminProblems() {
         </div>
 
         <div className="admin-filters__group">
-          <label className="admin-filters__label" htmlFor="problem-anonymous">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-anonymous"
+          >
             Vrsta prijave
           </label>
 
@@ -293,13 +423,20 @@ export default function AdminProblems() {
             onChange={handleFilterChange}
           >
             <option value="">Svi</option>
-            <option value="true">Anonimne</option>
-            <option value="false">Neanonimne</option>
+            <option value="true">
+              Anonimne
+            </option>
+            <option value="false">
+              Neanonimne
+            </option>
           </select>
         </div>
 
         <div className="admin-filters__group">
-          <label className="admin-filters__label" htmlFor="problem-sort">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-sort"
+          >
             Sortiranje
           </label>
 
@@ -310,13 +447,20 @@ export default function AdminProblems() {
             value={filters.sort}
             onChange={handleFilterChange}
           >
-            <option value="newest">Najnoviji prvo</option>
-            <option value="oldest">Najstariji prvo</option>
+            <option value="newest">
+              Najnoviji prvo
+            </option>
+            <option value="oldest">
+              Najstariji prvo
+            </option>
           </select>
         </div>
 
         <div className="admin-filters__group">
-          <label className="admin-filters__label" htmlFor="problem-date-from">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-date-from"
+          >
             Od datuma
           </label>
 
@@ -331,7 +475,10 @@ export default function AdminProblems() {
         </div>
 
         <div className="admin-filters__group">
-          <label className="admin-filters__label" htmlFor="problem-date-to">
+          <label
+            className="admin-filters__label"
+            htmlFor="problem-date-to"
+          >
             Do datuma
           </label>
 
@@ -357,7 +504,8 @@ export default function AdminProblems() {
       </div>
 
       <div className="admin-filters__summary">
-        Prikazano {filteredReports.length} od {reports.length} prijava
+        Prikazano {filteredReports.length} od{' '}
+        {reports.length} prijava
       </div>
 
       {loading && (
@@ -372,70 +520,149 @@ export default function AdminProblems() {
         </p>
       )}
 
-      {!loading && !error && reports.length === 0 && (
-        <p className="admin-news__empty">
-          Trenutno nema prijavljenih problema.
-        </p>
-      )}
+      {!loading &&
+        !error &&
+        reports.length === 0 && (
+          <p className="admin-news__empty">
+            Trenutno nema prijavljenih problema.
+          </p>
+        )}
 
-      {!loading && !error && reports.length > 0 && filteredReports.length === 0 && (
-        <p className="admin-news__empty">
-          Nema prijava koje odgovaraju izabranim filterima.
-        </p>
-      )}
+      {!loading &&
+        !error &&
+        reports.length > 0 &&
+        filteredReports.length === 0 && (
+          <p className="admin-news__empty">
+            Nema prijava koje odgovaraju izabranim
+            filterima.
+          </p>
+        )}
 
-      {!loading && !error && filteredReports.length > 0 && (
-        <table className="admin-news__table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Kategorija</th>
-              <th>Ime</th>
-              <th>Email</th>
-              <th>Lokacija</th>
-              <th>Anonimno</th>
-              <th>Datum</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredReports.map((report) => (
-              <tr
-                key={report.id}
-                className="admin-news__clickable-row"
-                onClick={() => setSelectedReport(report)}
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setSelectedReport(report);
-                  }
-                }}
-              >
-                <td>{report.id}</td>
-
-                <td>{report.category || '—'}</td>
-
-                <td>
-                  {report.anonymous
-                    ? 'Anonimno'
-                    : report.name || '—'}
-                </td>
-
-                <td>{report.email || '—'}</td>
-
-                <td>{report.location || '—'}</td>
-
-                <td>
-                  {report.anonymous ? 'Da' : 'Ne'}
-                </td>
-
-                <td>{formatDate(report.createdAt)}</td>
+      {!loading &&
+        !error &&
+        filteredReports.length > 0 && (
+          <table className="admin-news__table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Kategorija</th>
+                <th>Ime</th>
+                <th>Email</th>
+                <th>Lokacija</th>
+                <th>Anonimno</th>
+                <th>Datum</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+
+            <tbody>
+              {filteredReports.map((report) => (
+                <tr
+                  key={report.id}
+                  className="admin-news__clickable-row"
+                  onClick={() =>
+                    setSelectedReport(report)
+                  }
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === 'Enter' ||
+                      event.key === ' '
+                    ) {
+                      event.preventDefault();
+                      setSelectedReport(report);
+                    }
+                  }}
+                >
+                  <td>{report.id}</td>
+
+                  <td>
+                    {report.category || '—'}
+                  </td>
+
+                  <td>
+                    {report.anonymous
+                      ? 'Anonimno'
+                      : report.name || '—'}
+                  </td>
+
+                  <td>
+                    {report.email || '—'}
+                  </td>
+
+                  <td>
+                    {report.location || '—'}
+                  </td>
+
+                  <td>
+                    {report.anonymous
+                      ? 'Da'
+                      : 'Ne'}
+                  </td>
+
+                  <td>
+                    {formatDate(
+                      report.createdAt,
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+      <ExportPdfModal
+        isOpen={exportOpen}
+        onClose={() =>
+          setExportOpen(false)
+        }
+        title="Prijave problema"
+        currentData={filteredReports}
+        allData={reports}
+        filename="prijave-problema.pdf"
+        columns={[
+          {
+            label: 'ID',
+            value: (report) => report.id,
+          },
+          {
+            label: 'Kategorija',
+            value: (report) =>
+              report.category || '—',
+          },
+          {
+            label: 'Ime',
+            value: (report) =>
+              report.anonymous
+                ? 'Anonimno'
+                : report.name || '—',
+          },
+          {
+            label: 'Email',
+            value: (report) =>
+              report.email || '—',
+          },
+          {
+            label: 'Telefon',
+            value: (report) =>
+              report.phone || '—',
+          },
+          {
+            label: 'Lokacija',
+            value: (report) =>
+              report.location || '—',
+          },
+          {
+            label: 'Anonimno',
+            value: (report) =>
+              report.anonymous ? 'Da' : 'Ne',
+          },
+          {
+            label: 'Datum',
+            value: (report) =>
+              formatDate(report.createdAt),
+          },
+        ]}
+      />
     </div>
   );
 }
