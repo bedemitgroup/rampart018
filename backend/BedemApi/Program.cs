@@ -51,6 +51,12 @@ builder.Services.AddCors(options =>
 // Services
 builder.Services.AddScoped<TokenService>();
 
+// Client IP resolution. The app always sits behind the hosting provider's edge
+// proxy, so the real address comes from a header rather than the socket.
+builder.Services.Configure<ClientIpOptions>(
+    builder.Configuration.GetSection(ClientIpOptions.SectionName));
+builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
