@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { api } from '../services/api';
 import './PridruziSe.css';
 
 const membershipTypes = [
@@ -161,44 +162,29 @@ export default function PridruziSe() {
     }
 
     try {
-      const response = await fetch(
-        'http://localhost:5000/api/membership-applications',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(form),
-        }
-      );
-
-      if (!response.ok) {
-        let errorMessage = 'Greška pri slanju prijave.';
-
-        try {
-          const errorData = await response.json();
-
-          if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch {
-          // Ako backend ne vrati JSON, koristimo podrazumevanu poruku.
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      await response.json();
+      await api.createMembershipApplication({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null,
+        city: form.city.trim(),
+        occupation: form.occupation.trim() || null,
+        membershipType: form.membershipType,
+        motivation: form.motivation.trim() || null,
+        skills: form.skills.length > 0 ? form.skills : null,
+        newsletter: form.newsletter,
+        consent: form.consent,
+      });
 
       setSubmitted(true);
     } catch (error) {
       console.error('Greška pri slanju prijave:', error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : 'Došlo je do greške pri slanju prijave.'
-      );
+      setErrors({
+        submit:
+          error.message ||
+          'Došlo je do greške pri slanju prijave. Pokušajte ponovo.',
+      });
     }
   };
 
@@ -720,6 +706,15 @@ export default function PridruziSe() {
                   </span>
                 )}
               </div>
+
+              {errors.submit && (
+                <div
+                  className="form-error"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  {errors.submit}
+                </div>
+              )}
 
               <button
                 type="submit"

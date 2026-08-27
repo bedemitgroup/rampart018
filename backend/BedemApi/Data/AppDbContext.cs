@@ -12,7 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Vote> Votes => Set<Vote>();
     public DbSet<News> News => Set<News>();
     public DbSet<MembershipApplication> MembershipApplications => Set<MembershipApplication>();
-public DbSet<ProblemReport> ProblemReports => Set<ProblemReport>();
+    public DbSet<ProblemReport> ProblemReports => Set<ProblemReport>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

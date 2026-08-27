@@ -29,6 +29,7 @@ const initialForm = {
 export default function Problem() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [reference, setReference] = useState(null);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -117,8 +118,7 @@ export default function Problem() {
         consent: form.consent,
       });
 
-      console.log('Problem report created:', data);
-
+      setReference(data?.id ?? null);
       setSubmitted(true);
     } catch (error) {
       console.error('Problem report error:', error);
@@ -135,6 +135,7 @@ export default function Problem() {
     setForm(initialForm);
     setErrors({});
     setSubmitted(false);
+    setReference(null);
   };
 
   return (
@@ -268,12 +269,14 @@ export default function Problem() {
                     ' Ako je ostavljena email adresa, možemo te kontaktirati u vezi sa prijavom.'}
                 </p>
 
-                <p className="problem-success__ref">
-                  Referentni broj:{' '}
-                  <strong>
-                    BDM-{Date.now().toString().slice(-6)}
-                  </strong>
-                </p>
+                {reference != null && (
+                  <p className="problem-success__ref">
+                    Referentni broj:{' '}
+                    <strong>
+                      BDM-{String(reference).padStart(6, '0')}
+                    </strong>
+                  </p>
+                )}
 
                 <button
                   className="btn btn--primary btn--lg"

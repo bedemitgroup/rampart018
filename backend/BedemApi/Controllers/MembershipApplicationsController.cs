@@ -107,13 +107,18 @@ public class MembershipApplicationsController : ControllerBase
             });
         }
 
-        if (request.Skills?.Any(skill => skill.Length > 100) == true)
+        if (request.Skills?.Any(skill => skill?.Length > 100) == true)
         {
             return BadRequest(new
             {
                 message = "Jedna od veština je predugačka."
             });
         }
+
+        var normalizedSkills = request.Skills
+            ?.Where(skill => !string.IsNullOrWhiteSpace(skill))
+            .Select(skill => skill.Trim())
+            .ToArray();
 
         var normalizedEmail = ContactNormalizer.NormalizeEmail(request.Email);
 
@@ -146,9 +151,9 @@ public class MembershipApplicationsController : ControllerBase
             Occupation = request.Occupation?.Trim(),
             MembershipType = request.MembershipType.Trim(),
             Motivation = request.Motivation?.Trim(),
-            Skills = request.Skills == null
-                ? null
-                : JsonSerializer.Serialize(request.Skills),
+            Skills = normalizedSkills is { Length: > 0 }
+                ? JsonSerializer.Serialize(normalizedSkills)
+                : null,
             Newsletter = request.Newsletter,
             Consent = request.Consent
         };

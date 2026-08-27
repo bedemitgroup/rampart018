@@ -11,6 +11,20 @@ function formatDate(isoString) {
   }).format(date);
 }
 
+function toLocalDateKey(isoString) {
+  const date = new Date(isoString);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 function DetailRow({ label, children }) {
   return (
     <div className="admin-detail__row">
@@ -109,30 +123,22 @@ export default function AdminProblems() {
         return false;
       }
 
-      if (filters.dateFrom) {
-        const from = new Date(
-          `${filters.dateFrom}T00:00:00`,
-        );
-
-        const createdAt = new Date(
+      if (filters.dateFrom || filters.dateTo) {
+        const createdAtKey = toLocalDateKey(
           report.createdAt,
         );
 
-        if (createdAt < from) {
+        if (
+          filters.dateFrom &&
+          createdAtKey < filters.dateFrom
+        ) {
           return false;
         }
-      }
 
-      if (filters.dateTo) {
-        const to = new Date(
-          `${filters.dateTo}T23:59:59.999`,
-        );
-
-        const createdAt = new Date(
-          report.createdAt,
-        );
-
-        if (createdAt > to) {
+        if (
+          filters.dateTo &&
+          createdAtKey > filters.dateTo
+        ) {
           return false;
         }
       }
