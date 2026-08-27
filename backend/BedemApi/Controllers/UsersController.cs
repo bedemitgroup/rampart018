@@ -1,6 +1,8 @@
 using BedemApi.Data;
+using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -32,6 +34,7 @@ public class UsersController : ControllerBase
 
     /// <summary>Change a user's role. Valid roles: Admin, Moderator, User.</summary>
     [HttpPut("{id}/role")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -51,6 +54,7 @@ public class UsersController : ControllerBase
 
     /// <summary>Deactivate a user account.</summary>
     [HttpPut("{id}/deactivate")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeactivateUser(int id)

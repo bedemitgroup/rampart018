@@ -4,6 +4,7 @@ using BedemApi.Models;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -20,6 +21,8 @@ public class ProblemReportsController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.ProblemReports)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> Create(
         [FromBody] CreateProblemReportRequest request)
     {

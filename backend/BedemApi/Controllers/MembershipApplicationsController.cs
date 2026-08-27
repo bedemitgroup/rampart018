@@ -5,6 +5,7 @@ using BedemApi.Models;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -21,6 +22,8 @@ public class MembershipApplicationsController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.MembershipApplications)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> Create(
         [FromBody] CreateMembershipApplicationRequest request)
     {

@@ -3,8 +3,10 @@ using System.Text.RegularExpressions;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
+using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -59,6 +61,7 @@ public class NewsController : ControllerBase
     /// <summary>Create a new news article.</summary>
     [HttpPost]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(NewsDetailResponse), 201)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> Create([FromBody] CreateNewsRequest request)
@@ -99,6 +102,7 @@ public class NewsController : ControllerBase
     /// <summary>Update an existing news article. The slug never changes.</summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -136,6 +140,7 @@ public class NewsController : ControllerBase
     /// <summary>Delete a news article.</summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> Delete(int id)
@@ -151,6 +156,7 @@ public class NewsController : ControllerBase
     /// <summary>Move a news article up or down in the display order. Returns the full reordered list.</summary>
     [HttpPut("{id}/move")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(IEnumerable<NewsListItemResponse>), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -191,6 +197,7 @@ public class NewsController : ControllerBase
     /// <summary>Upload an image to attach to a news article. Returns its public URL.</summary>
     [HttpPost("upload-image")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [RequestSizeLimit(5 * 1024 * 1024)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

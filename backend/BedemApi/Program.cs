@@ -3,6 +3,7 @@ using BedemApi.Data;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,6 +58,9 @@ builder.Services.Configure<ClientIpOptions>(
     builder.Configuration.GetSection(ClientIpOptions.SectionName));
 builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
 
+// Per-IP rate limits on every endpoint that writes to the database.
+builder.Services.AddBedemRateLimiting(builder.Configuration);
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -68,10 +72,20 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
-app.UseCors("Frontend");
 app.UseStaticFiles();
+
+app.UseRouting();
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// After authentication, so policies keyed on the user id see a populated
+// ClaimsPrincipal. Rejections still carry the CORS headers added above.
+var rateLimiting = app.Services.GetRequiredService<IOptions<RateLimitOptions>>().Value;
+if (rateLimiting.Enabled)
+    app.UseRateLimiter();
+else
+    app.Logger.LogWarning("Rate limiting is DISABLED by configuration.");
 
 app.MapControllers();
 

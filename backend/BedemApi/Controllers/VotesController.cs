@@ -2,8 +2,10 @@ using System.Security.Claims;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
+using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -22,9 +24,11 @@ public class VotesController : ControllerBase
     /// <summary>Like or dislike a comment. Voting the same way again removes the vote (toggle).</summary>
     [HttpPost("comment")]
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Votes)]
     [ProducesResponseType(typeof(VoteStatsResponse), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> VoteOnComment([FromBody] VoteRequest request)
     {
         if (request.CommentId == null)
@@ -64,8 +68,10 @@ public class VotesController : ControllerBase
     /// <summary>Like or dislike an article by slug. Same toggle logic as comment votes.</summary>
     [HttpPost("vest")]
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.Votes)]
     [ProducesResponseType(typeof(VoteStatsResponse), 200)]
     [ProducesResponseType(400)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> VoteOnVest([FromBody] VoteRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.VestSlug))

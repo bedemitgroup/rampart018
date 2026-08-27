@@ -5,6 +5,7 @@ using BedemApi.Models;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -24,9 +25,11 @@ public class AuthController : ControllerBase
 
     /// <summary>Register a new user account.</summary>
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitPolicies.Register)]
     [ProducesResponseType(typeof(AuthResponse), 201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(409)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) ||
@@ -57,9 +60,11 @@ public class AuthController : ControllerBase
 
     /// <summary>Authenticate and receive a JWT token.</summary>
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))

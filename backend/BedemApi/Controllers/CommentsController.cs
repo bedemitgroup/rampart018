@@ -2,8 +2,10 @@ using System.Security.Claims;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
+using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace BedemApi.Controllers;
@@ -70,9 +72,11 @@ public class CommentsController : ControllerBase
     /// <summary>Create a new comment on an article. Auto-approved for Moderators and Admins.</summary>
     [HttpPost]
     [Authorize(Roles = "User,Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.Comments)]
     [ProducesResponseType(typeof(CommentResponse), 201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> CreateComment([FromBody] CreateCommentRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Content) || string.IsNullOrWhiteSpace(request.VestSlug))
@@ -105,6 +109,7 @@ public class CommentsController : ControllerBase
     /// <summary>Approve a pending comment.</summary>
     [HttpPut("{id}/approve")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> ApproveComment(int id)
@@ -120,6 +125,7 @@ public class CommentsController : ControllerBase
     /// <summary>Soft-delete a comment.</summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Moderator,Admin")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteComment(int id)
