@@ -337,10 +337,10 @@ export default function AdminProblems() {
           Prijave problema
         </h1>
 
-        <div>
+        <div className="admin-news__header-actions">
           <button
             type="button"
-            className="btn btn--primary"
+            className="btn btn--primary btn--sm"
             onClick={loadReports}
             disabled={loading}
           >
@@ -349,7 +349,7 @@ export default function AdminProblems() {
 
           <button
             type="button"
-            className="btn btn--secondary"
+            className="btn btn--secondary btn--sm"
             onClick={() =>
               setExportOpen(true)
             }

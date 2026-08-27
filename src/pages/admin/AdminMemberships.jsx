@@ -455,10 +455,10 @@ export default function AdminMemberships() {
           Zahtevi za članstvo
         </h1>
 
-        <div>
+        <div className="admin-news__header-actions">
           <button
             type="button"
-            className="btn btn--primary"
+            className="btn btn--primary btn--sm"
             onClick={loadApplications}
             disabled={loading}
           >
@@ -467,7 +467,7 @@ export default function AdminMemberships() {
 
           <button
             type="button"
-            className="btn btn--secondary"
+            className="btn btn--secondary btn--sm"
             onClick={() =>
               setExportOpen(true)
             }
