@@ -25,6 +25,22 @@ export default function AdminLayout() {
                   Vesti
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/admin/problems"
+                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+                >
+                  Prijave problema
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/admin/memberships"
+                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+                >
+                  Zahtevi za članstvo
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </aside>

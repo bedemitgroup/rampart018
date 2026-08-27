@@ -41,6 +41,10 @@ export const api = {
   updateNews: (id, data) => request(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteNews: (id) => request(`/api/news/${id}`, { method: 'DELETE' }),
   moveNews: (id, direction) => request(`/api/news/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
+  createMembershipApplication: (data) => request('/api/membership-applications', { method: 'POST', body: JSON.stringify(data) }),
+  getMembershipApplications: () => request('/api/membership-applications'),
+  createProblemReport: (data) => request('/api/problem-reports', { method: 'POST', body: JSON.stringify(data) }),
+  getProblemReports: () => request('/api/problem-reports'),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

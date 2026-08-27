@@ -3,6 +3,7 @@ using System;
 using BedemApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BedemApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825183120_AddMembershipApplication")]
+    partial class AddMembershipApplication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -176,48 +179,6 @@ namespace BedemApi.Migrations
                     b.ToTable("News");
                 });
 
-            modelBuilder.Entity("BedemApi.Models.ProblemReport", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Anonymous")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Consent")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Location")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProblemReports");
-                });
-
             modelBuilder.Entity("BedemApi.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -267,7 +228,7 @@ namespace BedemApi.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
                             IsActive = true,
-                            PasswordHash = "$2a$11$f3kLG58YOcvpkDcBMRVlUeDHzngWjBHhBHdnE0YeBaPIiFycTSwUi",
+                            PasswordHash = "$2a$11$BvcE.nhR71AQOMK192VRQeVuKgvDp2sDla0gLHK55eyJ3xwyZgofu",
                             Role = "Admin",
                             Username = "admin"
                         });

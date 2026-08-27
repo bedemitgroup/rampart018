@@ -3,6 +3,7 @@ using System;
 using BedemApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BedemApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825185856_AddProblemReport")]
+    partial class AddProblemReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -198,6 +201,7 @@ namespace BedemApi.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Location")
@@ -267,7 +271,7 @@ namespace BedemApi.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
                             IsActive = true,
-                            PasswordHash = "$2a$11$f3kLG58YOcvpkDcBMRVlUeDHzngWjBHhBHdnE0YeBaPIiFycTSwUi",
+                            PasswordHash = "$2a$11$SOqxnmklVD3Q7fg4st4iSuLDkNFW.30ruSEziKmhDnK1Yw0YxSLWS",
                             Role = "Admin",
                             Username = "admin"
                         });
