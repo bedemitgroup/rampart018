@@ -131,6 +131,50 @@
   white-space: nowrap;
 }
 
+/* Pagination */
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.admin-pagination__btn {
+  min-width: 2.25rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md);
+  background: var(--color-white, #fff);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-pagination__btn:hover:not(:disabled):not(.admin-pagination__btn--active) {
+  background: var(--color-bg-light);
+}
+
+.admin-pagination__btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  cursor: default;
+}
+
+.admin-pagination__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-pagination__ellipsis {
+  padding: 0 var(--space-1);
+  color: var(--color-neutral, #666);
+}
+
 .admin-news__move-btn {
   background: none;
   border: 1px solid var(--color-bg-light);

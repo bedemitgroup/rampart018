@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import ExportPdfModal from '../../components/admin/ExportPdfModal';
+import Pagination from '../../components/admin/Pagination';
+
+const PAGE_SIZE = 20;
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -75,9 +78,15 @@ export default function AdminMemberships() {
     setDetailExportOpen,
   ] = useState(false);
 
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
     loadApplications();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
   async function loadApplications() {
     setLoading(true);
@@ -198,6 +207,17 @@ export default function AdminMemberships() {
         : comparison;
     });
   }, [applications, filters]);
+
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredApplications.length / PAGE_SIZE),
+  );
+  const currentPage = Math.min(page, pageCount);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedApplications = filteredApplications.slice(
+    pageStart,
+    pageStart + PAGE_SIZE,
+  );
 
   function handleFilterChange(event) {
     const { name, value } =
@@ -600,9 +620,12 @@ export default function AdminMemberships() {
       </div>
 
       <div className="admin-filters__summary">
-        Prikazano{' '}
-        {filteredApplications.length} od{' '}
-        {applications.length} zahteva
+        {filteredApplications.length > 0
+          ? `Prikazano ${pageStart + 1}–${
+              pageStart + paginatedApplications.length
+            } od ${filteredApplications.length}`
+          : `Prikazano 0 od ${filteredApplications.length}`}{' '}
+        (ukupno {applications.length})
       </div>
 
       {loading && (
@@ -653,7 +676,7 @@ export default function AdminMemberships() {
             </thead>
 
             <tbody>
-              {filteredApplications.map(
+              {paginatedApplications.map(
                 (application) => (
                   <tr
                     key={application.id}
@@ -725,6 +748,16 @@ export default function AdminMemberships() {
               )}
             </tbody>
           </table>
+        )}
+
+      {!loading &&
+        !error &&
+        filteredApplications.length > 0 && (
+          <Pagination
+            page={currentPage}
+            pageCount={pageCount}
+            onPageChange={setPage}
+          />
         )}
 
       <ExportPdfModal

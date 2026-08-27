@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import ExportPdfModal from '../../components/admin/ExportPdfModal';
+import Pagination from '../../components/admin/Pagination';
+
+const PAGE_SIZE = 20;
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -52,10 +55,15 @@ export default function AdminProblems() {
   const [exportOpen, setExportOpen] = useState(false);
   const [detailExportOpen, setDetailExportOpen] =
     useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     loadReports();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
   async function loadReports() {
     setLoading(true);
@@ -160,6 +168,17 @@ export default function AdminProblems() {
         : dateB - dateA;
     });
   }, [reports, filters]);
+
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredReports.length / PAGE_SIZE),
+  );
+  const currentPage = Math.min(page, pageCount);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedReports = filteredReports.slice(
+    pageStart,
+    pageStart + PAGE_SIZE,
+  );
 
   function handleFilterChange(event) {
     const { name, value } = event.target;
@@ -510,8 +529,12 @@ export default function AdminProblems() {
       </div>
 
       <div className="admin-filters__summary">
-        Prikazano {filteredReports.length} od{' '}
-        {reports.length} prijava
+        {filteredReports.length > 0
+          ? `Prikazano ${pageStart + 1}–${
+              pageStart + paginatedReports.length
+            } od ${filteredReports.length}`
+          : `Prikazano 0 od ${filteredReports.length}`}{' '}
+        (ukupno {reports.length})
       </div>
 
       {loading && (
@@ -561,7 +584,7 @@ export default function AdminProblems() {
             </thead>
 
             <tbody>
-              {filteredReports.map((report) => (
+              {paginatedReports.map((report) => (
                 <tr
                   key={report.id}
                   className="admin-news__clickable-row"
@@ -615,6 +638,14 @@ export default function AdminProblems() {
             </tbody>
           </table>
         )}
+
+      {!loading && !error && filteredReports.length > 0 && (
+        <Pagination
+          page={currentPage}
+          pageCount={pageCount}
+          onPageChange={setPage}
+        />
+      )}
 
       <ExportPdfModal
         isOpen={exportOpen}
