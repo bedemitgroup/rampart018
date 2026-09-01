@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BedemApi.DTOs;
 
 public record CreateProblemReportRequest(
@@ -8,5 +10,6 @@ public record CreateProblemReportRequest(
     string? Location,
     string Message,
     bool Anonymous,
-    bool Consent
+    bool Consent,
+    [property: JsonPropertyName("contact_reference")] string? ContactReference = null
 );

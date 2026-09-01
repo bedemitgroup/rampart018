@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
+import HoneypotField, { HONEYPOT_NAME } from './HoneypotField';
 import './Comments.css';
 
 function formatDate(isoString) {
@@ -20,6 +21,7 @@ export default function Comments({ vestSlug }) {
   const [loadingComments, setLoadingComments] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [content, setContent] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -50,7 +52,11 @@ export default function Comments({ vestSlug }) {
     setSubmitError('');
     setSubmitSuccess(false);
     try {
-      await api.postComment({ vestSlug, content: content.trim() });
+      await api.postComment({
+        vestSlug,
+        content: content.trim(),
+        [HONEYPOT_NAME]: honeypot,
+      });
       setContent('');
       setSubmitSuccess(true);
     } catch (err) {
@@ -176,6 +182,7 @@ export default function Comments({ vestSlug }) {
               rows={4}
               required
             />
+            <HoneypotField value={honeypot} onChange={setHoneypot} />
             {submitError && <p className="comments-submit-error">{submitError}</p>}
             {submitSuccess && (
               <p className="comments-submit-success">

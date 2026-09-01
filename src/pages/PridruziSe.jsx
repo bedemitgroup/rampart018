@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../services/api';
+import HoneypotField, { HONEYPOT_NAME } from '../components/HoneypotField';
 import './PridruziSe.css';
 
 const membershipTypes = [
@@ -67,6 +68,7 @@ const initialForm = {
   skills: [],
   newsletter: true,
   consent: false,
+  [HONEYPOT_NAME]: '',
 };
 
 const skillOptions = [
@@ -174,6 +176,7 @@ export default function PridruziSe() {
         skills: form.skills.length > 0 ? form.skills : null,
         newsletter: form.newsletter,
         consent: form.consent,
+        [HONEYPOT_NAME]: form[HONEYPOT_NAME],
       });
 
       setSubmitted(true);
@@ -706,6 +709,11 @@ export default function PridruziSe() {
                   </span>
                 )}
               </div>
+
+              <HoneypotField
+                value={form[HONEYPOT_NAME]}
+                onChange={(v) => setForm({ ...form, [HONEYPOT_NAME]: v })}
+              />
 
               {errors.submit && (
                 <div

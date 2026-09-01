@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BedemApi.DTOs;
 
 public record CreateMembershipApplicationRequest(
@@ -11,5 +13,6 @@ public record CreateMembershipApplicationRequest(
     string? Motivation,
     string[]? Skills,
     bool Newsletter,
-    bool Consent
+    bool Consent,
+    [property: JsonPropertyName("contact_reference")] string? ContactReference = null
 );

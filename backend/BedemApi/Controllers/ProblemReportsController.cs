@@ -14,10 +14,12 @@ namespace BedemApi.Controllers;
 public class ProblemReportsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IHoneypotGuard _honeypot;
 
-    public ProblemReportsController(AppDbContext db)
+    public ProblemReportsController(AppDbContext db, IHoneypotGuard honeypot)
     {
         _db = db;
+        _honeypot = honeypot;
     }
 
     [HttpPost]
@@ -26,6 +28,29 @@ public class ProblemReportsController : ControllerBase
     public async Task<IActionResult> Create(
         [FromBody] CreateProblemReportRequest request)
     {
+        // Ahead of validation, so a bot gets the same answer whether or not the
+        // rest of its body was well formed. Fields are read defensively here
+        // because nothing has been validated yet.
+        if (await _honeypot.IsBotAsync(
+                HttpContext,
+                "problem-reports",
+                request.ContactReference,
+                request))
+        {
+            var decoyId = IHoneypotGuard.FakeId();
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = decoyId },
+                new
+                {
+                    Id = decoyId,
+                    Category = request.Category?.Trim() ?? string.Empty,
+                    request.Anonymous,
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
         if (!request.Anonymous &&
             string.IsNullOrWhiteSpace(request.Name))
         {

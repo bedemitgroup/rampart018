@@ -61,6 +61,9 @@ builder.Services.AddSingleton<IClientIpResolver, ClientIpResolver>();
 // Per-IP rate limits on every endpoint that writes to the database.
 builder.Services.AddBedemRateLimiting(builder.Configuration);
 
+// Hidden-field bot detection on the public forms.
+builder.Services.AddScoped<IHoneypotGuard, HoneypotGuard>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();

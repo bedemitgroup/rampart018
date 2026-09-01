@@ -15,10 +15,14 @@ namespace BedemApi.Controllers;
 public class MembershipApplicationsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IHoneypotGuard _honeypot;
 
-    public MembershipApplicationsController(AppDbContext db)
+    public MembershipApplicationsController(
+        AppDbContext db,
+        IHoneypotGuard honeypot)
     {
         _db = db;
+        _honeypot = honeypot;
     }
 
     [HttpPost]
@@ -27,6 +31,30 @@ public class MembershipApplicationsController : ControllerBase
     public async Task<IActionResult> Create(
         [FromBody] CreateMembershipApplicationRequest request)
     {
+        // Ahead of validation, so a bot gets the same answer whether or not the
+        // rest of its body was well formed.
+        if (await _honeypot.IsBotAsync(
+                HttpContext,
+                "membership-applications",
+                request.ContactReference,
+                request))
+        {
+            var decoyId = IHoneypotGuard.FakeId();
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = decoyId },
+                new
+                {
+                    Id = decoyId,
+                    FirstName = request.FirstName?.Trim() ?? string.Empty,
+                    LastName = request.LastName?.Trim() ?? string.Empty,
+                    Email = ContactNormalizer.NormalizeEmail(request.Email ?? string.Empty),
+                    MembershipType = request.MembershipType?.Trim() ?? string.Empty,
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
         if (string.IsNullOrWhiteSpace(request.FirstName) ||
             string.IsNullOrWhiteSpace(request.LastName) ||
             string.IsNullOrWhiteSpace(request.Email) ||

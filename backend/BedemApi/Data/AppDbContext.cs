@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<News> News => Set<News>();
     public DbSet<MembershipApplication> MembershipApplications => Set<MembershipApplication>();
     public DbSet<ProblemReport> ProblemReports => Set<ProblemReport>();
+    public DbSet<BotSubmission> BotSubmissions => Set<BotSubmission>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -70,6 +72,14 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(n => n.AuthorUserId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Honeypot hits. No relationship to User on purpose - this is evidence,
+        // and it must outlive the account that produced it.
+        modelBuilder.Entity<BotSubmission>(e =>
+        {
+            e.HasIndex(b => b.CreatedAt);
+            e.HasIndex(b => b.IpAddress);
         });
 
         // Seed admin user

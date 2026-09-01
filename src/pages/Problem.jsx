@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { api } from '../services/api';
+import HoneypotField, { HONEYPOT_NAME } from '../components/HoneypotField';
 
 import './Problem.css';
 
@@ -24,6 +25,7 @@ const initialForm = {
   message: '',
   anonymous: false,
   consent: false,
+  [HONEYPOT_NAME]: '',
 };
 
 export default function Problem() {
@@ -116,6 +118,7 @@ export default function Problem() {
         message: form.message.trim(),
         anonymous: form.anonymous,
         consent: form.consent,
+        [HONEYPOT_NAME]: form[HONEYPOT_NAME],
       });
 
       setReference(data?.id ?? null);
@@ -551,6 +554,13 @@ export default function Problem() {
                     </span>
                   )}
                 </div>
+
+                <HoneypotField
+                  value={form[HONEYPOT_NAME]}
+                  onChange={(v) =>
+                    setForm({ ...form, [HONEYPOT_NAME]: v })
+                  }
+                />
 
                 {errors.submit && (
                   <div

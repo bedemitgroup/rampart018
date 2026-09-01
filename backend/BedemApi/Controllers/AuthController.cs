@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
@@ -16,11 +17,16 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly TokenService _tokenService;
+    private readonly IHoneypotGuard _honeypot;
 
-    public AuthController(AppDbContext db, TokenService tokenService)
+    public AuthController(
+        AppDbContext db,
+        TokenService tokenService,
+        IHoneypotGuard honeypot)
     {
         _db = db;
         _tokenService = tokenService;
+        _honeypot = honeypot;
     }
 
     /// <summary>Register a new user account.</summary>
@@ -32,6 +38,27 @@ public class AuthController : ControllerBase
     [ProducesResponseType(429)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        // The stored payload is redacted, so the password does not reach the table.
+        if (await _honeypot.IsBotAsync(
+                HttpContext,
+                "register",
+                request.ContactReference,
+                request))
+        {
+            // Random bytes, deliberately NOT a signed JWT. A real token for an
+            // account that was never created would still satisfy [Authorize] on
+            // any endpoint that does not touch a foreign key.
+            var decoyToken = Convert.ToBase64String(
+                RandomNumberGenerator.GetBytes(48));
+
+            return CreatedAtAction(nameof(Me), new AuthResponse(
+                decoyToken,
+                request.Username ?? string.Empty,
+                request.Email ?? string.Empty,
+                "User",
+                DateTime.UtcNow.AddDays(7)));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Username) ||
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password))

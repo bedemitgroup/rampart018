@@ -15,10 +15,12 @@ namespace BedemApi.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IHoneypotGuard _honeypot;
 
-    public CommentsController(AppDbContext db)
+    public CommentsController(AppDbContext db, IHoneypotGuard honeypot)
     {
         _db = db;
+        _honeypot = honeypot;
     }
 
     /// <summary>Get comments for a specific article slug. Moderators/Admins also see pending comments.</summary>
@@ -79,6 +81,29 @@ public class CommentsController : ControllerBase
     [ProducesResponseType(429)]
     public async Task<IActionResult> CreateComment([FromBody] CreateCommentRequest request)
     {
+        // This form sits behind a login, so the account is recorded alongside
+        // the address - a bot that bothered to register is worth identifying.
+        if (await _honeypot.IsBotAsync(
+                HttpContext,
+                "comments",
+                request.ContactReference,
+                request,
+                int.Parse(User.FindFirstValue("userId")!)))
+        {
+            // Mirrors a real pending comment: unapproved, no votes yet.
+            var decoy = new CommentResponse(
+                IHoneypotGuard.FakeId(),
+                request.Content ?? string.Empty,
+                User.FindFirstValue("username") ?? string.Empty,
+                DateTime.UtcNow,
+                0, 0, false, null);
+
+            return CreatedAtAction(
+                nameof(GetComments),
+                new { vestSlug = request.VestSlug ?? string.Empty },
+                decoy);
+        }
+
         if (string.IsNullOrWhiteSpace(request.Content) || string.IsNullOrWhiteSpace(request.VestSlug))
             return BadRequest(new { message = "VestSlug and Content are required." });
 

@@ -11,7 +11,8 @@
       "Bash(node bedem-doc.js)",
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
-      "Bash(docker compose *)"
+      "Bash(docker compose *)",
+      "Bash(npx oxlint *)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import HoneypotField, { HONEYPOT_NAME } from './HoneypotField';
 import './AuthModal.css';
 
 export default function AuthModal({ onClose }) {
@@ -9,7 +10,12 @@ export default function AuthModal({ onClose }) {
   const [error, setError] = useState('');
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    [HONEYPOT_NAME]: '',
+  });
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -30,7 +36,7 @@ export default function AuthModal({ onClose }) {
     setError('');
     setLoading(true);
     try {
-      await register(registerForm.username, registerForm.email, registerForm.password);
+      await register(registerForm);
       onClose();
     } catch (err) {
       setError(err.message);
@@ -141,6 +147,10 @@ export default function AuthModal({ onClose }) {
                 placeholder="••••••••"
               />
             </label>
+            <HoneypotField
+              value={registerForm[HONEYPOT_NAME]}
+              onChange={(v) => setRegisterForm({ ...registerForm, [HONEYPOT_NAME]: v })}
+            />
             {error && <p className="auth-error">{error}</p>}
             <button className="auth-submit" type="submit" disabled={loading}>
               {loading ? 'Registracija...' : 'Registruj se'}

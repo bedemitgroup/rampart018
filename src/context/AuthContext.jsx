@@ -25,9 +25,11 @@ export function AuthProvider({ children }) {
     setUser({ username: data.username, email: data.email, role: data.role });
   }
 
-  async function register(username, email, password) {
-    await api.register({ username, email, password });
-    await login(email, password);
+  // Takes the whole payload so the honeypot field rides along without becoming
+  // an unnamed fourth positional argument.
+  async function register(data) {
+    await api.register(data);
+    await login(data.email, data.password);
   }
 
   function logout() {
