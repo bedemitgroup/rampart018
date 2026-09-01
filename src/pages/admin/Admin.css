@@ -37,7 +37,8 @@
 }
 
 .admin__nav-link:hover {
-  background: var(--color-bg-light);
+  background: var(--color-secondary);
+  color: white;
 }
 
 .admin__nav-link--active {
