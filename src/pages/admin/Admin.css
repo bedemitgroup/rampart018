@@ -113,6 +113,27 @@
   max-width: 320px;
 }
 
+.admin-news__row--featured {
+  box-shadow: inset 3px 0 0 var(--color-secondary);
+}
+
+.admin-news__row--featured td {
+  background: rgba(15, 138, 141, 0.05);
+}
+
+.admin-news__featured-badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: rgba(15, 138, 141, 0.12);
+  color: var(--color-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .admin-news__status {
   display: inline-block;
   padding: 2px var(--space-2);

@@ -82,7 +82,7 @@ export default function AdminNews() {
           </thead>
           <tbody>
             {news.map((n, index) => (
-              <tr key={n.id}>
+              <tr key={n.id} className={index === 0 ? 'admin-news__row--featured' : undefined}>
                 <td className="admin-news__move-cell">
                   <button
                     className="admin-news__move-btn"
@@ -103,7 +103,10 @@ export default function AdminNews() {
                     ↓
                   </button>
                 </td>
-                <td className="admin-news__title-cell">{n.title}</td>
+                <td className="admin-news__title-cell">
+                  {n.title}
+                  {index === 0 && <span className="admin-news__featured-badge">Glavna vest</span>}
+                </td>
                 <td>{n.category}</td>
                 <td>{n.authorName}</td>
                 <td>{formatDate(n.createdAt)}</td>
