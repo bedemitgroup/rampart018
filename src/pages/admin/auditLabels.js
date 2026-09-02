@@ -26,6 +26,13 @@ export const ACTION_LABELS = {
   'Finance.Year.Save': 'Sačuvao godinu',
   'Finance.Quarter.SetStatus': 'Promenio status kvartala',
 
+  'Assembly.Session.Create': 'Zakazao sednicu',
+  'Assembly.Session.Update': 'Izmenio sednicu',
+  'Assembly.Session.Open': 'Otvorio sednicu',
+  'Assembly.Session.Close': 'Zatvorio sednicu',
+  'Assembly.Session.Cancel': 'Otkazao sednicu',
+  'Assembly.Session.Delete': 'Obrisao sednicu',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',
@@ -39,6 +46,7 @@ export const ENTITY_LABELS = {
   FinanceCategory: 'Kategorija',
   FinanceYear: 'Godina',
   FinanceQuarter: 'Kvartal',
+  AssemblySession: 'Sednica skupštine',
   User: 'Nalog',
 };
 
@@ -49,6 +57,8 @@ const DESTRUCTIVE = new Set([
   'News.Unpublish',
   'Finance.Entry.Delete',
   'Finance.Category.Delete',
+  'Assembly.Session.Cancel',
+  'Assembly.Session.Delete',
   'User.Deactivate',
 ]);
 

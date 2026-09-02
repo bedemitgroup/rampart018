@@ -1,0 +1,475 @@
+/* The assembly hall and everything around it.
+ *
+ * Kept out of Admin.css deliberately: the chamber is its own visual system —
+ * a seat colour scale, a live pulse, its own responsive grid — and folding it
+ * into a 900-line file would bury both. Imported once, from AdminAssemblyTabs.
+ *
+ * The seat scale reuses the brand tokens rather than inventing colours:
+ *   accent2  green   here / voting for
+ *   accent   red     not coming / voting against
+ *   warning  amber   unsure / abstaining
+ *   neutral  grey    no answer
+ */
+
+/* --- Session header ------------------------------------------------------ */
+
+.assembly-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-neutral);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.assembly-head--scheduled { border-left-color: var(--color-secondary); }
+.assembly-head--live { border-left-color: var(--color-accent2); }
+.assembly-head--finished { border-left-color: var(--color-neutral); }
+.assembly-head--cancelled { border-left-color: var(--color-accent); }
+
+.assembly-head__main { flex: 1 1 320px; min-width: 0; }
+
+.assembly-head__status {
+  display: inline-block;
+  padding: 2px 10px;
+  margin-bottom: var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.assembly-head__title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.assembly-head__when {
+  margin: 0 0 var(--space-1);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.assembly-head__where,
+.assembly-head__note {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.assembly-head__where a { color: var(--color-secondary); }
+
+.assembly-head__side {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.assembly-head__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.assembly-head__counts div { text-align: center; }
+
+.assembly-head__counts dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.assembly-head__counts dd {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.assembly-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --- Connection state ----------------------------------------------------- */
+
+/* Never silent: a socket that died during a sitting must say so, or a member
+   sits in front of a hall that quietly stopped updating. */
+.assembly-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+.assembly-live__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.assembly-live--live {
+  color: #1c6b41;
+  background: rgba(46, 139, 87, 0.12);
+}
+
+.assembly-live--live .assembly-live__dot { animation: assembly-blink 2s ease-in-out infinite; }
+
+.assembly-live--connecting,
+.assembly-live--reconnecting {
+  color: #8a6100;
+  background: rgba(181, 127, 11, 0.14);
+}
+
+.assembly-live--offline {
+  color: #8f1b2a;
+  background: rgba(178, 34, 52, 0.12);
+}
+
+@keyframes assembly-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* --- Status pill (sessions table) ---------------------------------------- */
+
+.assembly-status {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  color: #6b7280;
+}
+
+.assembly-status--scheduled { background: rgba(15, 138, 141, 0.12); color: #0b6668; }
+.assembly-status--live { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.assembly-status--cancelled { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+/* --- My own answer -------------------------------------------------------- */
+
+.assembly-me {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-light);
+}
+
+.assembly-me__block { flex: 1 1 280px; }
+
+.assembly-me__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+}
+
+.assembly-me__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Deliberately generous: this is pressed on a phone, in a room, in a hurry. */
+.rsvp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-bg);
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast), transform var(--transition-fast);
+}
+
+.rsvp-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.rsvp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.rsvp-btn__icon { font-size: var(--font-size-base); line-height: 1; }
+
+.rsvp-btn--yes.rsvp-btn--active { background: var(--color-accent2); border-color: var(--color-accent2); color: #fff; }
+.rsvp-btn--online.rsvp-btn--active { background: var(--color-secondary); border-color: var(--color-secondary); color: #fff; }
+.rsvp-btn--maybe.rsvp-btn--active { background: var(--color-warning); border-color: var(--color-warning); color: #fff; }
+.rsvp-btn--no.rsvp-btn--active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+
+.rsvp-btn--yes:hover:not(:disabled) { border-color: var(--color-accent2); }
+.rsvp-btn--online:hover:not(:disabled) { border-color: var(--color-secondary); }
+.rsvp-btn--maybe:hover:not(:disabled) { border-color: var(--color-warning); }
+.rsvp-btn--no:hover:not(:disabled) { border-color: var(--color-accent); }
+
+/* --- The hall ------------------------------------------------------------- */
+
+.hall {
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.hall__tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid #eef1f5;
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.hall__tally-item { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hall__tally-item strong { font-size: var(--font-size-lg); color: var(--color-primary); }
+
+.hall__tally-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent2);
+  animation: assembly-blink 2s ease-in-out infinite;
+}
+
+/* auto-fill rather than a breakpoint per device: the chamber simply reflows
+   from four columns on a phone to a dozen on a laptop. */
+.hall__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.hall__grid > li { display: flex; }
+
+.seat {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: var(--space-2) 4px;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--color-bg-light);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.seat:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; }
+
+.seat__initials {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.seat__name {
+  width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What he answered when the sitting was announced — a small corner mark, so it
+   never competes with the fill, which is where he stands now. */
+.seat__rsvp {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+/* Seat states, in the precedence seatState() applies:
+   connected > checked in > what he answered > silence. */
+.seat--live {
+  color: #fff;
+  background: var(--color-accent2);
+  border-color: #24704a;
+}
+
+.seat--present {
+  color: #1c6b41;
+  background: rgba(46, 139, 87, 0.18);
+  border-color: rgba(46, 139, 87, 0.4);
+}
+
+.seat--yes { color: #1c6b41; background: rgba(46, 139, 87, 0.09); }
+.seat--online { color: #0b6668; background: rgba(15, 138, 141, 0.12); }
+.seat--maybe { color: #8a6100; background: rgba(181, 127, 11, 0.14); }
+.seat--no { color: #8f1b2a; background: rgba(178, 34, 52, 0.10); }
+
+.seat--silent {
+  color: #98a1ae;
+  background: var(--color-bg-light);
+  border-style: dashed;
+  border-color: #dde2ea;
+}
+
+.seat--me { box-shadow: 0 0 0 2px var(--color-primary); }
+.seat--selected { border-color: var(--color-primary); }
+
+/* The live ring. Presence lags reality by up to half a minute — the server only
+   notices a closed laptop on timeout — so this says "connected", not "here". */
+.seat__pulse {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--color-accent2);
+  border-radius: var(--radius-md);
+  animation: seat-pulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes seat-pulse {
+  0% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.14); }
+}
+
+/* --- Seat detail ---------------------------------------------------------- */
+
+.hall__detail {
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+  border: 1px solid #dde2ea;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+}
+
+.hall__detail-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.hall__detail-name { font-weight: 700; color: var(--color-primary); }
+.hall__detail-me { font-weight: 400; color: #8a92a0; }
+
+.hall__detail-close {
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  color: #8a92a0;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.hall__detail-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.hall__detail-rows dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.hall__detail-rows dd { margin: 0; font-size: var(--font-size-sm); }
+
+/* --- Legend --------------------------------------------------------------- */
+
+.hall__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  padding: 0;
+  margin: var(--space-5) 0 0;
+  font-size: 0.72rem;
+  color: #8a92a0;
+  list-style: none;
+}
+
+.hall__legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+.hall__swatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.hall__swatch--live { background: var(--color-accent2); }
+.hall__swatch--present { background: rgba(46, 139, 87, 0.4); }
+.hall__swatch--yes { background: rgba(46, 139, 87, 0.18); }
+.hall__swatch--online { background: rgba(15, 138, 141, 0.25); }
+.hall__swatch--maybe { background: rgba(181, 127, 11, 0.28); }
+.hall__swatch--no { background: rgba(178, 34, 52, 0.2); }
+.hall__swatch--silent { background: var(--color-bg-light); border-color: #dde2ea; border-style: dashed; }
+
+/* --- Responsive ----------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .assembly-head { padding: var(--space-4); }
+  .assembly-head__side { width: 100%; }
+  .assembly-head__counts { gap: var(--space-3); }
+}
+
+@media (max-width: 600px) {
+  .hall { padding: var(--space-4) var(--space-3); }
+  .assembly-me { padding: var(--space-4); }
+  .hall__grid { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
+  .seat { min-height: 66px; }
+  .seat__initials { font-size: var(--font-size-base); }
+  .rsvp-btn { flex: 1 1 130px; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seat__pulse,
+  .hall__tally-dot,
+  .assembly-live--live .assembly-live__dot {
+    animation: none;
+  }
+
+  .seat__pulse { opacity: 0.9; }
+  .rsvp-btn:hover:not(:disabled),
+  .seat:hover { transform: none; }
+}

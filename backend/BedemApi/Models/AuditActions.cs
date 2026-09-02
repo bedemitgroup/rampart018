@@ -33,6 +33,14 @@ public static class AuditActions
     public const string FinanceYearSave = "Finance.Year.Save";
     public const string FinanceQuarterSetStatus = "Finance.Quarter.SetStatus";
 
+    // Skupstina - sessions
+    public const string AssemblySessionCreate = "Assembly.Session.Create";
+    public const string AssemblySessionUpdate = "Assembly.Session.Update";
+    public const string AssemblySessionOpen = "Assembly.Session.Open";
+    public const string AssemblySessionClose = "Assembly.Session.Close";
+    public const string AssemblySessionCancel = "Assembly.Session.Cancel";
+    public const string AssemblySessionDelete = "Assembly.Session.Delete";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -53,6 +61,8 @@ public static class AuditActions
         FinanceCategoryCreate, FinanceCategoryUpdate, FinanceCategoryDelete,
         FinanceCategoryMoveUp, FinanceCategoryMoveDown,
         FinanceYearSave, FinanceQuarterSetStatus,
+        AssemblySessionCreate, AssemblySessionUpdate, AssemblySessionOpen,
+        AssemblySessionClose, AssemblySessionCancel, AssemblySessionDelete,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };
@@ -70,9 +80,11 @@ public static class AuditEntityTypes
     public const string FinanceYear = "FinanceYear";
     public const string FinanceQuarter = "FinanceQuarter";
     public const string User = "User";
+    public const string AssemblySession = "AssemblySession";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
-        News, FinanceEntry, FinanceCategory, FinanceYear, FinanceQuarter, User
+        News, FinanceEntry, FinanceCategory, FinanceYear, FinanceQuarter,
+        AssemblySession, User
     };
 }

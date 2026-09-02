@@ -76,6 +76,7 @@ export const canAccessAdmin = (user) =>
 // Where the admin panel drops you: your own section if you have one, otherwise
 // the news list, which is what a read-only visit is usually about.
 export function adminLandingPath(user) {
+  if (canManageAssembly(user) && !canManageNews(user)) return '/admin/skupstina';
   if (canManageFinance(user) && !canManageNews(user)) return '/admin/finance';
   if (canAccessAdmin(user)) return '/admin/news';
   return '/';

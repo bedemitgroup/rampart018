@@ -52,6 +52,7 @@ public class AuthController : ControllerBase
                 RandomNumberGenerator.GetBytes(48));
 
             return CreatedAtAction(nameof(Me), new AuthResponse(
+                0,
                 decoyToken,
                 request.Username ?? string.Empty,
                 request.Email ?? string.Empty,
@@ -84,7 +85,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return CreatedAtAction(nameof(Me), new AuthResponse(token, user.Username, user.Email, user.Role, expiresAt));
+        return CreatedAtAction(nameof(Me), new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
     }
 
     /// <summary>Authenticate and receive a JWT token.</summary>
@@ -107,7 +108,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Account is deactivated." });
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return Ok(new AuthResponse(token, user.Username, user.Email, user.Role, expiresAt));
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
     }
 
     /// <summary>Get the currently authenticated user's profile.</summary>

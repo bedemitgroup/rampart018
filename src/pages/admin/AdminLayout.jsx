@@ -9,6 +9,7 @@ import './Admin.css';
 const sections = [
   { to: '/admin/news', label: 'Vesti', allow: canAccessAdmin },
   { to: '/admin/finance', label: 'Finansije', allow: canAccessAdmin },
+  { to: '/admin/skupstina', label: 'Skupština', allow: canAccessAdmin },
   { to: '/admin/problems', label: 'Prijave problema', allow: canAccessAdmin },
   { to: '/admin/memberships', label: 'Zahtevi za članstvo', allow: canAccessAdmin },
   { to: '/admin/users', label: 'Nalozi i role', allow: canManageUsers },

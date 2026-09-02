@@ -8,6 +8,9 @@
   --color-bg-light: #F5F7FA;
   --color-accent: #B22234;
   --color-accent2: #2E8B57;
+  /* Abstention in the assembly hall: the third colour between accent (against)
+     and accent2 (for). Amber rather than yellow so white text still reads. */
+  --color-warning: #B57F0B;
 
   /* Typography */
   --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;

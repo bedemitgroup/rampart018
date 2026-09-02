@@ -16,6 +16,14 @@ public static class RateLimitPolicies
     public const string Votes = "votes";
     public const string AdminWrites = "admin-writes";
 
+    /// <summary>
+    /// Members acting during a live sitting: RSVP, check-in, ballots. Kept off
+    /// admin-writes on purpose - a chairman opening and closing fifteen items
+    /// in two minutes would eat that budget, and a 429 mid-session is the worst
+    /// possible moment for one.
+    /// </summary>
+    public const string AssemblyLive = "assembly-live";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         Register,
@@ -24,6 +32,7 @@ public static class RateLimitPolicies
         ProblemReports,
         MembershipApplications,
         Votes,
-        AdminWrites
+        AdminWrites,
+        AssemblyLive
     };
 }

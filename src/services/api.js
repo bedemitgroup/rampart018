@@ -85,6 +85,17 @@ export const api = {
     return request(`/api/audit-logs${query ? `?${query}` : ''}`);
   },
   getAuditLogFilters: () => request('/api/audit-logs/filters'),
+  getAssemblySessions: (status) =>
+    request(`/api/assembly/sessions${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  getCurrentAssemblySession: () => request('/api/assembly/sessions/current'),
+  getAssemblySession: (id) => request(`/api/assembly/sessions/${id}`),
+  getAssemblyHall: (id) => request(`/api/assembly/sessions/${id}/hall`),
+  createAssemblySession: (data) => request('/api/assembly/sessions', { method: 'POST', body: JSON.stringify(data) }),
+  updateAssemblySession: (id, data) => request(`/api/assembly/sessions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  setAssemblySessionStatus: (id, status) => request(`/api/assembly/sessions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  deleteAssemblySession: (id) => request(`/api/assembly/sessions/${id}`, { method: 'DELETE' }),
+  setAssemblyRsvp: (id, response, note) => request(`/api/assembly/sessions/${id}/rsvp`, { method: 'PUT', body: JSON.stringify({ response, note }) }),
+  setAssemblyCheckIn: (id, mode) => request(`/api/assembly/sessions/${id}/check-in`, { method: 'PUT', body: JSON.stringify({ mode }) }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

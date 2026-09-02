@@ -10,4 +10,7 @@ public record RegisterRequest(
 
 public record LoginRequest(string Email, string Password);
 
-public record AuthResponse(string Token, string Username, string Email, string Role, DateTime ExpiresAt);
+// Id is here because the client needs to know which row is its own - the
+// assembly hall is built entirely on "which seat is mine". Without it user.id
+// stays undefined until the next page load, when /me finally supplies it.
+public record AuthResponse(int Id, string Token, string Username, string Email, string Role, DateTime ExpiresAt);

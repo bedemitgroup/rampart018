@@ -18,12 +18,16 @@ import AdminFinance from './pages/admin/AdminFinance';
 import AdminFinanceForm from './pages/admin/AdminFinanceForm';
 import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
 import AdminFinanceYears from './pages/admin/AdminFinanceYears';
+import AdminAssembly from './pages/admin/AdminAssembly';
+import AdminAssemblySessions from './pages/admin/AdminAssemblySessions';
+import AdminAssemblySessionForm from './pages/admin/AdminAssemblySessionForm';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
 import RequirePermission from './pages/admin/RequirePermission';
 import {
   adminLandingPath,
   canAccessAdmin,
+  canManageAssembly,
   canManageFinance,
   canManageNews,
   canManageUsers,
@@ -56,11 +60,18 @@ export default function App() {
               <Route path="finance/years" element={<AdminFinanceYears />} />
               <Route path="problems" element={<AdminProblems />} />
               <Route path="memberships" element={<AdminMemberships />} />
+              <Route path="skupstina" element={<AdminAssembly />} />
+              <Route path="skupstina/sednice" element={<AdminAssemblySessions />} />
             </Route>
 
             <Route element={<RequirePermission allow={canManageNews} />}>
               <Route path="news/new" element={<AdminNewsForm />} />
               <Route path="news/:id/edit" element={<AdminNewsForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageAssembly} />}>
+              <Route path="skupstina/sednice/nova" element={<AdminAssemblySessionForm />} />
+              <Route path="skupstina/sednice/:id/izmena" element={<AdminAssemblySessionForm />} />
             </Route>
 
             <Route element={<RequirePermission allow={canManageFinance} />}>

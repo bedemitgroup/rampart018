@@ -19,6 +19,10 @@ public class AppDbContext : DbContext
     public DbSet<FinanceYear> FinanceYears => Set<FinanceYear>();
     public DbSet<FinanceQuarter> FinanceQuarters => Set<FinanceQuarter>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AssemblySession> AssemblySessions => Set<AssemblySession>();
+    public DbSet<AssemblyAttendance> AssemblyAttendances => Set<AssemblyAttendance>();
+    public DbSet<AssemblyTopic> AssemblyTopics => Set<AssemblyTopic>();
+    public DbSet<AssemblyVote> AssemblyVotes => Set<AssemblyVote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -130,6 +134,90 @@ public class AppDbContext : DbContext
             e.HasIndex(a => a.CreatedAt);
             e.HasIndex(a => a.ActorUserId);
             e.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+
+        // Skupština
+        modelBuilder.Entity<AssemblySession>(e =>
+        {
+            e.HasOne(x => x.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.ScheduledAt);
+
+            // At most one sitting may be in progress. The hall, the presence
+            // tracker and "which session am I in" all assume it, so the schema
+            // states it once instead of four controller guards that can drift.
+            e.HasIndex(x => x.Status)
+             .IsUnique()
+             .HasDatabaseName("IX_AssemblySessions_SingleInProgress")
+             .HasFilter($"\"Status\" = '{AssemblySessionStatus.InProgress}'");
+        });
+
+        modelBuilder.Entity<AssemblyAttendance>(e =>
+        {
+            // Cascade is right here and only here: an RSVP is an intention
+            // about one sitting and means nothing without it.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Attendances)
+             .HasForeignKey(x => x.SessionId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.SessionId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblyTopic>(e =>
+        {
+            // Restrict, not Cascade, and deliberately so: a topic that has been
+            // voted on is a record of a decision, and deleting the sitting it
+            // hung on must not take the ballots with it — the same principle
+            // the AuditLog block below states. The controller refuses first,
+            // with a sentence; this is the net under that rule.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Topics)
+             .HasForeignKey(x => x.SessionId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.ProposedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.ProposedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.ReviewedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.SessionId, x.DisplayOrder });
+            e.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<AssemblyVote>(e =>
+        {
+            // Same reasoning as the topic edge: a cast ballot outlives the row
+            // it hangs on. An open ballot is dropped explicitly, row by row.
+            e.HasOne(x => x.Topic)
+             .WithMany(t => t.Votes)
+             .HasForeignKey(x => x.TopicId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // .WithMany() with no navigation on User: it already carries an
+            // ICollection<Vote> for news likes, and a second collection beside
+            // it would only invite the two to be confused.
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.TopicId, x.UserId }).IsUnique();
         });
 
         FinanceSeed.Apply(modelBuilder);

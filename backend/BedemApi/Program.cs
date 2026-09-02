@@ -1,5 +1,6 @@
 using System.Text;
 using BedemApi.Data;
+using BedemApi.Hubs;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,26 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+
+    // A browser cannot set headers on a WebSocket, so the SignalR client puts
+    // the token in the socket URL instead. Accepted for the hub path only: a
+    // token in a query string on the REST API would land in every access log
+    // the request passes through.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                context.HttpContext.Request.Path.StartsWithSegments(AssemblyHub.Path))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -68,6 +89,16 @@ builder.Services.AddScoped<IHoneypotGuard, HoneypotGuard>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 
+// Skupstina. The presence tracker holds who is connected right now, and the
+// notifier is the one place outside the hub that pushes to it - both singletons,
+// matching IHubContext's own lifetime.
+//
+// Both live in this process, so the backend must stay at ONE replica: a second
+// container would give you two half-full halls. See docker-compose.yml.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IAssemblyPresenceTracker, AssemblyPresenceTracker>();
+builder.Services.AddSingleton<IAssemblyNotifier, AssemblyNotifier>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -95,5 +126,11 @@ else
     app.Logger.LogWarning("Rate limiting is DISABLED by configuration.");
 
 app.MapControllers();
+
+// Mapped after UseAuthorization so the hub's [Authorize] sees a populated
+// principal. Rate limiting is switched off on it explicitly: a hub connection
+// is one long-lived request, so a limiter would strangle the transport rather
+// than the writes - and every write goes through the controllers anyway.
+app.MapHub<AssemblyHub>(AssemblyHub.Path).DisableRateLimiting();
 
 app.Run();
