@@ -16,10 +16,12 @@ public class UsersController : ControllerBase
     private const int MinModeratorPasswordLength = 8;
 
     private readonly AppDbContext _db;
+    private readonly IAuditLogger _audit;
 
-    public UsersController(AppDbContext db)
+    public UsersController(AppDbContext db, IAuditLogger audit)
     {
         _db = db;
+        _audit = audit;
     }
 
     /// <summary>List all users with their role and status.</summary>
@@ -80,6 +82,10 @@ public class UsersController : ControllerBase
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
+        await _audit.RecordAsync(
+            AuditActions.UserCreateModerator, AuditEntityTypes.User,
+            user.Id.ToString(), user.Username);
+
         return Created(
             $"/api/users/{user.Id}",
             new { user.Id, user.Username, user.Email, user.Role, user.IsActive, user.CreatedAt });
@@ -101,6 +107,12 @@ public class UsersController : ControllerBase
         if (user == null) return NotFound();
 
         user.Role = request.Role;
+
+        // The new role is the action itself, so it goes in the label.
+        _audit.Record(
+            AuditActions.UserChangeRole, AuditEntityTypes.User,
+            user.Id.ToString(), $"{user.Username} → {request.Role}");
+
         await _db.SaveChangesAsync();
         return Ok(new { message = $"Role updated to {request.Role}." });
     }
@@ -116,6 +128,11 @@ public class UsersController : ControllerBase
         if (user == null) return NotFound();
 
         user.IsActive = false;
+
+        _audit.Record(
+            AuditActions.UserDeactivate, AuditEntityTypes.User,
+            user.Id.ToString(), user.Username);
+
         await _db.SaveChangesAsync();
         return Ok(new { message = "User deactivated." });
     }

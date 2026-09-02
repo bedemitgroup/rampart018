@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<FinanceEntry> FinanceEntries => Set<FinanceEntry>();
     public DbSet<FinanceYear> FinanceYears => Set<FinanceYear>();
     public DbSet<FinanceQuarter> FinanceQuarters => Set<FinanceQuarter>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -120,6 +121,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<FinanceQuarter>(e =>
         {
             e.HasIndex(q => new { q.Year, q.Quarter }).IsUnique();
+        });
+
+        // Audit trail. Like BotSubmission, no relationship to User on purpose:
+        // the record of what an account did must outlive the account.
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.HasIndex(a => a.CreatedAt);
+            e.HasIndex(a => a.ActorUserId);
+            e.HasIndex(a => new { a.EntityType, a.EntityId });
         });
 
         FinanceSeed.Apply(modelBuilder);

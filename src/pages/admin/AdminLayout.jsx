@@ -59,6 +59,16 @@ export default function AdminLayout() {
                   </NavLink>
                 </li>
               )}
+              {user.role === 'Admin' && (
+                <li>
+                  <NavLink
+                    to="/admin/audit"
+                    className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+                  >
+                    Dnevnik izmena
+                  </NavLink>
+                </li>
+              )}
             </ul>
           </nav>
         </aside>

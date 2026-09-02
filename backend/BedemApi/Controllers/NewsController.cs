@@ -16,10 +16,12 @@ namespace BedemApi.Controllers;
 public class NewsController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IAuditLogger _audit;
 
-    public NewsController(AppDbContext db)
+    public NewsController(AppDbContext db, IAuditLogger audit)
     {
         _db = db;
+        _audit = audit;
     }
 
     private bool IsModerator => User.Identity?.IsAuthenticated == true &&
@@ -92,6 +94,9 @@ public class NewsController : ControllerBase
         _db.News.Add(news);
         await _db.SaveChangesAsync();
 
+        await _audit.RecordAsync(
+            AuditActions.NewsCreate, AuditEntityTypes.News, news.Id.ToString(), news.Title);
+
         var response = new NewsDetailResponse(
             news.Id, news.Slug, news.Title, news.Excerpt, news.Body, news.Category, news.ImageUrl,
             news.AuthorName, news.SourceUrl, news.CreatedAt, news.UpdatedAt, news.IsPublished);
@@ -118,6 +123,8 @@ public class NewsController : ControllerBase
         var news = await _db.News.FirstOrDefaultAsync(x => x.Id == id);
         if (news == null) return NotFound();
 
+        var wasPublished = news.IsPublished;
+
         news.Title = request.Title;
         news.Excerpt = request.Excerpt;
         news.Body = request.Body;
@@ -127,6 +134,14 @@ public class NewsController : ControllerBase
         news.SourceUrl = request.SourceUrl;
         news.IsPublished = request.IsPublished;
         news.UpdatedAt = DateTime.UtcNow;
+
+        // Toggling publication is the change an admin actually looks for, so it
+        // gets its own action rather than hiding inside a generic update.
+        var action = news.IsPublished == wasPublished
+            ? AuditActions.NewsUpdate
+            : news.IsPublished ? AuditActions.NewsPublish : AuditActions.NewsUnpublish;
+
+        _audit.Record(action, AuditEntityTypes.News, news.Id.ToString(), news.Title);
 
         await _db.SaveChangesAsync();
 
@@ -147,6 +162,9 @@ public class NewsController : ControllerBase
     {
         var news = await _db.News.FindAsync(id);
         if (news == null) return NotFound();
+
+        _audit.Record(
+            AuditActions.NewsDelete, AuditEntityTypes.News, news.Id.ToString(), news.Title);
 
         _db.News.Remove(news);
         await _db.SaveChangesAsync();
@@ -182,6 +200,12 @@ public class NewsController : ControllerBase
 
         (ordered[index].DisplayOrder, ordered[targetIndex].DisplayOrder) =
             (ordered[targetIndex].DisplayOrder, ordered[index].DisplayOrder);
+
+        _audit.Record(
+            request.Direction == "up" ? AuditActions.NewsMoveUp : AuditActions.NewsMoveDown,
+            AuditEntityTypes.News,
+            ordered[index].Id.ToString(),
+            ordered[index].Title);
 
         await _db.SaveChangesAsync();
 

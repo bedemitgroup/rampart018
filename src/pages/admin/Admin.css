@@ -778,3 +778,50 @@
   color: var(--color-primary);
   margin-bottom: var(--space-3);
 }
+
+/* Audit log */
+
+.admin-audit__intro {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+  max-width: 70ch;
+}
+
+/* Same pill shape as .admin-news__status, in the neutral tone. */
+.admin-audit__action {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: rgba(23, 63, 115, 0.1);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Deletions and takedowns, so one destructive row stands out on a page of
+   routine edits. */
+.admin-audit__action--danger {
+  background: rgba(178, 34, 52, 0.12);
+  color: var(--color-accent);
+}
+
+.admin-audit__entity {
+  display: block;
+  font-weight: 600;
+}
+
+.admin-audit__entity-label {
+  display: block;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  /* The label is free text — a long news title must wrap, not stretch the row. */
+  overflow-wrap: anywhere;
+}
+
+.admin-audit__ip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}

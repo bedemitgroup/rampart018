@@ -64,6 +64,10 @@ builder.Services.AddBedemRateLimiting(builder.Configuration);
 // Hidden-field bot detection on the public forms.
 builder.Services.AddScoped<IHoneypotGuard, HoneypotGuard>();
 
+// Audit trail. Needs the current request to name the actor and their address.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();

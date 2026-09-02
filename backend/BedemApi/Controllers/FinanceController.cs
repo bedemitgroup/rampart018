@@ -15,10 +15,12 @@ namespace BedemApi.Controllers;
 public class FinanceController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IAuditLogger _audit;
 
-    public FinanceController(AppDbContext db)
+    public FinanceController(AppDbContext db, IAuditLogger audit)
     {
         _db = db;
+        _audit = audit;
     }
 
     private bool IsModerator => User.Identity?.IsAuthenticated == true &&
@@ -161,6 +163,10 @@ public class FinanceController : ControllerBase
         _db.FinanceCategories.Add(category);
         await _db.SaveChangesAsync();
 
+        await _audit.RecordAsync(
+            AuditActions.FinanceCategoryCreate, AuditEntityTypes.FinanceCategory,
+            category.Id.ToString(), category.Name);
+
         return CreatedAtAction(nameof(GetCategories), null, ToResponse(category, 0));
     }
 
@@ -186,6 +192,10 @@ public class FinanceController : ControllerBase
         category.Color = request.Color;
         category.IsActive = request.IsActive;
 
+        _audit.Record(
+            AuditActions.FinanceCategoryUpdate, AuditEntityTypes.FinanceCategory,
+            category.Id.ToString(), category.Name);
+
         await _db.SaveChangesAsync();
 
         var entryCount = await _db.FinanceEntries.CountAsync(e => e.CategoryId == id);
@@ -209,6 +219,10 @@ public class FinanceController : ControllerBase
             {
                 message = "Kategorija ima unete stavke — možete je deaktivirati umesto brisanja."
             });
+
+        _audit.Record(
+            AuditActions.FinanceCategoryDelete, AuditEntityTypes.FinanceCategory,
+            category.Id.ToString(), category.Name);
 
         _db.FinanceCategories.Remove(category);
         await _db.SaveChangesAsync();
@@ -249,6 +263,14 @@ public class FinanceController : ControllerBase
 
         (ordered[index].DisplayOrder, ordered[targetIndex].DisplayOrder) =
             (ordered[targetIndex].DisplayOrder, ordered[index].DisplayOrder);
+
+        _audit.Record(
+            request.Direction == "up"
+                ? AuditActions.FinanceCategoryMoveUp
+                : AuditActions.FinanceCategoryMoveDown,
+            AuditEntityTypes.FinanceCategory,
+            category.Id.ToString(),
+            category.Name);
 
         await _db.SaveChangesAsync();
 
@@ -336,6 +358,10 @@ public class FinanceController : ControllerBase
         await _db.SaveChangesAsync();
         await _db.Entry(entry).Reference(e => e.Category).LoadAsync();
 
+        await _audit.RecordAsync(
+            AuditActions.FinanceEntryCreate, AuditEntityTypes.FinanceEntry,
+            entry.Id.ToString(), DescribeEntry(entry));
+
         return CreatedAtAction(nameof(GetEntry), new { id = entry.Id }, ToResponse(entry));
     }
 
@@ -363,6 +389,12 @@ public class FinanceController : ControllerBase
         await _db.SaveChangesAsync();
         await _db.Entry(entry).Reference(e => e.Category).LoadAsync();
 
+        // Logged after the reload, so the label names the category the entry was
+        // moved to rather than the one it came from.
+        await _audit.RecordAsync(
+            AuditActions.FinanceEntryUpdate, AuditEntityTypes.FinanceEntry,
+            entry.Id.ToString(), DescribeEntry(entry));
+
         return Ok(ToResponse(entry));
     }
 
@@ -374,8 +406,15 @@ public class FinanceController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteEntry(int id)
     {
-        var entry = await _db.FinanceEntries.FindAsync(id);
+        var entry = await _db.FinanceEntries
+            .Include(e => e.Category)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (entry == null) return NotFound();
+
+        _audit.Record(
+            AuditActions.FinanceEntryDelete, AuditEntityTypes.FinanceEntry,
+            entry.Id.ToString(), DescribeEntry(entry));
 
         _db.FinanceEntries.Remove(entry);
         await _db.SaveChangesAsync();
@@ -453,6 +492,10 @@ public class FinanceController : ControllerBase
         row.ReportUrl = reportUrl;
         row.IsPublished = request.IsPublished;
 
+        _audit.Record(
+            AuditActions.FinanceYearSave, AuditEntityTypes.FinanceYear,
+            year.ToString(), year.ToString());
+
         await _db.SaveChangesAsync();
         return Ok(new { message = "Godina sačuvana." });
     }
@@ -481,6 +524,12 @@ public class FinanceController : ControllerBase
 
         row.Status = request.Status;
 
+        // The status is what the action *is*, not a before/after detail, so it
+        // belongs in the label — otherwise the row says nothing was set to what.
+        _audit.Record(
+            AuditActions.FinanceQuarterSetStatus, AuditEntityTypes.FinanceQuarter,
+            $"{year}/{quarter}", $"Q{quarter} {year} → {request.Status}");
+
         await _db.SaveChangesAsync();
         return Ok(new { message = "Status kvartala sačuvan." });
     }
@@ -504,6 +553,13 @@ public class FinanceController : ControllerBase
 
         return null;
     }
+
+    /// <summary>
+    /// Label an entry carries in the audit trail. Includes the category and the
+    /// amount so the row still means something once the entry is deleted.
+    /// </summary>
+    private static string DescribeEntry(FinanceEntry entry) =>
+        $"{entry.Category.Name}: {entry.Amount:0.##} RSD — {entry.Description}";
 
     private static decimal SumOf(IEnumerable<FinanceEntry> entries, string type) =>
         entries.Where(e => e.Category.Type == type).Sum(e => e.Amount);

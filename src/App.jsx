@@ -19,6 +19,7 @@ import AdminFinanceForm from './pages/admin/AdminFinanceForm';
 import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
 import AdminFinanceYears from './pages/admin/AdminFinanceYears';
 import AdminModerators from './pages/admin/AdminModerators';
+import AdminAuditLog from './pages/admin/AdminAuditLog';
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
   <Route path="finance/categories" element={<AdminFinanceCategories />} />
   <Route path="finance/years" element={<AdminFinanceYears />} />
   <Route path="moderators" element={<AdminModerators />} />
+  <Route path="audit" element={<AdminAuditLog />} />
 </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

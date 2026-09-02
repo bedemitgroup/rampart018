@@ -68,6 +68,20 @@ export const api = {
   getMembershipApplications: () => request('/api/membership-applications'),
   createProblemReport: (data) => request('/api/problem-reports', { method: 'POST', body: JSON.stringify(data) }),
   getProblemReports: () => request('/api/problem-reports'),
+  getAuditLogs: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.actorUserId) params.set('actorUserId', filters.actorUserId);
+    if (filters.entityType) params.set('entityType', filters.entityType);
+    if (filters.action) params.set('action', filters.action);
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.page) params.set('page', filters.page);
+    if (filters.pageSize) params.set('pageSize', filters.pageSize);
+    const query = params.toString();
+    return request(`/api/audit-logs${query ? `?${query}` : ''}`);
+  },
+  getAuditLogFilters: () => request('/api/audit-logs/filters'),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);
