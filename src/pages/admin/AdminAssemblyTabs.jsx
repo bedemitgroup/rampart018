@@ -3,6 +3,7 @@ import './Assembly.css';
 
 const TABS = [
   { to: '/admin/skupstina', label: 'Sala', end: true },
+  { to: '/admin/skupstina/dnevni-red', label: 'Dnevni red' },
   { to: '/admin/skupstina/sednice', label: 'Sednice' },
 ];
 

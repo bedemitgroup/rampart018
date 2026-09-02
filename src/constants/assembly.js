@@ -16,6 +16,26 @@ export const RSVP = {
   ABSENT: 'Ne dolazim',
 };
 
+export const TOPIC_STATUS = {
+  PROPOSED: 'Predložena',
+  ACCEPTED: 'Prihvaćena',
+  REJECTED: 'Odbijena',
+  WITHDRAWN: 'Povučena',
+};
+
+export const VOTING_STATUS = {
+  NOT_OPENED: 'Nije otvoreno',
+  OPEN: 'U toku',
+  CLOSED: 'Zatvoreno',
+};
+
+export const TOPIC_STATUS_TONES = {
+  [TOPIC_STATUS.PROPOSED]: 'proposed',
+  [TOPIC_STATUS.ACCEPTED]: 'accepted',
+  [TOPIC_STATUS.REJECTED]: 'rejected',
+  [TOPIC_STATUS.WITHDRAWN]: 'withdrawn',
+};
+
 export const CHECK_IN_MODE = {
   IN_PERSON: 'Uživo',
   ONLINE: 'Online',

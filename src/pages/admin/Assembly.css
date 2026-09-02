@@ -473,3 +473,156 @@
   .rsvp-btn:hover:not(:disabled),
   .seat:hover { transform: none; }
 }
+
+/* --- Agenda --------------------------------------------------------------- */
+
+.agenda__for {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.agenda__stale { color: #8f1b2a; font-weight: 600; }
+
+.agenda-form {
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  border: 1px solid #dde2ea;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-light);
+}
+
+.agenda-section { margin-bottom: var(--space-8); }
+
+.agenda-section__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin-bottom: var(--space-1);
+}
+
+.agenda-section__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+}
+
+.agenda-section__count {
+  padding: 1px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.agenda-section__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: #8a92a0;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* The left edge carries the status, so a long agenda can be skimmed down one
+   line rather than read badge by badge. */
+.agenda-item {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-neutral);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.agenda-item--accepted { border-left-color: var(--color-accent2); }
+.agenda-item--proposed { border-left-color: var(--color-warning); }
+.agenda-item--rejected { border-left-color: var(--color-accent); }
+.agenda-item--withdrawn { border-left-color: var(--color-neutral); opacity: 0.75; }
+
+.agenda-item__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.agenda-item__heading {
+  display: flex;
+  flex: 1;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.agenda-item__index {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-neutral);
+}
+
+.agenda-item__title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.agenda-item__body {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.agenda-item__meta,
+.agenda-item__note {
+  margin: 0 0 var(--space-2);
+  font-size: 0.78rem;
+  color: #8a92a0;
+}
+
+.agenda-item__note {
+  padding: var(--space-2) var(--space-3);
+  color: #6b7280;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-sm);
+}
+
+.agenda-item__mine { color: var(--color-secondary); font-weight: 600; }
+
+.agenda-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.agenda-badge {
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  color: #6b7280;
+}
+
+.agenda-badge--accepted { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.agenda-badge--proposed { background: rgba(181, 127, 11, 0.16); color: #8a6100; }
+.agenda-badge--rejected { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+@media (max-width: 600px) {
+  .agenda-form { padding: var(--space-4); }
+  .agenda-item { padding: var(--space-3) var(--space-4); }
+  .agenda-item__head { flex-direction: column; gap: var(--space-2); }
+}

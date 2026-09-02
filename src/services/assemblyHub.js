@@ -12,6 +12,9 @@ export const HUB_EVENTS = {
   MemberLeft: 'MemberLeft',
   SeatChanged: 'SeatChanged',
   SessionChanged: 'SessionChanged',
+  TopicChanged: 'TopicChanged',
+  TopicRemoved: 'TopicRemoved',
+  AgendaReordered: 'AgendaReordered',
 };
 
 export function buildAssemblyConnection() {

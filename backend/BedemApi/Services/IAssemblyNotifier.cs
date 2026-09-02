@@ -20,4 +20,18 @@ public interface IAssemblyNotifier
 
     /// <summary>The session itself changed — opened, closed, cancelled, edited.</summary>
     Task SessionChangedAsync(int sessionId, AssemblySessionResponse session);
+
+    /// <summary>One agenda item changed — proposed, reviewed, edited, moved in or out.</summary>
+    Task TopicChangedAsync(int sessionId, AssemblyTopicResponse topic);
+
+    /// <summary>An item left this sitting's agenda, for the backlog or the bin.</summary>
+    Task TopicRemovedAsync(int sessionId, int topicId);
+
+    /// <summary>
+    /// The whole agenda was reordered. Sent as a list rather than two swapped
+    /// items so every screen lands on the same order — which is a small win the
+    /// news list never had: two chairmen reordering at once converge here
+    /// instead of disagreeing until someone reloads.
+    /// </summary>
+    Task AgendaReorderedAsync(int sessionId, IReadOnlyList<AssemblyTopicResponse> agenda);
 }

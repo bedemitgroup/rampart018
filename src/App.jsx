@@ -20,6 +20,7 @@ import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
 import AdminFinanceYears from './pages/admin/AdminFinanceYears';
 import AdminAssembly from './pages/admin/AdminAssembly';
 import AdminAssemblySessions from './pages/admin/AdminAssemblySessions';
+import AdminAssemblyTopics from './pages/admin/AdminAssemblyTopics';
 import AdminAssemblySessionForm from './pages/admin/AdminAssemblySessionForm';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="problems" element={<AdminProblems />} />
               <Route path="memberships" element={<AdminMemberships />} />
               <Route path="skupstina" element={<AdminAssembly />} />
+              <Route path="skupstina/dnevni-red" element={<AdminAssemblyTopics />} />
               <Route path="skupstina/sednice" element={<AdminAssemblySessions />} />
             </Route>
 

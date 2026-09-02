@@ -35,6 +35,9 @@ public class AssemblyHub : Hub
         public const string MemberLeft = "MemberLeft";
         public const string SeatChanged = "SeatChanged";
         public const string SessionChanged = "SessionChanged";
+        public const string TopicChanged = "TopicChanged";
+        public const string TopicRemoved = "TopicRemoved";
+        public const string AgendaReordered = "AgendaReordered";
     }
 
     private readonly AppDbContext _db;

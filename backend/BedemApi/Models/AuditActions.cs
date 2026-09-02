@@ -41,6 +41,17 @@ public static class AuditActions
     public const string AssemblySessionCancel = "Assembly.Session.Cancel";
     public const string AssemblySessionDelete = "Assembly.Session.Delete";
 
+    // Skupstina - agenda topics
+    public const string AssemblyTopicPropose = "Assembly.Topic.Propose";
+    public const string AssemblyTopicUpdate = "Assembly.Topic.Update";
+    public const string AssemblyTopicApprove = "Assembly.Topic.Approve";
+    public const string AssemblyTopicReject = "Assembly.Topic.Reject";
+    public const string AssemblyTopicWithdraw = "Assembly.Topic.Withdraw";
+    public const string AssemblyTopicAssign = "Assembly.Topic.Assign";
+    public const string AssemblyTopicDelete = "Assembly.Topic.Delete";
+    public const string AssemblyTopicMoveUp = "Assembly.Topic.MoveUp";
+    public const string AssemblyTopicMoveDown = "Assembly.Topic.MoveDown";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -63,6 +74,9 @@ public static class AuditActions
         FinanceYearSave, FinanceQuarterSetStatus,
         AssemblySessionCreate, AssemblySessionUpdate, AssemblySessionOpen,
         AssemblySessionClose, AssemblySessionCancel, AssemblySessionDelete,
+        AssemblyTopicPropose, AssemblyTopicUpdate, AssemblyTopicApprove,
+        AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
+        AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };
@@ -81,10 +95,11 @@ public static class AuditEntityTypes
     public const string FinanceQuarter = "FinanceQuarter";
     public const string User = "User";
     public const string AssemblySession = "AssemblySession";
+    public const string AssemblyTopic = "AssemblyTopic";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
         News, FinanceEntry, FinanceCategory, FinanceYear, FinanceQuarter,
-        AssemblySession, User
+        AssemblySession, AssemblyTopic, User
     };
 }

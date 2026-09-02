@@ -35,6 +35,9 @@ public class AssemblyController : ControllerBase
 
     private int CurrentUserId => int.Parse(User.FindFirstValue("userId")!);
 
+    /// <summary>Whoever runs the assembly: the Skupstina role, or an Admin.</summary>
+    private bool IsChair => User.IsIn(Roles.ManageAssembly);
+
     // -----------------------------------------------------------------------
     // Sessions
     // -----------------------------------------------------------------------
@@ -385,6 +388,342 @@ public class AssemblyController : ControllerBase
     }
 
     // -----------------------------------------------------------------------
+    // Agenda topics
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// The agenda. Everyone sees what the chairman accepted; a member also sees
+    /// his own proposals, whatever their status, so he can tell whether his
+    /// point was taken up. Other people's unreviewed proposals stay private
+    /// until they are ruled on.
+    /// </summary>
+    [HttpGet("topics")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [ProducesResponseType(typeof(IEnumerable<AssemblyTopicResponse>), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> GetTopics([FromQuery] int? sessionId, [FromQuery] bool backlog = false)
+    {
+        var me = CurrentUserId;
+        var isChair = IsChair;
+
+        var query = _db.AssemblyTopics.AsNoTracking()
+            .Include(t => t.Session)
+            .Include(t => t.ProposedByUser)
+            .Include(t => t.ReviewedByUser)
+            .AsQueryable();
+
+        if (backlog)
+            query = query.Where(t => t.SessionId == null);
+        else if (sessionId is int wanted)
+            query = query.Where(t => t.SessionId == wanted);
+
+        if (!isChair)
+            query = query.Where(t => t.Status == AssemblyTopicStatus.Accepted || t.ProposedByUserId == me);
+
+        var topics = await InAgendaOrder(query).ToListAsync();
+
+        return Ok(topics.Select(t => ToResponse(t, isChair, me)).ToList());
+    }
+
+    /// <summary>
+    /// Propose a point of business. Every role the organisation admitted may do
+    /// this — the chairman only decides what reaches the agenda.
+    /// </summary>
+    [HttpPost("topics")]
+    [Authorize(Roles = Roles.AssemblyParticipants)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 201)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> CreateTopic([FromBody] CreateAssemblyTopicRequest request)
+    {
+        var error = ValidateTopic(request.Title, request.Description);
+        if (error != null) return BadRequest(new { message = error });
+
+        // An ordinary member sends no sitting at all, so the server files the
+        // proposal where it belongs: the next open one, or the backlog.
+        var targetSessionId = request.SessionId ?? (await NextOpenSessionAsync())?.Id;
+
+        if (targetSessionId is int target)
+        {
+            var session = await _db.AssemblySessions.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == target);
+
+            if (session is null)
+                return BadRequest(new { message = "Tražena sednica ne postoji." });
+
+            if (session.Status is AssemblySessionStatus.Finished or AssemblySessionStatus.Cancelled)
+                return BadRequest(new { message = "Ta sednica je zatvorena — tema se u nju ne može staviti." });
+        }
+
+        var topic = new AssemblyTopic
+        {
+            SessionId = targetSessionId,
+            Title = request.Title.Trim(),
+            Description = request.Description.Trim(),
+            Status = AssemblyTopicStatus.Proposed,
+            ProposedByUserId = CurrentUserId,
+            DisplayOrder = await NextDisplayOrderAsync(targetSessionId, AssemblyTopicStatus.Proposed)
+        };
+
+        _db.AssemblyTopics.Add(topic);
+        await _db.SaveChangesAsync();
+
+        await _audit.RecordAsync(AuditActions.AssemblyTopicPropose,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        var dto = await ReloadTopicAsync(topic.Id);
+        await NotifyTopicAsync(dto);
+
+        return CreatedAtAction(nameof(GetTopics), null, dto);
+    }
+
+    /// <summary>Edit the wording. The proposer while it is unreviewed; the chairman until the ballot.</summary>
+    [HttpPut("topics/{id:int}")]
+    [Authorize(Roles = Roles.AssemblyParticipants)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateTopic(int id, [FromBody] UpdateAssemblyTopicRequest request)
+    {
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        var denied = AssemblyTopicRules.WhyCannotEdit(topic, IsChair, CurrentUserId);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        var error = ValidateTopic(request.Title, request.Description);
+        if (error != null) return BadRequest(new { message = error });
+
+        topic.Title = request.Title.Trim();
+        topic.Description = request.Description.Trim();
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        _audit.Record(AuditActions.AssemblyTopicUpdate,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var dto = await ReloadTopicAsync(id);
+        await NotifyTopicAsync(dto);
+        return Ok(dto);
+    }
+
+    /// <summary>Accept a proposal onto the agenda, or reject it with a reason.</summary>
+    [HttpPut("topics/{id:int}/review")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ReviewTopic(int id, [FromBody] ReviewAssemblyTopicRequest request)
+    {
+        if (request.Status != AssemblyTopicStatus.Accepted && request.Status != AssemblyTopicStatus.Rejected)
+            return BadRequest(new { message = "Tačka se može samo prihvatiti ili odbiti." });
+
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        var denied = AssemblyTopicRules.WhyCannotReview(topic);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        var wasStatus = topic.Status;
+        topic.Status = request.Status;
+        topic.ReviewedByUserId = CurrentUserId;
+        topic.ReviewedAt = DateTime.UtcNow;
+        topic.ReviewNote = Blank(request.Note);
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        // Accepting moves the item into a different list, and DisplayOrder is
+        // scoped per (sitting, status) — so it needs a position at the end of
+        // the list it is arriving in, not the one it left.
+        if (wasStatus != request.Status)
+            topic.DisplayOrder = await NextDisplayOrderAsync(topic.SessionId, request.Status);
+
+        _audit.Record(
+            request.Status == AssemblyTopicStatus.Accepted
+                ? AuditActions.AssemblyTopicApprove
+                : AuditActions.AssemblyTopicReject,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var dto = await ReloadTopicAsync(id);
+        await NotifyTopicAsync(dto);
+        return Ok(dto);
+    }
+
+    /// <summary>Take back your own proposal, while it is still unreviewed.</summary>
+    [HttpPut("topics/{id:int}/withdraw")]
+    [Authorize(Roles = Roles.AssemblyParticipants)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> WithdrawTopic(int id)
+    {
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        if (topic.ProposedByUserId != CurrentUserId)
+            return BadRequest(new { message = "Možeš povući samo svoj predlog." });
+
+        if (topic.Status != AssemblyTopicStatus.Proposed)
+            return BadRequest(new { message = "Povlači se samo predlog o kome još nije odlučeno." });
+
+        topic.Status = AssemblyTopicStatus.Withdrawn;
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        _audit.Record(AuditActions.AssemblyTopicWithdraw,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var dto = await ReloadTopicAsync(id);
+        await NotifyTopicAsync(dto);
+        return Ok(dto);
+    }
+
+    /// <summary>Move a topic onto a sitting, or back to the backlog.</summary>
+    [HttpPut("topics/{id:int}/assign")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> AssignTopic(int id, [FromBody] AssignAssemblyTopicRequest request)
+    {
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        AssemblySession? target = null;
+        if (request.SessionId is int wanted)
+        {
+            target = await _db.AssemblySessions.FindAsync(wanted);
+            if (target is null) return BadRequest(new { message = "Tražena sednica ne postoji." });
+        }
+
+        var denied = AssemblyTopicRules.WhyCannotAssign(topic, target);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        var previousSessionId = topic.SessionId;
+
+        topic.SessionId = request.SessionId;
+        // Appended to the end of where it lands rather than keeping a position
+        // that means nothing in the new list — the same shape as creating a
+        // finance category.
+        topic.DisplayOrder = await NextDisplayOrderAsync(request.SessionId, topic.Status);
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        _audit.Record(AuditActions.AssemblyTopicAssign,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(),
+            $"{topic.Title} → {target?.Title ?? "bekleg"}");
+
+        await _db.SaveChangesAsync();
+
+        var dto = await ReloadTopicAsync(id);
+
+        // The old room must be told the item left, or it keeps rendering a
+        // topic that no longer belongs to it.
+        if (previousSessionId is int gone && gone != request.SessionId)
+            await _notifier.TopicRemovedAsync(gone, id);
+
+        await NotifyTopicAsync(dto);
+        return Ok(dto);
+    }
+
+    /// <summary>Reorder the agenda by one place.</summary>
+    [HttpPut("topics/{id:int}/move")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(IEnumerable<AssemblyTopicResponse>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> MoveTopic(int id, [FromBody] MoveAssemblyTopicRequest request)
+    {
+        if (request.Direction != "up" && request.Direction != "down")
+            return BadRequest(new { message = "Pravac mora biti 'up' ili 'down'." });
+
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        // Ordering the backlog has no meaning: it is a pile, not an agenda.
+        if (topic.SessionId is null)
+            return BadRequest(new { message = "Tačka nije u dnevnom redu nijedne sednice." });
+
+        var sessionId = topic.SessionId.Value;   // unwrapped before it reaches SQL
+        var session = await _db.AssemblySessions.FindAsync(sessionId);
+
+        var anyVotingStarted = await _db.AssemblyTopics
+            .AnyAsync(t => t.SessionId == sessionId && t.VotingStatus != AssemblyVotingStatus.NotOpened);
+
+        var denied = AssemblyTopicRules.WhyCannotReorder(session!, anyVotingStarted);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        // Scoped to one sitting AND one status, because that is the pair the
+        // agenda screen filters on. Reordering across statuses would swap the
+        // last visible row with an invisible rejected one, and the button would
+        // look like it did nothing.
+        var ordered = await InAgendaOrder(_db.AssemblyTopics
+                .Where(t => t.SessionId == sessionId && t.Status == topic.Status))
+            .ToListAsync();
+
+        for (var i = 0; i < ordered.Count; i++)
+            ordered[i].DisplayOrder = i;
+
+        var index = ordered.FindIndex(t => t.Id == id);
+        var targetIndex = request.Direction == "up" ? index - 1 : index + 1;
+
+        if (targetIndex < 0 || targetIndex >= ordered.Count)
+            return BadRequest(new { message = "Tačka je već na kraju u tom pravcu." });
+
+        (ordered[index].DisplayOrder, ordered[targetIndex].DisplayOrder) =
+            (ordered[targetIndex].DisplayOrder, ordered[index].DisplayOrder);
+
+        _audit.Record(
+            request.Direction == "up" ? AuditActions.AssemblyTopicMoveUp : AuditActions.AssemblyTopicMoveDown,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var agenda = await LoadAgendaAsync(sessionId, topic.Status);
+        await _notifier.AgendaReorderedAsync(sessionId, agenda);
+
+        return Ok(agenda);
+    }
+
+    /// <summary>Delete a topic. Refused once a ballot has been opened on it.</summary>
+    [HttpDelete("topics/{id:int}")]
+    [Authorize(Roles = Roles.AssemblyParticipants)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteTopic(int id)
+    {
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        var denied = AssemblyTopicRules.WhyCannotDelete(topic, IsChair, CurrentUserId);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        var sessionId = topic.SessionId;
+
+        _audit.Record(AuditActions.AssemblyTopicDelete,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        _db.AssemblyTopics.Remove(topic);
+        await _db.SaveChangesAsync();
+
+        if (sessionId is int room)
+            await _notifier.TopicRemovedAsync(room, id);
+
+        return Ok(new { message = "Tačka obrisana." });
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
@@ -447,6 +786,114 @@ public class AssemblyController : ControllerBase
         await _notifier.SessionChangedAsync(sessionId, dto);
         return dto;
     }
+
+    /// <summary>
+    /// The one ordering the agenda uses. Written once because the list endpoint
+    /// and the move endpoint must agree byte for byte: if they sort differently
+    /// the server swaps <em>its</em> positions three and four while the chairman
+    /// clicked <em>his</em>, and the arrow moves the wrong row — intermittently,
+    /// only when DisplayOrder has duplicates.
+    /// </summary>
+    private static IOrderedQueryable<AssemblyTopic> InAgendaOrder(IQueryable<AssemblyTopic> query) =>
+        query.OrderBy(t => t.DisplayOrder).ThenBy(t => t.Id);
+
+    /// <summary>
+    /// The sitting a fresh proposal belongs to: the one under way, else the
+    /// soonest one scheduled. Null when nothing is on the calendar, which sends
+    /// the proposal to the backlog.
+    /// </summary>
+    private async Task<AssemblySession?> NextOpenSessionAsync()
+    {
+        var open = await _db.AssemblySessions.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Status == AssemblySessionStatus.InProgress);
+
+        if (open != null) return open;
+
+        return await _db.AssemblySessions.AsNoTracking()
+            .Where(s => s.Status == AssemblySessionStatus.Scheduled)
+            .OrderBy(s => s.ScheduledAt)
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// End of the list a topic is arriving in. DisplayOrder is scoped per
+    /// (sitting, status), so every move across either boundary needs a new one.
+    /// </summary>
+    private async Task<int> NextDisplayOrderAsync(int? sessionId, string status)
+    {
+        var max = await _db.AssemblyTopics
+            .Where(t => t.SessionId == sessionId && t.Status == status)
+            .Select(t => (int?)t.DisplayOrder)
+            .MaxAsync();
+
+        return (max ?? -1) + 1;
+    }
+
+    private async Task<AssemblyTopicResponse> ReloadTopicAsync(int id)
+    {
+        var topic = await _db.AssemblyTopics.AsNoTracking()
+            .Include(t => t.Session)
+            .Include(t => t.ProposedByUser)
+            .Include(t => t.ReviewedByUser)
+            .FirstAsync(t => t.Id == id);
+
+        return ToResponse(topic, IsChair, CurrentUserId);
+    }
+
+    private async Task<IReadOnlyList<AssemblyTopicResponse>> LoadAgendaAsync(int sessionId, string status)
+    {
+        var topics = await InAgendaOrder(_db.AssemblyTopics.AsNoTracking()
+                .Include(t => t.Session)
+                .Include(t => t.ProposedByUser)
+                .Include(t => t.ReviewedByUser)
+                .Where(t => t.SessionId == sessionId && t.Status == status))
+            .ToListAsync();
+
+        return topics.Select(t => ToResponse(t, IsChair, CurrentUserId)).ToList();
+    }
+
+    /// <summary>
+    /// Pushes a topic to the room it belongs to. A backlog item has no room, so
+    /// there is nobody to tell — the agenda screen picks it up on its next load.
+    /// </summary>
+    private Task NotifyTopicAsync(AssemblyTopicResponse topic) =>
+        topic.SessionId is int room
+            ? _notifier.TopicChangedAsync(room, topic)
+            : Task.CompletedTask;
+
+    private static string? ValidateTopic(string? title, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            return "Naslov teme je obavezan.";
+
+        if (title.Trim().Length > MaxTitleLength)
+            return $"Naslov teme ne sme biti duži od {MaxTitleLength} znakova.";
+
+        if (string.IsNullOrWhiteSpace(description))
+            return "Opis teme je obavezan — iz njega ostali vide o čemu se glasa.";
+
+        return null;
+    }
+
+    private static AssemblyTopicResponse ToResponse(AssemblyTopic t, bool isChair, int currentUserId) =>
+        new(
+            t.Id,
+            t.SessionId,
+            t.Session?.Title,
+            t.Title,
+            t.Description,
+            t.Status,
+            t.ProposedByUserId,
+            t.ProposedByUser?.Username ?? "?",
+            t.ReviewedByUser?.Username,
+            t.ReviewedAt,
+            t.ReviewNote,
+            t.DisplayOrder,
+            t.VotingStatus,
+            t.CreatedAt,
+            t.UpdatedAt,
+            AssemblyTopicRules.WhyCannotEdit(t, isChair, currentUserId) is null,
+            AssemblyTopicRules.WhyCannotDelete(t, isChair, currentUserId) is null);
 
     private static string? ValidateSession(string? title, string? onlineUrl, int? quorum)
     {

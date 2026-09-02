@@ -96,6 +96,20 @@ export const api = {
   deleteAssemblySession: (id) => request(`/api/assembly/sessions/${id}`, { method: 'DELETE' }),
   setAssemblyRsvp: (id, response, note) => request(`/api/assembly/sessions/${id}/rsvp`, { method: 'PUT', body: JSON.stringify({ response, note }) }),
   setAssemblyCheckIn: (id, mode) => request(`/api/assembly/sessions/${id}/check-in`, { method: 'PUT', body: JSON.stringify({ mode }) }),
+  getAssemblyTopics: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.sessionId) params.set('sessionId', filters.sessionId);
+    if (filters.backlog) params.set('backlog', 'true');
+    const query = params.toString();
+    return request(`/api/assembly/topics${query ? `?${query}` : ''}`);
+  },
+  createAssemblyTopic: (data) => request('/api/assembly/topics', { method: 'POST', body: JSON.stringify(data) }),
+  updateAssemblyTopic: (id, data) => request(`/api/assembly/topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  reviewAssemblyTopic: (id, status, note) => request(`/api/assembly/topics/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, note }) }),
+  withdrawAssemblyTopic: (id) => request(`/api/assembly/topics/${id}/withdraw`, { method: 'PUT' }),
+  assignAssemblyTopic: (id, sessionId) => request(`/api/assembly/topics/${id}/assign`, { method: 'PUT', body: JSON.stringify({ sessionId }) }),
+  moveAssemblyTopic: (id, direction) => request(`/api/assembly/topics/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
+  deleteAssemblyTopic: (id) => request(`/api/assembly/topics/${id}`, { method: 'DELETE' }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

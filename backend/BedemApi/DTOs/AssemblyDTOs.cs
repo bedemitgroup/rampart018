@@ -96,6 +96,54 @@ public record AssemblyHallResponse(
 );
 
 // ---------------------------------------------------------------------------
+// Agenda topics
+// ---------------------------------------------------------------------------
+
+/// <summary>
+/// SessionId is optional. Left null - which is what an ordinary member always
+/// sends - the server files the proposal against the next open sitting, or into
+/// the backlog when none is scheduled. Choosing a sitting by hand is the
+/// chairman's job, and he has the assign endpoint for it.
+/// </summary>
+public record CreateAssemblyTopicRequest(string Title, string Description, int? SessionId);
+
+public record UpdateAssemblyTopicRequest(string Title, string Description);
+
+/// <summary>Status is Prihvacena or Odbijena; Note is the reason, shown back to the proposer.</summary>
+public record ReviewAssemblyTopicRequest(string Status, string? Note);
+
+/// <summary>Null SessionId sends the topic back to the backlog.</summary>
+public record AssignAssemblyTopicRequest(int? SessionId);
+
+public record MoveAssemblyTopicRequest(string Direction);
+
+/// <summary>
+/// CanEdit and CanDelete are answered by the server rather than re-derived in
+/// the browser: the rules depend on who is asking, on the topic's status and on
+/// whether a ballot has been opened, and a second copy of that in JSX would be
+/// a second copy that can be wrong.
+/// </summary>
+public record AssemblyTopicResponse(
+    int Id,
+    int? SessionId,
+    string? SessionTitle,
+    string Title,
+    string Description,
+    string Status,
+    int ProposedByUserId,
+    string ProposedByUsername,
+    string? ReviewedByUsername,
+    DateTime? ReviewedAt,
+    string? ReviewNote,
+    int DisplayOrder,
+    string VotingStatus,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    bool CanEdit,
+    bool CanDelete
+);
+
+// ---------------------------------------------------------------------------
 // Live payloads (SignalR)
 // ---------------------------------------------------------------------------
 

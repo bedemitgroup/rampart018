@@ -33,6 +33,16 @@ export const ACTION_LABELS = {
   'Assembly.Session.Cancel': 'Otkazao sednicu',
   'Assembly.Session.Delete': 'Obrisao sednicu',
 
+  'Assembly.Topic.Propose': 'Predložio temu',
+  'Assembly.Topic.Update': 'Izmenio temu',
+  'Assembly.Topic.Approve': 'Prihvatio temu',
+  'Assembly.Topic.Reject': 'Odbio temu',
+  'Assembly.Topic.Withdraw': 'Povukao predlog',
+  'Assembly.Topic.Assign': 'Premestio temu',
+  'Assembly.Topic.Delete': 'Obrisao temu',
+  'Assembly.Topic.MoveUp': 'Pomerio tačku gore',
+  'Assembly.Topic.MoveDown': 'Pomerio tačku dole',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',
@@ -47,6 +57,7 @@ export const ENTITY_LABELS = {
   FinanceYear: 'Godina',
   FinanceQuarter: 'Kvartal',
   AssemblySession: 'Sednica skupštine',
+  AssemblyTopic: 'Tačka dnevnog reda',
   User: 'Nalog',
 };
 
@@ -59,6 +70,8 @@ const DESTRUCTIVE = new Set([
   'Finance.Category.Delete',
   'Assembly.Session.Cancel',
   'Assembly.Session.Delete',
+  'Assembly.Topic.Reject',
+  'Assembly.Topic.Delete',
   'User.Deactivate',
 ]);
 

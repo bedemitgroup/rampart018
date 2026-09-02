@@ -27,6 +27,15 @@ public class AssemblyNotifier : IAssemblyNotifier
     public Task SessionChangedAsync(int sessionId, AssemblySessionResponse session) =>
         SendAsync(sessionId, AssemblyHub.Events.SessionChanged, session);
 
+    public Task TopicChangedAsync(int sessionId, AssemblyTopicResponse topic) =>
+        SendAsync(sessionId, AssemblyHub.Events.TopicChanged, topic);
+
+    public Task TopicRemovedAsync(int sessionId, int topicId) =>
+        SendAsync(sessionId, AssemblyHub.Events.TopicRemoved, topicId);
+
+    public Task AgendaReorderedAsync(int sessionId, IReadOnlyList<AssemblyTopicResponse> agenda) =>
+        SendAsync(sessionId, AssemblyHub.Events.AgendaReordered, agenda);
+
     /// <summary>
     /// Never throws. The caller has already committed; the acting client gets
     /// its answer from the HTTP response either way, and everyone else
