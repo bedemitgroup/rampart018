@@ -319,3 +319,55 @@
     gap: var(--space-5);
   }
 }
+
+/* Year picker — sits where the "Izveštaj za 2025." badge used to, and keeps
+   its shape, so switching years does not shift the header. */
+.finansije-year-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.finansije-year-picker__label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-neutral);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.finansije-year-picker__select {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.finansije-year-picker__select:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+.finansije-empty,
+.finansije-error {
+  color: var(--color-neutral);
+  font-size: var(--font-size-base);
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+.finansije-error {
+  color: var(--color-accent);
+}
+
+.finansije-report__btn--disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}

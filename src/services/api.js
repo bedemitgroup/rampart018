@@ -41,6 +41,27 @@ export const api = {
   updateNews: (id, data) => request(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteNews: (id) => request(`/api/news/${id}`, { method: 'DELETE' }),
   moveNews: (id, direction) => request(`/api/news/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
+  getFinanceOverview: (year) => request(`/api/finance/overview${year ? `?year=${year}` : ''}`),
+  getFinanceCategories: () => request('/api/finance/categories'),
+  createFinanceCategory: (data) => request('/api/finance/categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateFinanceCategory: (id, data) => request(`/api/finance/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteFinanceCategory: (id) => request(`/api/finance/categories/${id}`, { method: 'DELETE' }),
+  moveFinanceCategory: (id, direction) => request(`/api/finance/categories/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
+  getFinanceEntries: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.year) params.set('year', filters.year);
+    if (filters.type) params.set('type', filters.type);
+    if (filters.categoryId) params.set('categoryId', filters.categoryId);
+    const query = params.toString();
+    return request(`/api/finance/entries${query ? `?${query}` : ''}`);
+  },
+  getFinanceEntry: (id) => request(`/api/finance/entries/${id}`),
+  createFinanceEntry: (data) => request('/api/finance/entries', { method: 'POST', body: JSON.stringify(data) }),
+  updateFinanceEntry: (id, data) => request(`/api/finance/entries/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteFinanceEntry: (id) => request(`/api/finance/entries/${id}`, { method: 'DELETE' }),
+  getFinanceYears: () => request('/api/finance/years'),
+  saveFinanceYear: (year, data) => request(`/api/finance/years/${year}`, { method: 'PUT', body: JSON.stringify(data) }),
+  saveFinanceQuarter: (year, quarter, status) => request(`/api/finance/quarters/${year}/${quarter}`, { method: 'PUT', body: JSON.stringify({ status }) }),
   createMembershipApplication: (data) => request('/api/membership-applications', { method: 'POST', body: JSON.stringify(data) }),
   getMembershipApplications: () => request('/api/membership-applications'),
   createProblemReport: (data) => request('/api/problem-reports', { method: 'POST', body: JSON.stringify(data) }),

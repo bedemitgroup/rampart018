@@ -14,6 +14,10 @@ public class AppDbContext : DbContext
     public DbSet<MembershipApplication> MembershipApplications => Set<MembershipApplication>();
     public DbSet<ProblemReport> ProblemReports => Set<ProblemReport>();
     public DbSet<BotSubmission> BotSubmissions => Set<BotSubmission>();
+    public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
+    public DbSet<FinanceEntry> FinanceEntries => Set<FinanceEntry>();
+    public DbSet<FinanceYear> FinanceYears => Set<FinanceYear>();
+    public DbSet<FinanceQuarter> FinanceQuarters => Set<FinanceQuarter>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,6 +85,44 @@ public class AppDbContext : DbContext
             e.HasIndex(b => b.CreatedAt);
             e.HasIndex(b => b.IpAddress);
         });
+
+        // Finance
+        modelBuilder.Entity<FinanceCategory>(e =>
+        {
+            e.HasIndex(c => new { c.Type, c.DisplayOrder });
+        });
+
+        modelBuilder.Entity<FinanceEntry>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+
+            // Restrict on both sides: an entry is a booked figure, so neither
+            // retiring a category nor deleting a user may quietly erase it.
+            e.HasOne(x => x.Category)
+             .WithMany(c => c.Entries)
+             .HasForeignKey(x => x.CategoryId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.Date);
+        });
+
+        modelBuilder.Entity<FinanceYear>(e =>
+        {
+            e.HasIndex(y => y.Year).IsUnique();
+            e.Property(y => y.ReserveFund).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<FinanceQuarter>(e =>
+        {
+            e.HasIndex(q => new { q.Year, q.Quarter }).IsUnique();
+        });
+
+        FinanceSeed.Apply(modelBuilder);
 
         // Seed admin user
         modelBuilder.Entity<User>().HasData(new User

@@ -14,6 +14,10 @@ import AdminNews from './pages/admin/AdminNews';
 import AdminNewsForm from './pages/admin/AdminNewsForm';
 import AdminProblems from './pages/admin/AdminProblems';
 import AdminMemberships from './pages/admin/AdminMemberships';
+import AdminFinance from './pages/admin/AdminFinance';
+import AdminFinanceForm from './pages/admin/AdminFinanceForm';
+import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
+import AdminFinanceYears from './pages/admin/AdminFinanceYears';
 
 export default function App() {
   return (
@@ -36,6 +40,11 @@ export default function App() {
   <Route path="memberships" element={<AdminMemberships />} />
   <Route path="news/new" element={<AdminNewsForm />} />
   <Route path="news/:id/edit" element={<AdminNewsForm />} />
+  <Route path="finance" element={<AdminFinance />} />
+  <Route path="finance/new" element={<AdminFinanceForm />} />
+  <Route path="finance/:id/edit" element={<AdminFinanceForm />} />
+  <Route path="finance/categories" element={<AdminFinanceCategories />} />
+  <Route path="finance/years" element={<AdminFinanceYears />} />
 </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

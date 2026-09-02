@@ -533,3 +533,170 @@
     width: 100%;
   }
 }
+
+/* --- Finance ------------------------------------------------------------ */
+
+/* Sub-navigation for the three finance screens, kept under one sidebar entry. */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border, #ddd);
+}
+
+.admin-tabs__link {
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid transparent;
+  color: var(--color-neutral, #666);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-tabs__link:hover {
+  color: var(--color-primary);
+}
+
+.admin-tabs__link--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.admin-finance__amount-cell {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-finance__type {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-finance__type--income {
+  background: rgba(46, 139, 87, 0.12);
+  color: var(--color-accent2);
+}
+
+.admin-finance__type--expense {
+  background: rgba(178, 34, 52, 0.1);
+  color: var(--color-accent);
+}
+
+.admin-finance__color-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-finance__swatch {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.admin-finance__inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.admin-finance__group {
+  margin-bottom: 2rem;
+}
+
+.admin-finance__group-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  color: var(--color-primary);
+}
+
+.admin-finance__new-category,
+.admin-finance__new-year {
+  align-items: end;
+}
+
+.admin-finance__new-year {
+  grid-template-columns: minmax(0, 12rem) auto;
+}
+
+.admin-finance__year {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 12px;
+  background: var(--color-white, #fff);
+}
+
+.admin-finance__year-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-finance__year-totals {
+  font-size: 0.9rem;
+  color: var(--color-neutral, #666);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-finance__year-fields,
+.admin-finance__quarters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.admin-finance__year-field--wide {
+  grid-column: span 2;
+}
+
+.admin-finance__year-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-finance__saved {
+  color: var(--color-accent2);
+  font-weight: 600;
+}
+
+/* Shared form helpers. The admin forms used these before they had rules of
+   their own — they were only ever defined on the public form pages. */
+.admin__content .required-star {
+  color: var(--color-accent);
+}
+
+.admin__content .form-optional,
+.admin__content .form-hint {
+  color: var(--color-neutral, #666);
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+.admin__content .form-hint {
+  margin: 0.35rem 0 0;
+}
+
+@media (max-width: 900px) {
+  .admin-finance__year-fields,
+  .admin-finance__quarters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-finance__year-field--wide {
+    grid-column: span 2;
+  }
+}

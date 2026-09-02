@@ -27,6 +27,14 @@ export default function AdminLayout() {
               </li>
               <li>
                 <NavLink
+                  to="/admin/finance"
+                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+                >
+                  Finansije
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/admin/problems"
                   className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
                 >
