@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS, ROLES, canManageNews } from '../../constants/roles';
+import ReadOnlyNotice from './ReadOnlyNotice';
 
 function formatDate(isoString) {
   const d = new Date(isoString);
@@ -9,6 +12,9 @@ function formatDate(isoString) {
 }
 
 export default function AdminNews() {
+  const { user } = useAuth();
+  const canEdit = canManageNews(user);
+
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,8 +61,10 @@ export default function AdminNews() {
     <div className="admin-news">
       <div className="admin-news__header">
         <h1 className="admin__title">Vesti</h1>
-        <Link to="/admin/news/new" className="btn btn--primary">+ Nova vest</Link>
+        {canEdit && <Link to="/admin/news/new" className="btn btn--primary">+ Nova vest</Link>}
       </div>
+
+      {!canEdit && <ReadOnlyNotice owner={ROLE_LABELS[ROLES.MODERATOR]} />}
 
       {deleteError && <p className="admin-news__error">{deleteError}</p>}
       {moveError && <p className="admin-news__error">{moveError}</p>}
@@ -64,25 +72,28 @@ export default function AdminNews() {
       {error && <p className="admin-news__error">{error}</p>}
 
       {!loading && !error && news.length === 0 && (
-        <p className="admin-news__empty">Još nema vesti. Dodajte prvu.</p>
+        <p className="admin-news__empty">
+          {canEdit ? 'Još nema vesti. Dodajte prvu.' : 'Još nema vesti.'}
+        </p>
       )}
 
       {!loading && !error && news.length > 0 && (
         <table className="admin-news__table">
           <thead>
             <tr>
-              <th></th>
+              {canEdit && <th></th>}
               <th>Naslov</th>
               <th>Kategorija</th>
               <th>Autor</th>
               <th>Datum</th>
               <th>Status</th>
-              <th></th>
+              {canEdit && <th></th>}
             </tr>
           </thead>
           <tbody>
             {news.map((n, index) => (
               <tr key={n.id}>
+                {canEdit && (
                 <td className="admin-news__move-cell">
                   <button
                     className="admin-news__move-btn"
@@ -103,6 +114,7 @@ export default function AdminNews() {
                     ↓
                   </button>
                 </td>
+                )}
                 <td className="admin-news__title-cell">{n.title}</td>
                 <td>{n.category}</td>
                 <td>{n.authorName}</td>
@@ -112,6 +124,7 @@ export default function AdminNews() {
                     {n.isPublished ? 'Objavljeno' : 'Nacrt'}
                   </span>
                 </td>
+                {canEdit && (
                 <td>
                   <span className="admin-news__actions">
                     <Link to={`/admin/news/${n.id}/edit`} className="admin-news__action-btn">Izmeni</Link>
@@ -123,6 +136,7 @@ export default function AdminNews() {
                     </button>
                   </span>
                 </td>
+                )}
               </tr>
             ))}
           </tbody>

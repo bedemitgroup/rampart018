@@ -1,4 +1,5 @@
 using BedemApi.Data;
+using BedemApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ namespace BedemApi.Controllers;
 
 [ApiController]
 [Route("api/bot-submissions")]
-[Authorize(Roles = "Admin,Moderator")]
+[Authorize(Roles = Roles.ManageSubmissions)]
 public class BotSubmissionsController : ControllerBase
 {
     private const int DefaultTake = 100;

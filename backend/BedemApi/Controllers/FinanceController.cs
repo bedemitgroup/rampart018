@@ -23,8 +23,9 @@ public class FinanceController : ControllerBase
         _audit = audit;
     }
 
-    private bool IsModerator => User.Identity?.IsAuthenticated == true &&
-        (User.IsInRole("Moderator") || User.IsInRole("Admin"));
+    // Held-back years and retired categories are part of "what is going on",
+    // so every panel viewer sees them; only Finansije and Admin may change them.
+    private bool CanSeeUnpublished => User.IsIn(Roles.ViewPanel);
 
     // -----------------------------------------------------------------------
     // Public
@@ -47,7 +48,7 @@ public class FinanceController : ControllerBase
 
         // A year without a FinanceYear row is visible by default; a row is what
         // lets an admin hold a year back, the way IsPublished does for news.
-        var hiddenYears = IsModerator
+        var hiddenYears = CanSeeUnpublished
             ? new HashSet<int>()
             : yearRows.Where(y => !y.IsPublished).Select(y => y.Year).ToHashSet();
 
@@ -118,7 +119,7 @@ public class FinanceController : ControllerBase
     {
         var query = _db.FinanceCategories.AsNoTracking().AsQueryable();
 
-        if (!IsModerator)
+        if (!CanSeeUnpublished)
             query = query.Where(c => c.IsActive);
 
         var categories = await query
@@ -131,7 +132,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Create a category.</summary>
     [HttpPost("categories")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(FinanceCategoryResponse), 201)]
     [ProducesResponseType(400)]
@@ -172,7 +173,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Update a category. The type never changes — entries are already filed under it.</summary>
     [HttpPut("categories/{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(FinanceCategoryResponse), 200)]
     [ProducesResponseType(400)]
@@ -204,7 +205,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Delete a category. Refused while entries are filed under it.</summary>
     [HttpDelete("categories/{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -231,7 +232,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Move a category up or down within its own type. Returns the full reordered list.</summary>
     [HttpPut("categories/{id}/move")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(IEnumerable<FinanceCategoryResponse>), 200)]
     [ProducesResponseType(400)]
@@ -289,7 +290,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>List entries, newest first. Admin-only: the public page shows aggregates.</summary>
     [HttpGet("entries")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ViewPanel)]
     [ProducesResponseType(typeof(IEnumerable<FinanceEntryResponse>), 200)]
     public async Task<IActionResult> GetEntries(
         [FromQuery] int? year,
@@ -317,7 +318,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Get a single entry.</summary>
     [HttpGet("entries/{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ViewPanel)]
     [ProducesResponseType(typeof(FinanceEntryResponse), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetEntry(int id)
@@ -334,7 +335,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Book a new income or expense entry.</summary>
     [HttpPost("entries")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(FinanceEntryResponse), 201)]
     [ProducesResponseType(400)]
@@ -367,7 +368,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Update an entry.</summary>
     [HttpPut("entries/{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(FinanceEntryResponse), 200)]
     [ProducesResponseType(400)]
@@ -400,7 +401,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Delete an entry.</summary>
     [HttpDelete("entries/{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -427,7 +428,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>List every year that has a row or any entries, with its totals and quarter statuses.</summary>
     [HttpGet("years")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ViewPanel)]
     [ProducesResponseType(typeof(IEnumerable<FinanceYearResponse>), 200)]
     public async Task<IActionResult> GetYears()
     {
@@ -462,7 +463,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Create or update the per-year figures that entries cannot supply.</summary>
     [HttpPut("years/{year}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -502,7 +503,7 @@ public class FinanceController : ControllerBase
 
     /// <summary>Set the approval status of one quarter.</summary>
     [HttpPut("quarters/{year}/{quarter}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageFinance)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

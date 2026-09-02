@@ -1,5 +1,6 @@
 using BedemApi.Data;
 using BedemApi.DTOs;
+using BedemApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,7 @@ namespace BedemApi.Controllers;
 /// </remarks>
 [ApiController]
 [Route("api/audit-logs")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Roles.ManageUsers)]
 public class AuditLogsController : ControllerBase
 {
     private const int DefaultPageSize = 25;

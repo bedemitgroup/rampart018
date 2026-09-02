@@ -207,7 +207,7 @@ public class MembershipApplicationsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Moderator")]
+    [Authorize(Roles = Roles.ViewPanel)]
     public async Task<IActionResult> GetAll()
     {
         var applications = await _db.MembershipApplications
@@ -218,7 +218,7 @@ public class MembershipApplicationsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,Moderator")]
+    [Authorize(Roles = Roles.ViewPanel)]
     public async Task<IActionResult> GetById(int id)
     {
         var application = await _db.MembershipApplications

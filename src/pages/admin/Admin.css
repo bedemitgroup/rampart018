@@ -14,6 +14,14 @@
   font-size: var(--font-size-lg);
   font-weight: 800;
   color: var(--color-primary);
+  margin-bottom: var(--space-1);
+}
+
+/* Which role this panel is showing, so a Moderator is not puzzled by a shorter
+   sidebar than the one his admin described to him. */
+.admin__sidebar-role {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
   margin-bottom: var(--space-4);
 }
 
@@ -701,7 +709,19 @@
   }
 }
 
-/* Moderators */
+/* Read-only sections */
+
+.admin__readonly {
+  border-left: 4px solid var(--color-neutral);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+/* Accounts and roles */
 
 .admin-moderators__form {
   background: var(--color-bg);
@@ -772,11 +792,56 @@
   flex-wrap: wrap;
 }
 
+.admin-moderators__role-hint {
+  color: var(--color-neutral);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-2);
+}
+
+.admin-moderators__list-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
 .admin-moderators__list-title {
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-primary);
-  margin-bottom: var(--space-3);
+  margin: 0;
+}
+
+.admin-moderators__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-moderators__filter .form-label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.admin-moderators__filter .form-input {
+  width: auto;
+}
+
+/* The role select and the deactivate button make this table wider than the
+   others, so it scrolls on its own instead of pushing the page sideways. */
+.admin-moderators__table-scroll {
+  overflow-x: auto;
+}
+
+/* Narrow enough that the role select does not stretch the row further. */
+.admin-moderators__role-select {
+  width: auto;
+  min-width: 9rem;
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
 }
 
 /* Audit log */

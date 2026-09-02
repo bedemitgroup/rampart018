@@ -18,8 +18,17 @@ import AdminFinance from './pages/admin/AdminFinance';
 import AdminFinanceForm from './pages/admin/AdminFinanceForm';
 import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
 import AdminFinanceYears from './pages/admin/AdminFinanceYears';
-import AdminModerators from './pages/admin/AdminModerators';
+import AdminUsers from './pages/admin/AdminUsers';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
+import RequirePermission from './pages/admin/RequirePermission';
+import {
+  adminLandingPath,
+  canAccessAdmin,
+  canManageFinance,
+  canManageNews,
+  canManageUsers,
+} from './constants/roles';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
   return (
@@ -35,21 +44,35 @@ export default function App() {
           <Route path="/problem" element={<Problem />} />
           <Route path="/pridruzi-se" element={<PridruziSe />} />
           <Route path="/vest/:slug" element={<Vest />} />
-         <Route path="/admin" element={<AdminLayout />}>
-  <Route index element={<Navigate to="news" replace />} />
-  <Route path="news" element={<AdminNews />} />
-  <Route path="problems" element={<AdminProblems />} />
-  <Route path="memberships" element={<AdminMemberships />} />
-  <Route path="news/new" element={<AdminNewsForm />} />
-  <Route path="news/:id/edit" element={<AdminNewsForm />} />
-  <Route path="finance" element={<AdminFinance />} />
-  <Route path="finance/new" element={<AdminFinanceForm />} />
-  <Route path="finance/:id/edit" element={<AdminFinanceForm />} />
-  <Route path="finance/categories" element={<AdminFinanceCategories />} />
-  <Route path="finance/years" element={<AdminFinanceYears />} />
-  <Route path="moderators" element={<AdminModerators />} />
-  <Route path="audit" element={<AdminAuditLog />} />
-</Route>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminIndex />} />
+
+            {/* Lists are readable by the whole membership; the forms behind
+                them write, so those keep the stricter guard. */}
+            <Route element={<RequirePermission allow={canAccessAdmin} />}>
+              <Route path="news" element={<AdminNews />} />
+              <Route path="finance" element={<AdminFinance />} />
+              <Route path="finance/categories" element={<AdminFinanceCategories />} />
+              <Route path="finance/years" element={<AdminFinanceYears />} />
+              <Route path="problems" element={<AdminProblems />} />
+              <Route path="memberships" element={<AdminMemberships />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageNews} />}>
+              <Route path="news/new" element={<AdminNewsForm />} />
+              <Route path="news/:id/edit" element={<AdminNewsForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageFinance} />}>
+              <Route path="finance/new" element={<AdminFinanceForm />} />
+              <Route path="finance/:id/edit" element={<AdminFinanceForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageUsers} />}>
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="audit" element={<AdminAuditLog />} />
+            </Route>
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -57,6 +80,14 @@ export default function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+// /admin has no page of its own: it drops you into the first section your role
+// actually administers, which is not the same one for a Moderator and for
+// Finansije.
+function AdminIndex() {
+  const { user } = useAuth();
+  return <Navigate to={adminLandingPath(user)} replace />;
 }
 
 function NotFound() {

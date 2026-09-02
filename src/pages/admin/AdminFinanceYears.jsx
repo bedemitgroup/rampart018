@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import AdminFinanceTabs from './AdminFinanceTabs';
 import { formatAmount, QUARTER_STATUSES } from './financeFormat';
+import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS, ROLES, canManageFinance } from '../../constants/roles';
+import ReadOnlyNotice from './ReadOnlyNotice';
 
 const QUARTER_MONTHS = ['jan–mar', 'apr–jun', 'jul–sep', 'okt–dec'];
 
 export default function AdminFinanceYears() {
+  const { user } = useAuth();
+  const canEdit = canManageFinance(user);
+
   const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -96,8 +102,11 @@ export default function AdminFinanceYears() {
         <h1 className="admin__title">Finansije</h1>
       </div>
 
+      {!canEdit && <ReadOnlyNotice owner={ROLE_LABELS[ROLES.FINANCE]} />}
+
       <AdminFinanceTabs />
 
+      {canEdit && (
       <form onSubmit={handleAddYear} className="admin-filters admin-finance__new-year">
         <div className="admin-filters__group">
           <label className="admin-filters__label" htmlFor="new-year">Dodaj godinu</label>
@@ -116,13 +125,16 @@ export default function AdminFinanceYears() {
           <button className="btn btn--primary" type="submit">+ Dodaj godinu</button>
         </div>
       </form>
+      )}
 
       {actionError && <p className="admin-news__error">{actionError}</p>}
       {loading && <p className="admin-news__loading">Učitavanje...</p>}
       {error && <p className="admin-news__error">{error}</p>}
 
       {!loading && !error && years.length === 0 && (
-        <p className="admin-news__empty">Još nema nijedne godine. Dodajte prvu.</p>
+        <p className="admin-news__empty">
+          {canEdit ? 'Još nema nijedne godine. Dodajte prvu.' : 'Još nema nijedne godine.'}
+        </p>
       )}
 
       {!loading && !error && years.map(entry => (
@@ -149,6 +161,7 @@ export default function AdminFinanceYears() {
                 type="number"
                 min="0"
                 value={entry.memberCount}
+                disabled={!canEdit}
                 onChange={e => updateYear(entry.year, { memberCount: e.target.value })}
               />
             </div>
@@ -162,6 +175,7 @@ export default function AdminFinanceYears() {
                 min="0"
                 step="0.01"
                 value={entry.reserveFund}
+                disabled={!canEdit}
                 onChange={e => updateYear(entry.year, { reserveFund: e.target.value })}
               />
             </div>
@@ -176,6 +190,7 @@ export default function AdminFinanceYears() {
                 type="url"
                 placeholder="https://..."
                 value={entry.reportUrl ?? ''}
+                disabled={!canEdit}
                 onChange={e => updateYear(entry.year, { reportUrl: e.target.value })}
               />
             </div>
@@ -191,6 +206,7 @@ export default function AdminFinanceYears() {
                   id={`q-${entry.year}-${q.quarter}`}
                   className="form-input"
                   value={q.status}
+                  disabled={!canEdit}
                   onChange={e => handleQuarterChange(entry.year, q.quarter, e.target.value)}
                 >
                   {QUARTER_STATUSES.map(status => (
@@ -206,11 +222,13 @@ export default function AdminFinanceYears() {
               <input
                 type="checkbox"
                 checked={entry.isPublished}
+                disabled={!canEdit}
                 onChange={e => updateYear(entry.year, { isPublished: e.target.checked })}
               />
               Objavljeno (vidljivo na stranici Finansije)
             </label>
 
+            {canEdit && (
             <button
               className="btn btn--primary"
               type="button"
@@ -219,6 +237,7 @@ export default function AdminFinanceYears() {
             >
               {savingYear === entry.year ? 'Čuvanje...' : 'Sačuvaj godinu'}
             </button>
+            )}
 
             {savedYear === entry.year && (
               <span className="admin-finance__saved">Sačuvano ✓</span>

@@ -34,7 +34,7 @@ public class CommentsController : ControllerBase
         if (User.Identity?.IsAuthenticated == true)
         {
             currentUserId = int.Parse(User.FindFirstValue("userId")!);
-            isModerator = User.IsInRole("Moderator") || User.IsInRole("Admin");
+            isModerator = User.IsIn(Roles.ManageComments);
         }
 
         var query = _db.Comments
@@ -71,9 +71,13 @@ public class CommentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Create a new comment on an article. Auto-approved for Moderators and Admins.</summary>
+    /// <summary>
+    /// Create a new comment on an article. Open to every signed-in account,
+    /// Visitors included — talking is the one thing a fresh account may do.
+    /// Auto-approved for whoever moderates comments.
+    /// </summary>
     [HttpPost]
-    [Authorize(Roles = "User,Moderator,Admin")]
+    [Authorize]
     [EnableRateLimiting(RateLimitPolicies.Comments)]
     [ProducesResponseType(typeof(CommentResponse), 201)]
     [ProducesResponseType(400)]
@@ -108,8 +112,7 @@ public class CommentsController : ControllerBase
             return BadRequest(new { message = "VestSlug and Content are required." });
 
         var userId = int.Parse(User.FindFirstValue("userId")!);
-        var role = User.FindFirstValue(ClaimTypes.Role)!;
-        var isAutoApproved = role == "Moderator" || role == "Admin";
+        var isAutoApproved = User.IsIn(Roles.ManageComments);
 
         var comment = new Comment
         {
@@ -133,7 +136,7 @@ public class CommentsController : ControllerBase
 
     /// <summary>Approve a pending comment.</summary>
     [HttpPut("{id}/approve")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageComments)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -149,7 +152,7 @@ public class CommentsController : ControllerBase
 
     /// <summary>Soft-delete a comment.</summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageComments)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]

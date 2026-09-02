@@ -26,9 +26,11 @@ export const ACTION_LABELS = {
   'Finance.Year.Save': 'Sačuvao godinu',
   'Finance.Quarter.SetStatus': 'Promenio status kvartala',
 
+  'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',
   'User.Deactivate': 'Deaktivirao nalog',
+  'User.Activate': 'Aktivirao nalog',
 };
 
 export const ENTITY_LABELS = {

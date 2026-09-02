@@ -4,12 +4,18 @@ import { api } from '../../services/api';
 import Pagination from '../../components/admin/Pagination';
 import AdminFinanceTabs from './AdminFinanceTabs';
 import { formatAmount, formatDate, TYPE_LABELS } from './financeFormat';
+import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS, ROLES, canManageFinance } from '../../constants/roles';
+import ReadOnlyNotice from './ReadOnlyNotice';
 
 const PAGE_SIZE = 20;
 
 const initialFilters = { year: '', type: '', categoryId: '' };
 
 export default function AdminFinance() {
+  const { user } = useAuth();
+  const canEdit = canManageFinance(user);
+
   const [entries, setEntries] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
@@ -84,8 +90,10 @@ export default function AdminFinance() {
     <div className="admin-news">
       <div className="admin-news__header">
         <h1 className="admin__title">Finansije</h1>
-        <Link to="/admin/finance/new" className="btn btn--primary">+ Nova stavka</Link>
+        {canEdit && <Link to="/admin/finance/new" className="btn btn--primary">+ Nova stavka</Link>}
       </div>
+
+      {!canEdit && <ReadOnlyNotice owner={ROLE_LABELS[ROLES.FINANCE]} />}
 
       <AdminFinanceTabs />
 
@@ -169,7 +177,7 @@ export default function AdminFinance() {
                 <th>Kategorija</th>
                 <th>Tip</th>
                 <th className="admin-finance__amount-cell">Iznos (RSD)</th>
-                <th></th>
+                {canEdit && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -184,17 +192,19 @@ export default function AdminFinance() {
                     </span>
                   </td>
                   <td className="admin-finance__amount-cell">{formatAmount(entry.amount)}</td>
-                  <td>
-                    <span className="admin-news__actions">
-                      <Link to={`/admin/finance/${entry.id}/edit`} className="admin-news__action-btn">Izmeni</Link>
-                      <button
-                        className="admin-news__action-btn admin-news__action-btn--delete"
-                        onClick={() => handleDelete(entry)}
-                      >
-                        Obriši
-                      </button>
-                    </span>
-                  </td>
+                  {canEdit && (
+                    <td>
+                      <span className="admin-news__actions">
+                        <Link to={`/admin/finance/${entry.id}/edit`} className="admin-news__action-btn">Izmeni</Link>
+                        <button
+                          className="admin-news__action-btn admin-news__action-btn--delete"
+                          onClick={() => handleDelete(entry)}
+                        >
+                          Obriši
+                        </button>
+                      </span>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

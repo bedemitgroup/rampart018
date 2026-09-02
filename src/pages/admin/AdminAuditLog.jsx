@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import Pagination from '../../components/admin/Pagination';
 import ExportPdfModal from '../../components/admin/ExportPdfModal';
 import { actionLabel, actionTone, entityLabel } from './auditLabels';
+import { roleLabel } from '../../constants/roles';
 
 const PAGE_SIZE = 25;
 
@@ -326,7 +327,7 @@ export default function AdminAuditLog() {
               <tr key={entry.id}>
                 <td>{formatDate(entry.createdAt)}</td>
                 <td className="admin-news__title-cell">{entry.actorUsername}</td>
-                <td>{entry.actorRole}</td>
+                <td>{roleLabel(entry.actorRole)}</td>
                 <td>
                   <span
                     className={`admin-audit__action admin-audit__action--${actionTone(entry.action)}`}
@@ -359,7 +360,7 @@ export default function AdminAuditLog() {
         columns={[
           { label: 'Vreme', value: (entry) => formatDate(entry.createdAt) },
           { label: 'Korisnik', value: (entry) => entry.actorUsername },
-          { label: 'Rola', value: (entry) => entry.actorRole },
+          { label: 'Rola', value: (entry) => roleLabel(entry.actorRole) },
           { label: 'Akcija', value: (entry) => actionLabel(entry.action) },
           { label: 'Oblast', value: (entry) => entityLabel(entry.entityType) },
           { label: 'Objekat', value: (entry) => entry.entityLabel || '—' },

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { canManageComments } from '../constants/roles';
 import AuthModal from './AuthModal';
 import HoneypotField, { HONEYPOT_NAME } from './HoneypotField';
 import './Comments.css';
@@ -28,7 +29,7 @@ export default function Comments({ vestSlug }) {
   const [showAuth, setShowAuth] = useState(false);
   const [actionError, setActionError] = useState('');
 
-  const isMod = user && (user.role === 'Moderator' || user.role === 'Admin');
+  const isMod = canManageComments(user);
 
   useEffect(() => { loadComments(); }, [vestSlug]);
 

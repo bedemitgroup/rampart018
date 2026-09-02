@@ -34,9 +34,16 @@ public static class AuditActions
     public const string FinanceQuarterSetStatus = "Finance.Quarter.SetStatus";
 
     // Accounts
+    public const string UserCreateAccount = "User.CreateAccount";
+
+    /// <summary>
+    /// Superseded by <see cref="UserCreateAccount"/> once accounts could be
+    /// created with any staff role. Kept so old rows still render a label.
+    /// </summary>
     public const string UserCreateModerator = "User.CreateModerator";
     public const string UserChangeRole = "User.ChangeRole";
     public const string UserDeactivate = "User.Deactivate";
+    public const string UserActivate = "User.Activate";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
@@ -46,7 +53,8 @@ public static class AuditActions
         FinanceCategoryCreate, FinanceCategoryUpdate, FinanceCategoryDelete,
         FinanceCategoryMoveUp, FinanceCategoryMoveDown,
         FinanceYearSave, FinanceQuarterSetStatus,
-        UserCreateModerator, UserChangeRole, UserDeactivate
+        UserCreateAccount, UserCreateModerator, UserChangeRole,
+        UserDeactivate, UserActivate
     };
 }
 

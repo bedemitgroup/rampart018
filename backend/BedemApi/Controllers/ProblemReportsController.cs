@@ -224,7 +224,7 @@ public class ProblemReportsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Moderator")]
+    [Authorize(Roles = Roles.ViewPanel)]
     public async Task<IActionResult> GetAll()
     {
         var reports = await _db.ProblemReports
@@ -235,7 +235,7 @@ public class ProblemReportsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,Moderator")]
+    [Authorize(Roles = Roles.ViewPanel)]
     public async Task<IActionResult> GetById(int id)
     {
         var report = await _db.ProblemReports

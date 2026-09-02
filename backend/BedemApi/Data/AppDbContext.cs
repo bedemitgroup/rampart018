@@ -29,7 +29,7 @@ public class AppDbContext : DbContext
         {
             e.HasIndex(u => u.Email).IsUnique();
             e.HasIndex(u => u.Username).IsUnique();
-            e.Property(u => u.Role).HasDefaultValue("User");
+            e.Property(u => u.Role).HasDefaultValue(Roles.Visitor);
         });
 
         // Comment -> User
@@ -141,7 +141,7 @@ public class AppDbContext : DbContext
             Username = "admin",
             Email = "admin@bedem.rs",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-            Role = "Admin",
+            Role = Roles.Admin,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             IsActive = true
         });

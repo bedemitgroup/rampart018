@@ -1,74 +1,46 @@
 import { Navigate, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { canAccessAdmin, canManageUsers, roleLabel } from '../../constants/roles';
 import './Admin.css';
+
+// Everyone the organisation admitted reads the whole panel; each page decides
+// on its own whether to draw buttons. The last two are the exception: they are
+// about oversight of the staff itself, so they stay with the Admin.
+const sections = [
+  { to: '/admin/news', label: 'Vesti', allow: canAccessAdmin },
+  { to: '/admin/finance', label: 'Finansije', allow: canAccessAdmin },
+  { to: '/admin/problems', label: 'Prijave problema', allow: canAccessAdmin },
+  { to: '/admin/memberships', label: 'Zahtevi za članstvo', allow: canAccessAdmin },
+  { to: '/admin/users', label: 'Nalozi i role', allow: canManageUsers },
+  { to: '/admin/audit', label: 'Dnevnik izmena', allow: canManageUsers },
+];
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();
 
   if (loading) return null;
+  if (!canAccessAdmin(user)) return <Navigate to="/" replace />;
 
-  const isModOrAdmin = user && (user.role === 'Admin' || user.role === 'Moderator');
-  if (!isModOrAdmin) return <Navigate to="/" replace />;
+  const visible = sections.filter(({ allow }) => allow(user));
 
   return (
     <div className="admin">
       <div className="container admin__inner">
         <aside className="admin__sidebar">
           <div className="admin__sidebar-title">Admin panel</div>
+          <div className="admin__sidebar-role">{roleLabel(user.role)}</div>
           <nav aria-label="Admin navigacija">
             <ul className="admin__nav">
-              <li>
-                <NavLink
-                  to="/admin/news"
-                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
-                >
-                  Vesti
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/finance"
-                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
-                >
-                  Finansije
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/problems"
-                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
-                >
-                  Prijave problema
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/memberships"
-                  className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
-                >
-                  Zahtevi za članstvo
-                </NavLink>
-              </li>
-              {user.role === 'Admin' && (
-                <li>
+              {visible.map(({ to, label }) => (
+                <li key={to}>
                   <NavLink
-                    to="/admin/moderators"
+                    to={to}
                     className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
                   >
-                    Moderatori
+                    {label}
                   </NavLink>
                 </li>
-              )}
-              {user.role === 'Admin' && (
-                <li>
-                  <NavLink
-                    to="/admin/audit"
-                    className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
-                  >
-                    Dnevnik izmena
-                  </NavLink>
-                </li>
-              )}
+              ))}
             </ul>
           </nav>
         </aside>

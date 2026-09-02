@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
                 decoyToken,
                 request.Username ?? string.Empty,
                 request.Email ?? string.Empty,
-                "User",
+                Roles.Visitor,
                 DateTime.UtcNow.AddDays(7)));
         }
 
@@ -75,7 +75,9 @@ public class AuthController : ControllerBase
             Username = request.Username,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "User"
+            // Registering is not membership: a fresh account may comment and
+            // like, nothing more. An admin promotes it to Member by hand.
+            Role = Roles.Visitor
         };
 
         _db.Users.Add(user);

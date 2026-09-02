@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BedemApi.Data;
 using BedemApi.Models;
 using BedemApi.Services;
@@ -10,10 +11,10 @@ namespace BedemApi.Controllers;
 
 [ApiController]
 [Route("api/users")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Roles.ManageUsers)]
 public class UsersController : ControllerBase
 {
-    private const int MinModeratorPasswordLength = 8;
+    private const int MinStaffPasswordLength = 8;
 
     private readonly AppDbContext _db;
     private readonly IAuditLogger _audit;
@@ -38,28 +39,38 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Create a moderator account outright. There is no invite flow — the admin
-    /// picks the credentials here and hands them over in person, so the password
-    /// is never mailed, stored in the clear, or echoed back by the API.
+    /// Create an account outright with the role it is meant to hold. There is no
+    /// invite flow — the admin picks the credentials here and hands them over in
+    /// person, so the password is never mailed, stored in the clear, or echoed
+    /// back by the API.
     /// </summary>
-    [HttpPost("moderators")]
+    [HttpPost("staff")]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(409)]
     [ProducesResponseType(429)]
-    public async Task<IActionResult> CreateModerator([FromBody] CreateModeratorRequest request)
+    public async Task<IActionResult> CreateStaffAccount([FromBody] CreateStaffAccountRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) ||
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "All fields are required." });
 
-        // Stricter than public registration on purpose: this account moderates.
-        if (request.Password.Length < MinModeratorPasswordLength)
+        // Admin is missing from Creatable on purpose: a second admin is made by
+        // creating a lesser account and promoting it, so the promotion shows up
+        // in the audit log as its own step.
+        if (!Roles.Creatable.Contains(request.Role))
             return BadRequest(new
             {
-                message = $"Password must be at least {MinModeratorPasswordLength} characters."
+                message = $"Invalid role. Valid values: {string.Join(", ", Roles.Creatable)}."
+            });
+
+        // Stricter than public registration on purpose: this account administers.
+        if (request.Password.Length < MinStaffPasswordLength)
+            return BadRequest(new
+            {
+                message = $"Password must be at least {MinStaffPasswordLength} characters."
             });
 
         if (await _db.Users.AnyAsync(u => u.Email == request.Email))
@@ -73,25 +84,24 @@ public class UsersController : ControllerBase
             Username = request.Username,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            // Hardcoded, not taken from the request. Promoting someone to Admin
-            // stays a separate, deliberate step through ChangeRole below.
-            Role = "Moderator",
+            Role = request.Role,
             IsActive = true
         };
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
+        // The role is half of what was created, so it rides in the label.
         await _audit.RecordAsync(
-            AuditActions.UserCreateModerator, AuditEntityTypes.User,
-            user.Id.ToString(), user.Username);
+            AuditActions.UserCreateAccount, AuditEntityTypes.User,
+            user.Id.ToString(), $"{user.Username} ({user.Role})");
 
         return Created(
             $"/api/users/{user.Id}",
             new { user.Id, user.Username, user.Email, user.Role, user.IsActive, user.CreatedAt });
     }
 
-    /// <summary>Change a user's role. Valid roles: Admin, Moderator, User.</summary>
+    /// <summary>Change a user's role. Valid roles: see <see cref="Roles.All"/>.</summary>
     [HttpPut("{id}/role")]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
@@ -99,12 +109,20 @@ public class UsersController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> ChangeRole(int id, [FromBody] ChangeRoleRequest request)
     {
-        var validRoles = new[] { "Admin", "Moderator", "User" };
-        if (!validRoles.Contains(request.Role))
-            return BadRequest(new { message = "Invalid role. Valid values: Admin, Moderator, User." });
+        if (!Roles.IsKnown(request.Role))
+            return BadRequest(new
+            {
+                message = $"Invalid role. Valid values: {string.Join(", ", Roles.All)}."
+            });
 
         var user = await _db.Users.FindAsync(id);
         if (user == null) return NotFound();
+
+        // Locking yourself out of the admin panel by demoting your own account
+        // would leave the site with no way back in short of a database edit.
+        var actorId = int.Parse(User.FindFirstValue("userId")!);
+        if (user.Id == actorId && request.Role != Roles.Admin)
+            return BadRequest(new { message = "You cannot change your own role." });
 
         user.Role = request.Role;
 
@@ -121,11 +139,16 @@ public class UsersController : ControllerBase
     [HttpPut("{id}/deactivate")]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeactivateUser(int id)
     {
         var user = await _db.Users.FindAsync(id);
         if (user == null) return NotFound();
+
+        var actorId = int.Parse(User.FindFirstValue("userId")!);
+        if (user.Id == actorId)
+            return BadRequest(new { message = "You cannot deactivate your own account." });
 
         user.IsActive = false;
 
@@ -136,8 +159,32 @@ public class UsersController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(new { message = "User deactivated." });
     }
+
+    /// <summary>
+    /// Let a deactivated account sign in again. The counterpart of
+    /// <see cref="DeactivateUser"/> — without it, deactivating is a one-way door
+    /// that only a database edit can reopen.
+    /// </summary>
+    [HttpPut("{id}/activate")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ActivateUser(int id)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        user.IsActive = true;
+
+        _audit.Record(
+            AuditActions.UserActivate, AuditEntityTypes.User,
+            user.Id.ToString(), user.Username);
+
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "User activated." });
+    }
 }
 
 public record ChangeRoleRequest(string Role);
 
-public record CreateModeratorRequest(string Username, string Email, string Password);
+public record CreateStaffAccountRequest(string Username, string Email, string Password, string Role);

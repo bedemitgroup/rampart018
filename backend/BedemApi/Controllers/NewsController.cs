@@ -24,17 +24,18 @@ public class NewsController : ControllerBase
         _audit = audit;
     }
 
-    private bool IsModerator => User.Identity?.IsAuthenticated == true &&
-        (User.IsInRole("Moderator") || User.IsInRole("Admin"));
+    // Reading the panel and writing in it are two different permissions: a
+    // Finansije account sees the drafts, it just gets no buttons for them.
+    private bool CanSeeDrafts => User.IsIn(Roles.ViewPanel);
 
-    /// <summary>List news. Moderators/Admins also see unpublished drafts.</summary>
+    /// <summary>List news. Panel viewers also see unpublished drafts.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<NewsListItemResponse>), 200)]
     public async Task<IActionResult> GetAll()
     {
         var query = _db.News.AsQueryable();
 
-        if (!IsModerator)
+        if (!CanSeeDrafts)
             query = query.Where(n => n.IsPublished);
 
         var news = await query.OrderBy(n => n.DisplayOrder).ThenByDescending(n => n.CreatedAt).ToListAsync();
@@ -53,7 +54,7 @@ public class NewsController : ControllerBase
     public async Task<IActionResult> GetBySlug(string slug)
     {
         var n = await _db.News.FirstOrDefaultAsync(x => x.Slug == slug);
-        if (n == null || (!n.IsPublished && !IsModerator)) return NotFound();
+        if (n == null || (!n.IsPublished && !CanSeeDrafts)) return NotFound();
 
         return Ok(new NewsDetailResponse(
             n.Id, n.Slug, n.Title, n.Excerpt, n.Body, n.Category, n.ImageUrl,
@@ -62,7 +63,7 @@ public class NewsController : ControllerBase
 
     /// <summary>Create a new news article.</summary>
     [HttpPost]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageNews)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(NewsDetailResponse), 201)]
     [ProducesResponseType(400)]
@@ -106,7 +107,7 @@ public class NewsController : ControllerBase
 
     /// <summary>Update an existing news article. The slug never changes.</summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageNews)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -154,7 +155,7 @@ public class NewsController : ControllerBase
 
     /// <summary>Delete a news article.</summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageNews)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -173,7 +174,7 @@ public class NewsController : ControllerBase
 
     /// <summary>Move a news article up or down in the display order. Returns the full reordered list.</summary>
     [HttpPut("{id}/move")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageNews)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [ProducesResponseType(typeof(IEnumerable<NewsListItemResponse>), 200)]
     [ProducesResponseType(400)]
@@ -220,7 +221,7 @@ public class NewsController : ControllerBase
 
     /// <summary>Upload an image to attach to a news article. Returns its public URL.</summary>
     [HttpPost("upload-image")]
-    [Authorize(Roles = "Moderator,Admin")]
+    [Authorize(Roles = Roles.ManageNews)]
     [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
     [RequestSizeLimit(5 * 1024 * 1024)]
     [ProducesResponseType(200)]

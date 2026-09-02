@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import AdminFinanceTabs from './AdminFinanceTabs';
 import { COLOR_OPTIONS, TYPE_LABELS } from './financeFormat';
+import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS, ROLES, canManageFinance } from '../../constants/roles';
+import ReadOnlyNotice from './ReadOnlyNotice';
 
 const emptyDraft = { name: '', type: 'Expense', color: 'primary', isActive: true };
 
@@ -23,6 +26,9 @@ function ColorSelect({ id, value, onChange }) {
 }
 
 export default function AdminFinanceCategories() {
+  const { user } = useAuth();
+  const canEdit = canManageFinance(user);
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -122,12 +128,12 @@ export default function AdminFinanceCategories() {
           <table className="admin-news__table">
             <thead>
               <tr>
-                <th></th>
+                {canEdit && <th></th>}
                 <th>Naziv</th>
                 <th>Boja</th>
                 <th>Stavki</th>
                 <th>Status</th>
-                <th></th>
+                {canEdit && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -136,6 +142,7 @@ export default function AdminFinanceCategories() {
 
                 return (
                   <tr key={category.id}>
+                    {canEdit && (
                     <td className="admin-news__move-cell">
                       <button
                         className="admin-news__move-btn"
@@ -156,6 +163,7 @@ export default function AdminFinanceCategories() {
                         ↓
                       </button>
                     </td>
+                    )}
 
                     <td className="admin-news__title-cell">
                       {isEditing ? (
@@ -205,6 +213,7 @@ export default function AdminFinanceCategories() {
                       )}
                     </td>
 
+                    {canEdit && (
                     <td>
                       <span className="admin-news__actions">
                         {isEditing ? (
@@ -241,6 +250,7 @@ export default function AdminFinanceCategories() {
                         )}
                       </span>
                     </td>
+                    )}
                   </tr>
                 );
               })}
@@ -257,8 +267,11 @@ export default function AdminFinanceCategories() {
         <h1 className="admin__title">Finansije</h1>
       </div>
 
+      {!canEdit && <ReadOnlyNotice owner={ROLE_LABELS[ROLES.FINANCE]} />}
+
       <AdminFinanceTabs />
 
+      {canEdit && (
       <form onSubmit={handleCreate} className="admin-filters admin-finance__new-category">
         <div className="admin-filters__group">
           <label className="admin-filters__label" htmlFor="new-category-name">Naziv</label>
@@ -300,6 +313,7 @@ export default function AdminFinanceCategories() {
           </button>
         </div>
       </form>
+      )}
 
       {actionError && <p className="admin-news__error">{actionError}</p>}
       {loading && <p className="admin-news__loading">Učitavanje...</p>}

@@ -12,7 +12,10 @@
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
       "Bash(docker compose *)",
-      "Bash(npx oxlint *)"
+      "Bash(npx oxlint *)",
+      "Bash(python -)",
+      "Bash(cat > *)",
+      "Bash(git mv *)"
     ]
   }
 }

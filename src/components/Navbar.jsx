@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ROLES, roleLabel, canAccessAdmin, adminLandingPath } from '../constants/roles';
 import AuthModal from './AuthModal';
 import './Navbar.css';
 
@@ -69,12 +70,12 @@ export default function Navbar() {
                 <>
                   <span className="navbar__user">
                     <span className="navbar__username">{user.username}</span>
-                    {user.role && user.role !== 'User' && (
-                      <span className="navbar__role-badge">{user.role}</span>
+                    {user.role && user.role !== ROLES.VISITOR && (
+                      <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                     )}
                   </span>
-                  {(user.role === 'Admin' || user.role === 'Moderator') && (
-                    <Link to="/admin/news" className="btn btn--outline navbar__btn">Admin</Link>
+                  {canAccessAdmin(user) && (
+                    <Link to={adminLandingPath(user)} className="btn btn--outline navbar__btn">Admin</Link>
                   )}
                   <button className="btn btn--outline navbar__btn" onClick={logout}>
                     Odjava
@@ -151,12 +152,12 @@ export default function Navbar() {
             <>
               <div className="navbar__drawer-user">
                 <span className="navbar__username">{user.username}</span>
-                {user.role && user.role !== 'User' && (
-                  <span className="navbar__role-badge">{user.role}</span>
+                {user.role && user.role !== ROLES.VISITOR && (
+                  <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                 )}
               </div>
-              {(user.role === 'Admin' || user.role === 'Moderator') && (
-                <Link to="/admin/news" className="btn btn--outline navbar__drawer-btn" onClick={closeMenu}>
+              {canAccessAdmin(user) && (
+                <Link to={adminLandingPath(user)} className="btn btn--outline navbar__drawer-btn" onClick={closeMenu}>
                   Admin
                 </Link>
               )}

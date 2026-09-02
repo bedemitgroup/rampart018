@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import {
+  ALL_ROLES,
+  CREATABLE_ROLES,
+  ROLES,
+  ROLE_DESCRIPTIONS,
+  roleLabel,
+} from '../../constants/roles';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -10,7 +16,15 @@ const MIN_PASSWORD_LENGTH = 8;
 const PASSWORD_ALPHABET = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?#$%';
 const GENERATED_PASSWORD_LENGTH = 14;
 
-const emptyDraft = { username: '', email: '', password: '' };
+const emptyDraft = { username: '', email: '', password: '', role: ROLES.MODERATOR };
+
+// Staff accounts are what an admin opens this page for, so that is the default
+// view; the full list is one select away.
+const FILTERS = [
+  { value: 'staff', label: 'Sa pravima' },
+  { value: 'all', label: 'Svi nalozi' },
+  ...ALL_ROLES.map((role) => ({ value: role, label: roleLabel(role) })),
+];
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -33,10 +47,10 @@ function generatePassword() {
   ).join('');
 }
 
-// The API speaks English. Translate the cases this form can actually produce
+// The API speaks English. Translate the cases this page can actually produce
 // and fall back to the raw message so nothing is swallowed silently.
 function translateError(message) {
-  if (!message) return 'Greška pri kreiranju naloga.';
+  if (!message) return 'Greška pri izmeni naloga.';
 
   if (message.includes('Email already in use')) {
     return 'Nalog sa tim e-mailom već postoji.';
@@ -54,15 +68,28 @@ function translateError(message) {
     return 'Sva polja su obavezna.';
   }
 
+  if (message.includes('Invalid role')) {
+    return 'Ta rola se ne može dodeliti.';
+  }
+
+  if (message.includes('cannot change your own role')) {
+    return 'Ne možeš da menjaš sopstvenu rolu.';
+  }
+
+  if (message.includes('cannot deactivate your own account')) {
+    return 'Ne možeš da deaktiviraš sopstveni nalog.';
+  }
+
   return message;
 }
 
-export default function AdminModerators() {
+export default function AdminUsers() {
   const { user } = useAuth();
 
-  const [staff, setStaff] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filter, setFilter] = useState('staff');
 
   const [draft, setDraft] = useState(emptyDraft);
   const [showPassword, setShowPassword] = useState(false);
@@ -70,26 +97,32 @@ export default function AdminModerators() {
   const [formError, setFormError] = useState('');
   const [copied, setCopied] = useState(false);
 
+  // Which row is mid-request, so only that row's controls go dead.
+  const [busyId, setBusyId] = useState(null);
+  const [rowError, setRowError] = useState('');
+
   // Credentials of the account just created, kept only in this component's
   // state. The password never comes back from the server.
   const [created, setCreated] = useState(null);
 
-  const isAdmin = user?.role === 'Admin';
+  useEffect(() => { load(); }, []);
 
-  useEffect(() => {
-    if (isAdmin) load();
-  }, [isAdmin]);
+  const visible = useMemo(() => {
+    if (filter === 'all') return accounts;
 
-  // AdminLayout lets moderators in; this page is admin-only.
-  if (!isAdmin) return <Navigate to="/admin/news" replace />;
+    if (filter === 'staff') {
+      return accounts.filter((a) => a.role !== ROLES.VISITOR && a.role !== ROLES.MEMBER);
+    }
+
+    return accounts.filter((a) => a.role === filter);
+  }, [accounts, filter]);
 
   async function load() {
     setLoading(true);
     setError('');
 
     try {
-      const users = await api.getUsers();
-      setStaff(users.filter((u) => u.role !== 'User'));
+      setAccounts(await api.getUsers());
     } catch (err) {
       setError(err.message || 'Greška pri učitavanju naloga.');
     } finally {
@@ -105,6 +138,7 @@ export default function AdminModerators() {
       username: draft.username.trim(),
       email: draft.email.trim(),
       password: draft.password,
+      role: draft.role,
     };
 
     if (payload.password.length < MIN_PASSWORD_LENGTH) {
@@ -115,8 +149,13 @@ export default function AdminModerators() {
     setSubmitting(true);
 
     try {
-      await api.createModerator(payload);
-      setCreated({ username: payload.username, email: payload.email, password: payload.password });
+      await api.createStaffAccount(payload);
+      setCreated({
+        username: payload.username,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+      });
       setDraft(emptyDraft);
       setShowPassword(false);
       setCopied(false);
@@ -125,6 +164,52 @@ export default function AdminModerators() {
       setFormError(translateError(err.message));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleRoleChange(account, role) {
+    if (role === account.role) return;
+
+    const question = role === ROLES.ADMIN
+      ? `Dati nalogu "${account.username}" puna administratorska prava?`
+      : `Promeniti rolu naloga "${account.username}" u "${roleLabel(role)}"?`;
+
+    if (!window.confirm(question)) return;
+
+    setBusyId(account.id);
+    setRowError('');
+
+    try {
+      await api.changeUserRole(account.id, role);
+      await load();
+    } catch (err) {
+      setRowError(translateError(err.message));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleToggleActive(account) {
+    const question = account.isActive
+      ? `Deaktivirati nalog "${account.username}"? Neće više moći da se prijavi.`
+      : `Ponovo aktivirati nalog "${account.username}"?`;
+
+    if (!window.confirm(question)) return;
+
+    setBusyId(account.id);
+    setRowError('');
+
+    try {
+      if (account.isActive) {
+        await api.deactivateUser(account.id);
+      } else {
+        await api.activateUser(account.id);
+      }
+      await load();
+    } catch (err) {
+      setRowError(translateError(err.message));
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -150,22 +235,22 @@ export default function AdminModerators() {
   return (
     <div>
       <div className="admin-news__header">
-        <h1 className="admin__title">Moderatori</h1>
+        <h1 className="admin__title">Nalozi i role</h1>
       </div>
 
       <form className="admin-moderators__form" onSubmit={handleSubmit}>
-        <h2 className="admin-moderators__form-title">Dodaj novog moderatora</h2>
+        <h2 className="admin-moderators__form-title">Dodaj novi nalog</h2>
         <p className="admin-moderators__hint">
           Nalog se pravi odmah. Lozinku saopšti korisniku lično — ne šalje se mejlom
           i posle ovog ekrana se više ne može pročitati.
         </p>
 
         <div className="admin-moderators__row">
-          <label className="form-label" htmlFor="moderator-username">
+          <label className="form-label" htmlFor="account-username">
             Korisničko ime
           </label>
           <input
-            id="moderator-username"
+            id="account-username"
             className="form-input"
             type="text"
             value={draft.username}
@@ -177,11 +262,11 @@ export default function AdminModerators() {
         </div>
 
         <div className="admin-moderators__row">
-          <label className="form-label" htmlFor="moderator-email">
+          <label className="form-label" htmlFor="account-email">
             E-mail
           </label>
           <input
-            id="moderator-email"
+            id="account-email"
             className="form-input"
             type="email"
             value={draft.email}
@@ -193,12 +278,29 @@ export default function AdminModerators() {
         </div>
 
         <div className="admin-moderators__row">
-          <label className="form-label" htmlFor="moderator-password">
+          <label className="form-label" htmlFor="account-role">
+            Rola
+          </label>
+          <select
+            id="account-role"
+            className="form-input"
+            value={draft.role}
+            onChange={(e) => setDraft({ ...draft, role: e.target.value })}
+          >
+            {CREATABLE_ROLES.map((role) => (
+              <option key={role} value={role}>{roleLabel(role)}</option>
+            ))}
+          </select>
+          <p className="admin-moderators__role-hint">{ROLE_DESCRIPTIONS[draft.role]}</p>
+        </div>
+
+        <div className="admin-moderators__row">
+          <label className="form-label" htmlFor="account-password">
             Lozinka
           </label>
           <div className="admin-moderators__password">
             <input
-              id="moderator-password"
+              id="account-password"
               className="form-input"
               type={showPassword ? 'text' : 'password'}
               value={draft.password}
@@ -239,6 +341,7 @@ export default function AdminModerators() {
             <li>Korisničko ime: <code>{created.username}</code></li>
             <li>E-mail: <code>{created.email}</code></li>
             <li>Lozinka: <code>{created.password}</code></li>
+            <li>Rola: <code>{roleLabel(created.role)}</code></li>
           </ul>
           <div className="admin-moderators__success-actions">
             <button type="button" className="btn btn--outline btn--sm" onClick={handleCopy}>
@@ -255,16 +358,32 @@ export default function AdminModerators() {
         </div>
       )}
 
-      <h2 className="admin-moderators__list-title">Postojeći nalozi</h2>
+      <div className="admin-moderators__list-header">
+        <h2 className="admin-moderators__list-title">Postojeći nalozi</h2>
+        <label className="admin-moderators__filter">
+          <span className="form-label">Prikaži</span>
+          <select
+            className="form-input"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            {FILTERS.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {loading && <p className="admin-news__loading">Učitavanje...</p>}
       {error && <p className="admin-news__error">{error}</p>}
+      {rowError && <p className="admin-news__error">{rowError}</p>}
 
-      {!loading && !error && staff.length === 0 && (
-        <p className="admin-news__empty">Nema naloga sa administratorskim pravima.</p>
+      {!loading && !error && visible.length === 0 && (
+        <p className="admin-news__empty">Nema naloga u ovom izboru.</p>
       )}
 
-      {!loading && !error && staff.length > 0 && (
+      {!loading && !error && visible.length > 0 && (
+        <div className="admin-moderators__table-scroll">
         <table className="admin-news__table">
           <thead>
             <tr>
@@ -274,27 +393,64 @@ export default function AdminModerators() {
               <th>Rola</th>
               <th>Status</th>
               <th>Kreiran</th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {staff.map((account) => (
-              <tr key={account.id}>
-                <td>{account.id}</td>
-                <td className="admin-news__title-cell">{account.username}</td>
-                <td>{account.email}</td>
-                <td>{account.role}</td>
-                <td>
-                  <span
-                    className={`admin-news__status${account.isActive ? '' : ' admin-news__status--draft'}`}
-                  >
-                    {account.isActive ? 'Aktivan' : 'Deaktiviran'}
-                  </span>
-                </td>
-                <td>{formatDate(account.createdAt)}</td>
-              </tr>
-            ))}
+            {visible.map((account) => {
+              // Your own row is read-only: the server refuses both actions, so
+              // offering them here would only produce an error message.
+              const isSelf = account.username === user?.username;
+              const busy = busyId === account.id;
+
+              return (
+                <tr key={account.id}>
+                  <td>{account.id}</td>
+                  <td className="admin-news__title-cell">{account.username}</td>
+                  <td>{account.email}</td>
+                  <td>
+                    {isSelf ? (
+                      roleLabel(account.role)
+                    ) : (
+                      <select
+                        className="form-input admin-moderators__role-select"
+                        value={account.role}
+                        disabled={busy}
+                        onChange={(e) => handleRoleChange(account, e.target.value)}
+                        aria-label={`Rola naloga ${account.username}`}
+                      >
+                        {ALL_ROLES.map((role) => (
+                          <option key={role} value={role}>{roleLabel(role)}</option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`admin-news__status${account.isActive ? '' : ' admin-news__status--draft'}`}
+                    >
+                      {account.isActive ? 'Aktivan' : 'Deaktiviran'}
+                    </span>
+                  </td>
+                  <td>{formatDate(account.createdAt)}</td>
+                  <td>
+                    {!isSelf && (
+                      <button
+                        type="button"
+                        className="btn btn--outline btn--sm"
+                        disabled={busy}
+                        onClick={() => handleToggleActive(account)}
+                      >
+                        {account.isActive ? 'Deaktiviraj' : 'Aktiviraj'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
