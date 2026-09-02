@@ -18,6 +18,7 @@ import AdminFinance from './pages/admin/AdminFinance';
 import AdminFinanceForm from './pages/admin/AdminFinanceForm';
 import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
 import AdminFinanceYears from './pages/admin/AdminFinanceYears';
+import AdminModerators from './pages/admin/AdminModerators';
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
   <Route path="finance/:id/edit" element={<AdminFinanceForm />} />
   <Route path="finance/categories" element={<AdminFinanceCategories />} />
   <Route path="finance/years" element={<AdminFinanceYears />} />
+  <Route path="moderators" element={<AdminModerators />} />
 </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

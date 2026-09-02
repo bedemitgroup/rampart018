@@ -700,3 +700,81 @@
     grid-column: span 2;
   }
 }
+
+/* Moderators */
+
+.admin-moderators__form {
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  max-width: 520px;
+}
+
+.admin-moderators__form-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.admin-moderators__hint {
+  color: var(--color-neutral);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+}
+
+.admin-moderators__row {
+  margin-bottom: var(--space-4);
+}
+
+.admin-moderators__password {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-moderators__password .form-input {
+  flex: 1 1 200px;
+}
+
+.admin-moderators__success {
+  border-left: 4px solid var(--color-accent2);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+  max-width: 520px;
+}
+
+.admin-moderators__credentials {
+  list-style: none;
+  margin: var(--space-3) 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.admin-moderators__credentials code {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.4em;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.admin-moderators__success-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-moderators__list-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+}

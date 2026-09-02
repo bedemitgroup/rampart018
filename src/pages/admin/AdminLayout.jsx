@@ -49,6 +49,16 @@ export default function AdminLayout() {
                   Zahtevi za članstvo
                 </NavLink>
               </li>
+              {user.role === 'Admin' && (
+                <li>
+                  <NavLink
+                    to="/admin/moderators"
+                    className={({ isActive }) => `admin__nav-link${isActive ? ' admin__nav-link--active' : ''}`}
+                  >
+                    Moderatori
+                  </NavLink>
+                </li>
+              )}
             </ul>
           </nav>
         </aside>

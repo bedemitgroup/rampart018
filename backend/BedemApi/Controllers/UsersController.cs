@@ -1,4 +1,5 @@
 using BedemApi.Data;
+using BedemApi.Models;
 using BedemApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,8 @@ namespace BedemApi.Controllers;
 [Authorize(Roles = "Admin")]
 public class UsersController : ControllerBase
 {
+    private const int MinModeratorPasswordLength = 8;
+
     private readonly AppDbContext _db;
 
     public UsersController(AppDbContext db)
@@ -30,6 +33,56 @@ public class UsersController : ControllerBase
             .ToListAsync();
 
         return Ok(users);
+    }
+
+    /// <summary>
+    /// Create a moderator account outright. There is no invite flow — the admin
+    /// picks the credentials here and hands them over in person, so the password
+    /// is never mailed, stored in the clear, or echoed back by the API.
+    /// </summary>
+    [HttpPost("moderators")]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(201)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> CreateModerator([FromBody] CreateModeratorRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { message = "All fields are required." });
+
+        // Stricter than public registration on purpose: this account moderates.
+        if (request.Password.Length < MinModeratorPasswordLength)
+            return BadRequest(new
+            {
+                message = $"Password must be at least {MinModeratorPasswordLength} characters."
+            });
+
+        if (await _db.Users.AnyAsync(u => u.Email == request.Email))
+            return Conflict(new { message = "Email already in use." });
+
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username))
+            return Conflict(new { message = "Username already taken." });
+
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            // Hardcoded, not taken from the request. Promoting someone to Admin
+            // stays a separate, deliberate step through ChangeRole below.
+            Role = "Moderator",
+            IsActive = true
+        };
+
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        return Created(
+            $"/api/users/{user.Id}",
+            new { user.Id, user.Username, user.Email, user.Role, user.IsActive, user.CreatedAt });
     }
 
     /// <summary>Change a user's role. Valid roles: Admin, Moderator, User.</summary>
@@ -69,3 +122,5 @@ public class UsersController : ControllerBase
 }
 
 public record ChangeRoleRequest(string Role);
+
+public record CreateModeratorRequest(string Username, string Email, string Password);
