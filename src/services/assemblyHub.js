@@ -15,6 +15,7 @@ export const HUB_EVENTS = {
   TopicChanged: 'TopicChanged',
   TopicRemoved: 'TopicRemoved',
   AgendaReordered: 'AgendaReordered',
+  VoteTally: 'VoteTally',
 };
 
 export function buildAssemblyConnection() {

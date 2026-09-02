@@ -626,3 +626,194 @@
   .agenda-item { padding: var(--space-3) var(--space-4); }
   .agenda-item__head { flex-direction: column; gap: var(--space-2); }
 }
+
+/* --- Ballot --------------------------------------------------------------- */
+
+.ballot {
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-secondary);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+}
+
+.ballot--closed { border-left-color: var(--color-neutral); }
+
+.ballot__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.ballot__flag {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  background: rgba(15, 138, 141, 0.14);
+  color: #0b6668;
+}
+
+.ballot--closed .ballot__flag { background: var(--color-bg-light); color: #6b7280; }
+
+.ballot__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.ballot__body {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Same pure-CSS bar the finance page uses — no chart library for three numbers. */
+.ballot__bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ballot__bar-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.ballot__bar-head strong { font-size: var(--font-size-base); color: var(--color-primary); }
+
+.ballot__bar-track {
+  height: 10px;
+  overflow: hidden;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.ballot__bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.ballot__bar-fill--for { background: var(--color-accent2); }
+.ballot__bar-fill--against { background: var(--color-accent); }
+.ballot__bar-fill--abstain { background: var(--color-warning); }
+
+.ballot__meta {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: #8a92a0;
+}
+
+.ballot__quorum--met { color: #1c6b41; font-weight: 600; }
+.ballot__quorum--short { color: #8a6100; font-weight: 600; }
+
+.ballot__verdict {
+  padding: var(--space-3);
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-md);
+}
+
+.ballot__verdict--passed { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.ballot__verdict--failed { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+.ballot__hint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+/* Three targets, full width, tall enough to hit without looking. */
+.ballot__choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.vote-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: var(--space-3) var(--space-2);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-bg);
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast), transform var(--transition-fast);
+}
+
+.vote-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.vote-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.vote-btn__icon { font-size: var(--font-size-2xl); line-height: 1; }
+
+.vote-btn--for:hover:not(:disabled) { border-color: var(--color-accent2); }
+.vote-btn--against:hover:not(:disabled) { border-color: var(--color-accent); }
+.vote-btn--abstain:hover:not(:disabled) { border-color: var(--color-warning); }
+
+.vote-btn--for.vote-btn--active { background: var(--color-accent2); border-color: var(--color-accent2); color: #fff; }
+.vote-btn--against.vote-btn--active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.vote-btn--abstain.vote-btn--active { background: var(--color-warning); border-color: var(--color-warning); color: #fff; }
+
+/* --- Seats during a ballot ------------------------------------------------ */
+
+.seat--for { color: #fff; background: var(--color-accent2); border-color: #24704a; }
+.seat--against { color: #fff; background: var(--color-accent); border-color: #8f1b2a; }
+.seat--abstain { color: #fff; background: var(--color-warning); border-color: #8a6100; }
+
+.hall__swatch--for { background: var(--color-accent2); }
+.hall__swatch--against { background: var(--color-accent); }
+.hall__swatch--abstain { background: var(--color-warning); }
+
+/* --- Result line on an agenda item ---------------------------------------- */
+
+.agenda-item__result {
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.agenda-item__result--passed { background: rgba(46, 139, 87, 0.12); color: #1c6b41; }
+.agenda-item__result--failed { background: rgba(178, 34, 52, 0.10); color: #8f1b2a; }
+
+.agenda-item__vote-btn { font-weight: 700; }
+
+@media (max-width: 600px) {
+  .ballot { padding: var(--space-4); }
+  .vote-btn { min-height: 72px; font-size: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vote-btn:hover:not(:disabled) { transform: none; }
+  .ballot__bar-fill { transition: none; }
+}

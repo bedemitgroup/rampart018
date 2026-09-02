@@ -34,4 +34,11 @@ public interface IAssemblyNotifier
     /// instead of disagreeing until someone reloads.
     /// </summary>
     Task AgendaReorderedAsync(int sessionId, IReadOnlyList<AssemblyTopicResponse> agenda);
+
+    /// <summary>
+    /// A ballot moved: opened, closed, or someone voted. Carries the whole
+    /// tally and every mark, so a client repaints the room from one frame
+    /// rather than accumulating deltas it might have missed.
+    /// </summary>
+    Task VoteTallyAsync(int sessionId, AssemblyTallyResponse tally);
 }

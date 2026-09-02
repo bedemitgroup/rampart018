@@ -38,6 +38,7 @@ public class AssemblyHub : Hub
         public const string TopicChanged = "TopicChanged";
         public const string TopicRemoved = "TopicRemoved";
         public const string AgendaReordered = "AgendaReordered";
+        public const string VoteTally = "VoteTally";
     }
 
     private readonly AppDbContext _db;

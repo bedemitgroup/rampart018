@@ -36,6 +36,9 @@ public class AssemblyNotifier : IAssemblyNotifier
     public Task AgendaReorderedAsync(int sessionId, IReadOnlyList<AssemblyTopicResponse> agenda) =>
         SendAsync(sessionId, AssemblyHub.Events.AgendaReordered, agenda);
 
+    public Task VoteTallyAsync(int sessionId, AssemblyTallyResponse tally) =>
+        SendAsync(sessionId, AssemblyHub.Events.VoteTally, tally);
+
     /// <summary>
     /// Never throws. The caller has already committed; the acting client gets
     /// its answer from the HTTP response either way, and everyone else

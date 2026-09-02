@@ -52,6 +52,12 @@ public static class AuditActions
     public const string AssemblyTopicMoveUp = "Assembly.Topic.MoveUp";
     public const string AssemblyTopicMoveDown = "Assembly.Topic.MoveDown";
 
+    // Skupstina - ballots. The decision to open or close a vote is logged; the
+    // ballots themselves are not, because AssemblyVote already is that record,
+    // with a timestamp, and a row per click would drown the log.
+    public const string AssemblyVotingOpen = "Assembly.Voting.Open";
+    public const string AssemblyVotingClose = "Assembly.Voting.Close";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -77,6 +83,7 @@ public static class AuditActions
         AssemblyTopicPropose, AssemblyTopicUpdate, AssemblyTopicApprove,
         AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
         AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
+        AssemblyVotingOpen, AssemblyVotingClose,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };

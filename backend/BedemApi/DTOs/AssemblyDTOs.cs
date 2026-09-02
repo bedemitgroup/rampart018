@@ -92,7 +92,9 @@ public record AssemblyHallResponse(
     AssemblySessionResponse Session,
     IReadOnlyList<AssemblySeatResponse> Seats,
     int EligibleCount,
-    int CheckedInCount
+    int CheckedInCount,
+    AssemblyTopicResponse? ActiveTopic,
+    AssemblyTallyResponse? ActiveTally
 );
 
 // ---------------------------------------------------------------------------
@@ -141,6 +143,45 @@ public record AssemblyTopicResponse(
     DateTime? UpdatedAt,
     bool CanEdit,
     bool CanDelete
+);
+
+// ---------------------------------------------------------------------------
+// Ballots
+// ---------------------------------------------------------------------------
+
+/// <summary>Status is AssemblyVotingStatus.Open or .Closed.</summary>
+public record SetVotingStatusRequest(string Status);
+
+/// <summary>Choice is one of AssemblyVoteChoice.</summary>
+public record CastAssemblyVoteRequest(string Choice);
+
+/// <summary>How one member voted. Votes are public per member, by design.</summary>
+public record AssemblyVoteMarkResponse(int UserId, string Choice);
+
+/// <summary>
+/// The state of one ballot, and every ballot cast in it.
+///
+/// The per-member marks ride along so the hall can repaint itself from a single
+/// frame. There is deliberately no "my choice" field: the payload has to be
+/// byte-identical for everyone in the room, so each client picks its own row out
+/// of Votes by user id.
+///
+/// Counts are summed on read rather than stored, the same way the finance
+/// figures are - a stored total is a total that can drift from the rows under it.
+/// </summary>
+public record AssemblyTallyResponse(
+    int TopicId,
+    string TopicTitle,
+    string VotingStatus,
+    int For,
+    int Against,
+    int Abstained,
+    int NotVoted,
+    int EligibleVoters,
+    int? QuorumRequired,
+    bool QuorumMet,
+    string Outcome,
+    IReadOnlyList<AssemblyVoteMarkResponse> Votes
 );
 
 // ---------------------------------------------------------------------------

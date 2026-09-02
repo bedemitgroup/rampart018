@@ -10,7 +10,8 @@ import { buildAssemblyConnection, HUB_EVENTS } from '../services/assemblyHub';
  * @param {number|null} sessionId  null while the session is still loading
  * @param {object} handlers        { onPresence, onMemberJoined, onMemberLeft,
  *                                   onSeatChanged, onSessionChanged, onTopicChanged,
- *                                   onTopicRemoved, onAgendaReordered, onResync }
+ *                                   onTopicRemoved, onAgendaReordered, onVoteTally,
+ *                                   onResync }
  * @returns {'idle'|'connecting'|'live'|'reconnecting'|'offline'}
  */
 export function useAssemblyLive(sessionId, handlers) {
@@ -42,6 +43,7 @@ export function useAssemblyLive(sessionId, handlers) {
     connection.on(HUB_EVENTS.TopicChanged, (p) => handlersRef.current.onTopicChanged?.(p));
     connection.on(HUB_EVENTS.TopicRemoved, (id) => handlersRef.current.onTopicRemoved?.(id));
     connection.on(HUB_EVENTS.AgendaReordered, (p) => handlersRef.current.onAgendaReordered?.(p));
+    connection.on(HUB_EVENTS.VoteTally, (p) => handlersRef.current.onVoteTally?.(p));
 
     connection.onreconnecting(() => {
       if (!cancelled) setLiveState('reconnecting');

@@ -155,11 +155,21 @@ public class AssemblyController : ControllerBase
                 live.Contains(u.Id));
         }).ToList();
 
+        // What the room is deciding right now. Null between items, which is
+        // what puts the hall back to showing attendance rather than votes.
+        var active = session.Topics
+            .FirstOrDefault(t => t.VotingStatus == AssemblyVotingStatus.Open);
+
+        var activeTopic = active is null ? null : await ReloadTopicAsync(active.Id);
+        var activeTally = active is null ? null : await BuildTallyAsync(active.Id);
+
         return Ok(new AssemblyHallResponse(
             ToResponse(session, roll.Count, CurrentUserId),
             seats,
             roll.Count,
-            seats.Count(s => s.CheckedInAt != null)));
+            seats.Count(s => s.CheckedInAt != null),
+            activeTopic,
+            activeTally));
     }
 
     /// <summary>Schedule a sitting.</summary>
@@ -724,8 +734,229 @@ public class AssemblyController : ControllerBase
     }
 
     // -----------------------------------------------------------------------
+    // Ballots
+    // -----------------------------------------------------------------------
+
+    /// <summary>Open the floor on one agenda item, or close it.</summary>
+    [HttpPut("topics/{id:int}/voting")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(AssemblyTallyResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> SetVotingStatus(int id, [FromBody] SetVotingStatusRequest request)
+    {
+        if (request.Status != AssemblyVotingStatus.Open && request.Status != AssemblyVotingStatus.Closed)
+            return BadRequest(new { message = "Glasanje se može samo otvoriti ili zatvoriti." });
+
+        var topic = await _db.AssemblyTopics.FindAsync(id);
+        if (topic is null) return NotFound();
+
+        if (topic.SessionId is not int sessionId)
+            return BadRequest(new { message = "Tačka nije u dnevnom redu nijedne sednice." });
+
+        var session = await _db.AssemblySessions.FindAsync(sessionId);
+
+        if (request.Status == AssemblyVotingStatus.Open)
+        {
+            var denied = AssemblyTopicRules.WhyCannotOpenVoting(topic, session!);
+            if (denied != null) return BadRequest(new { message = denied });
+
+            // A room votes on one thing at a time. Two open ballots would leave
+            // the hall unable to say which one its colours belong to.
+            var alreadyOpen = await _db.AssemblyTopics
+                .AnyAsync(t => t.SessionId == sessionId
+                            && t.Id != id
+                            && t.VotingStatus == AssemblyVotingStatus.Open);
+
+            if (alreadyOpen)
+                return Conflict(new { message = "Glasanje o drugoj tački je već otvoreno. Prvo njega zatvorite." });
+
+            topic.VotingStatus = AssemblyVotingStatus.Open;
+            topic.VotingOpenedAt = DateTime.UtcNow;
+
+            // Snapshotted here and never recomputed: roles change, and without
+            // this the denominator under every past decision would drift with
+            // the membership until "was this vote valid" stopped being answerable.
+            topic.EligibleVotersAtOpen = await AssemblyEligibility.Roll(_db).CountAsync();
+        }
+        else
+        {
+            var denied = AssemblyTopicRules.WhyCannotCloseVoting(topic);
+            if (denied != null) return BadRequest(new { message = denied });
+
+            topic.VotingStatus = AssemblyVotingStatus.Closed;
+            topic.VotingClosedAt = DateTime.UtcNow;
+        }
+
+        topic.UpdatedAt = DateTime.UtcNow;
+
+        _audit.Record(
+            request.Status == AssemblyVotingStatus.Open
+                ? AuditActions.AssemblyVotingOpen
+                : AuditActions.AssemblyVotingClose,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var tally = await BuildTallyAsync(id);
+        await _notifier.VoteTallyAsync(sessionId, tally);
+
+        // The agenda screen keys its buttons off VotingStatus, so it has to hear
+        // about this too — the hall alone is not the whole audience.
+        await NotifyTopicAsync(await ReloadTopicAsync(id));
+
+        return Ok(tally);
+    }
+
+    /// <summary>The tally on one item, whatever state its ballot is in.</summary>
+    [HttpGet("topics/{id:int}/tally")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [ProducesResponseType(typeof(AssemblyTallyResponse), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetTally(int id)
+    {
+        if (!await _db.AssemblyTopics.AnyAsync(t => t.Id == id)) return NotFound();
+
+        return Ok(await BuildTallyAsync(id));
+    }
+
+    /// <summary>
+    /// Cast a ballot, or change one while the floor is still open.
+    /// </summary>
+    [HttpPost("topics/{id:int}/votes")]
+    [Authorize(Roles = Roles.AssemblyParticipants)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblyTallyResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> CastVote(int id, [FromBody] CastAssemblyVoteRequest request)
+    {
+        if (!AssemblyVoteChoice.IsKnown(request.Choice))
+            return BadRequest(new { message = "Nepoznat glas." });
+
+        var userId = CurrentUserId;
+
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        // The row is locked for the length of the transaction. Without it a
+        // ballot that arrives a millisecond after the chairman's "close" commits
+        // slips through: both statements read VotingStatus = open, and both are
+        // individually correct.
+        var topic = await _db.AssemblyTopics
+            .FromSql($@"SELECT * FROM ""AssemblyTopics"" WHERE ""Id"" = {id} FOR UPDATE")
+            .FirstOrDefaultAsync();
+
+        if (topic is null) return NotFound();
+
+        var denied = AssemblyTopicRules.WhyCannotVote(topic);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        // The token carries a role and lives seven days, so it outlives the
+        // membership it was issued against. The roll does not.
+        var voter = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.Username, u.IsActive, u.Role })
+            .FirstAsync();
+
+        if (!AssemblyEligibility.CanTakePart(voter.IsActive, voter.Role))
+            return BadRequest(new { message = "Tvoj nalog više nema pravo glasa." });
+
+        var existing = await _db.AssemblyVotes
+            .FirstOrDefaultAsync(v => v.TopicId == id && v.UserId == userId);
+
+        if (existing is null)
+        {
+            _db.AssemblyVotes.Add(new AssemblyVote
+            {
+                TopicId = id,
+                UserId = userId,
+                VoterUsername = voter.Username,
+                Choice = request.Choice,
+                CastAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            existing.Choice = request.Choice;
+            existing.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+        // Nothing has been broadcast above this line: a frame must never
+        // announce state that the transaction under it could still roll back.
+
+        var tally = await BuildTallyAsync(id);
+
+        if (topic.SessionId is int sessionId)
+            await _notifier.VoteTallyAsync(sessionId, tally);
+
+        return Ok(tally);
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Counts the ballots on one item. Nothing here is stored: the outcome, the
+    /// quorum and every count are summed from the rows each time they are asked
+    /// for, so the verdict can never drift away from the ballots behind it.
+    /// </summary>
+    private async Task<AssemblyTallyResponse> BuildTallyAsync(int topicId)
+    {
+        var topic = await _db.AssemblyTopics.AsNoTracking()
+            .Include(t => t.Session)
+            .FirstAsync(t => t.Id == topicId);
+
+        var votes = await _db.AssemblyVotes.AsNoTracking()
+            .Where(v => v.TopicId == topicId)
+            .Select(v => new AssemblyVoteMarkResponse(v.UserId, v.Choice))
+            .ToListAsync();
+
+        var forCount = votes.Count(v => v.Choice == AssemblyVoteChoice.For);
+        var againstCount = votes.Count(v => v.Choice == AssemblyVoteChoice.Against);
+        var abstained = votes.Count(v => v.Choice == AssemblyVoteChoice.Abstained);
+
+        // The roll as it stood when the floor opened, so a role handed out
+        // mid-sitting cannot change the denominator under a vote in progress.
+        // Before that, the roll as it stands now.
+        var eligible = topic.VotingStatus == AssemblyVotingStatus.NotOpened
+            ? await AssemblyEligibility.Roll(_db).CountAsync()
+            : topic.EligibleVotersAtOpen;
+
+        var quorum = topic.Session?.QuorumRequired;
+
+        var outcome = topic.VotingStatus switch
+        {
+            AssemblyVotingStatus.NotOpened => AssemblyOutcome.NotOpened,
+            AssemblyVotingStatus.Open => AssemblyOutcome.Pending,
+
+            // Simple majority of the ballots actually cast. Abstentions are
+            // counted and shown but do not sink a proposal — abstaining is
+            // standing aside, not voting against.
+            _ => forCount > againstCount ? AssemblyOutcome.Passed : AssemblyOutcome.Failed
+        };
+
+        return new AssemblyTallyResponse(
+            topic.Id,
+            topic.Title,
+            topic.VotingStatus,
+            forCount,
+            againstCount,
+            abstained,
+            Math.Max(0, eligible - votes.Count),
+            eligible,
+            quorum,
+            // Shown as information, never enforced: whether a sitting was
+            // quorate is the association's call, not the software's.
+            quorum is null || votes.Count >= quorum,
+            outcome,
+            votes);
+    }
 
     private Task<AssemblySession?> LoadSessionAsync(int id) =>
         _db.AssemblySessions.AsNoTracking()

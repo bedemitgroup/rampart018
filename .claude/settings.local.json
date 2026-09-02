@@ -15,7 +15,8 @@
       "Bash(npx oxlint *)",
       "Bash(python -)",
       "Bash(cat > *)",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(cat)"
     ]
   }
 }

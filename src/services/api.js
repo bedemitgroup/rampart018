@@ -110,6 +110,9 @@ export const api = {
   assignAssemblyTopic: (id, sessionId) => request(`/api/assembly/topics/${id}/assign`, { method: 'PUT', body: JSON.stringify({ sessionId }) }),
   moveAssemblyTopic: (id, direction) => request(`/api/assembly/topics/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
   deleteAssemblyTopic: (id) => request(`/api/assembly/topics/${id}`, { method: 'DELETE' }),
+  setAssemblyVoting: (id, status) => request(`/api/assembly/topics/${id}/voting`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getAssemblyTally: (id) => request(`/api/assembly/topics/${id}/tally`),
+  castAssemblyVote: (id, choice) => request(`/api/assembly/topics/${id}/votes`, { method: 'POST', body: JSON.stringify({ choice }) }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

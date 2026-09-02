@@ -9,10 +9,12 @@ import {
   RSVP_OPTIONS,
   SESSION_STATUS,
   SESSION_STATUS_TONES,
+  VOTING_STATUS,
   formatSessionDateTime,
 } from '../../constants/assembly';
 import { useAssemblyLive } from '../../hooks/useAssemblyLive';
 import AssemblyHall from '../../components/admin/AssemblyHall';
+import AssemblyBallot from '../../components/admin/AssemblyBallot';
 import AdminAssemblyTabs from './AdminAssemblyTabs';
 import ReadOnlyNotice from './ReadOnlyNotice';
 
@@ -38,6 +40,8 @@ export default function AdminAssembly() {
 
   const [session, setSession] = useState(null);
   const [seats, setSeats] = useState([]);
+  const [activeTopic, setActiveTopic] = useState(null);
+  const [tally, setTally] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -53,11 +57,15 @@ export default function AdminAssembly() {
       if (!current) {
         setSession(null);
         setSeats([]);
+        setActiveTopic(null);
+        setTally(null);
         return;
       }
       const hall = await api.getAssemblyHall(current.id);
       setSession(hall.session);
       setSeats(hall.seats);
+      setActiveTopic(hall.activeTopic);
+      setTally(hall.activeTally);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -89,6 +97,17 @@ export default function AdminAssembly() {
     },
     onSessionChanged: (next) => {
       setSession((prev) => (prev && prev.id === next.id ? next : prev));
+    },
+    onVoteTally: (next) => {
+      setTally(next);
+      // A ballot that just closed leaves the floor: the hall goes back to
+      // showing attendance rather than freezing on the last vote's colours.
+      if (next.votingStatus === VOTING_STATUS.CLOSED) {
+        setActiveTopic(null);
+      }
+    },
+    onTopicChanged: (topic) => {
+      setActiveTopic((prev) => (prev && prev.id === topic.id ? topic : prev));
     },
     onResync: load,
   }), [load]);
@@ -122,6 +141,16 @@ export default function AdminAssembly() {
     setSession(await api.setAssemblySessionStatus(session.id, status));
   });
 
+  const castVote = (choice) => act(async () => {
+    setTally(await api.castAssemblyVote(tally.topicId, choice));
+  });
+
+  const closeVoting = () => act(async () => {
+    if (!window.confirm('Zatvoriti glasanje? Posle toga se glasovi ne menjaju.')) return;
+    setTally(await api.setAssemblyVoting(tally.topicId, VOTING_STATUS.CLOSED));
+    setActiveTopic(null);
+  });
+
   if (loading) return <p className="admin-news__loading">Učitavanje...</p>;
 
   const mySeat = seats.find((s) => s.userId === user?.id) ?? null;
@@ -131,7 +160,7 @@ export default function AdminAssembly() {
   // the live socket keeps current, so deriving the tally from them means the
   // numbers can never disagree with the grid under them — and an RSVP from
   // anyone moves both at once, without a second broadcast or a reload.
-  const tally = seats.reduce((acc, seat) => {
+  const rsvpTally = seats.reduce((acc, seat) => {
     const key = RSVP_COUNT_KEYS[seat.response] ?? 'noAnswer';
     acc[key] += 1;
     return acc;
@@ -196,11 +225,11 @@ export default function AdminAssembly() {
               )}
 
               <dl className="assembly-head__counts">
-                <div><dt>Dolazi</dt><dd>{tally.attending}</dd></div>
-                <div><dt>Online</dt><dd>{tally.online}</dd></div>
-                <div><dt>Možda</dt><dd>{tally.unsure}</dd></div>
-                <div><dt>Ne dolazi</dt><dd>{tally.absent}</dd></div>
-                <div><dt>Bez odgovora</dt><dd>{tally.noAnswer}</dd></div>
+                <div><dt>Dolazi</dt><dd>{rsvpTally.attending}</dd></div>
+                <div><dt>Online</dt><dd>{rsvpTally.online}</dd></div>
+                <div><dt>Možda</dt><dd>{rsvpTally.unsure}</dd></div>
+                <div><dt>Ne dolazi</dt><dd>{rsvpTally.absent}</dd></div>
+                <div><dt>Bez odgovora</dt><dd>{rsvpTally.noAnswer}</dd></div>
               </dl>
 
               {canEdit && (
@@ -249,7 +278,7 @@ export default function AdminAssembly() {
             </div>
           </section>
 
-          {canTakePart && session.status !== SESSION_STATUS.FINISHED
+          {canTakePart && !tally && session.status !== SESSION_STATUS.FINISHED
             && session.status !== SESSION_STATUS.CANCELLED && (
             <section className="assembly-me">
               <div className="assembly-me__block">
@@ -314,7 +343,24 @@ export default function AdminAssembly() {
             </section>
           )}
 
-          <AssemblyHall seats={seats} currentUserId={user?.id} />
+          {tally && (
+            <AssemblyBallot
+              topic={activeTopic}
+              tally={tally}
+              myChoice={tally.votes.find((v) => v.userId === user?.id)?.choice ?? null}
+              canVote={canTakePart}
+              busy={busy}
+              isChair={canEdit}
+              onVote={castVote}
+              onClose={closeVoting}
+            />
+          )}
+
+          <AssemblyHall
+            seats={seats}
+            currentUserId={user?.id}
+            tally={tally?.votingStatus === VOTING_STATUS.OPEN ? tally : null}
+          />
         </>
       )}
     </div>

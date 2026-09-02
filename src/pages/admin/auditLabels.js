@@ -43,6 +43,9 @@ export const ACTION_LABELS = {
   'Assembly.Topic.MoveUp': 'Pomerio tačku gore',
   'Assembly.Topic.MoveDown': 'Pomerio tačku dole',
 
+  'Assembly.Voting.Open': 'Otvorio glasanje',
+  'Assembly.Voting.Close': 'Zatvorio glasanje',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',

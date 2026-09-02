@@ -7,6 +7,7 @@ import {
   TOPIC_STATUS,
   TOPIC_STATUS_TONES,
   VOTING_STATUS,
+  OUTCOME,
   formatSessionDateTime,
 } from '../../constants/assembly';
 import { useAssemblyLive } from '../../hooks/useAssemblyLive';
@@ -22,6 +23,7 @@ export default function AdminAssemblyTopics() {
   const [session, setSession] = useState(null);
   const [topics, setTopics] = useState([]);
   const [backlog, setBacklog] = useState([]);
+  const [tallies, setTallies] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -46,6 +48,12 @@ export default function AdminAssemblyTopics() {
       ]);
       setTopics(forSession);
       setBacklog(loose);
+
+      // Results for anything that has been voted on, so a closed item shows its
+      // verdict in the agenda rather than only in the hall.
+      const decided = forSession.filter((t) => t.votingStatus !== VOTING_STATUS.NOT_OPENED);
+      const results = await Promise.all(decided.map((t) => api.getAssemblyTally(t.id)));
+      setTallies(Object.fromEntries(results.map((r) => [r.topicId, r])));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,6 +92,7 @@ export default function AdminAssemblyTopics() {
       setTopics((prev) => [...prev.filter((t) => t.status !== status), ...agenda]);
     },
     onSessionChanged: (next) => setSession((prev) => (prev && prev.id === next.id ? next : prev)),
+    onVoteTally: (next) => setTallies((prev) => ({ ...prev, [next.topicId]: next })),
     onResync: load,
   }), [mergeTopic, load]);
 
@@ -140,6 +149,14 @@ export default function AdminAssemblyTopics() {
     setTopics((prev) => [...prev.filter((t) => t.status !== topic.status), ...agenda]);
   });
 
+  const setVoting = (topic, status) => act(async () => {
+    if (status === VOTING_STATUS.CLOSED
+        && !window.confirm('Zatvoriti glasanje? Posle toga se glasovi ne menjaju.')) return;
+    const next = await api.setAssemblyVoting(topic.id, status);
+    setTallies((prev) => ({ ...prev, [next.topicId]: next }));
+    await load();
+  });
+
   const remove = (topic) => act(async () => {
     if (!window.confirm(`Obrisati temu "${topic.title}"?`)) return;
     await api.deleteAssemblyTopic(topic.id);
@@ -163,6 +180,9 @@ export default function AdminAssemblyTopics() {
     && session.status !== SESSION_STATUS.CANCELLED;
 
   const cardProps = {
+    tallies,
+    setVoting,
+    sessionLive: session?.status === SESSION_STATUS.IN_PROGRESS,
     isChair,
     busy,
     editingId,
@@ -331,7 +351,7 @@ function TopicSection({
 }
 
 function TopicCard({
-  topic, index, isChair, busy, currentUserId,
+  topic, index, isChair, busy, currentUserId, tallies, setVoting, sessionLive,
   editingId, editDraft, setEditingId, setEditDraft, saveEdit,
   review, withdraw, remove,
   onMoveUp, onMoveDown, onAssign, assignLabel,
@@ -339,6 +359,10 @@ function TopicCard({
   const isEditing = editingId === topic.id;
   const isMine = topic.proposedByUserId === currentUserId;
   const votingStarted = topic.votingStatus !== VOTING_STATUS.NOT_OPENED;
+  const tally = tallies?.[topic.id];
+  const canOpenVoting = isChair && sessionLive
+    && topic.status === TOPIC_STATUS.ACCEPTED
+    && topic.votingStatus === VOTING_STATUS.NOT_OPENED;
 
   return (
     <li className={`agenda-item agenda-item--${TOPIC_STATUS_TONES[topic.status]}`}>
@@ -383,6 +407,12 @@ function TopicCard({
         <p className="agenda-item__note">Obrazloženje: {topic.reviewNote}</p>
       )}
 
+      {tally && topic.votingStatus === VOTING_STATUS.CLOSED && (
+        <p className={`agenda-item__result agenda-item__result--${tally.outcome === OUTCOME.PASSED ? 'passed' : 'failed'}`}>
+          {tally.outcome} — za {tally.for}, protiv {tally.against}, uzdržano {tally.abstained}
+        </p>
+      )}
+
       <div className="agenda-item__actions">
         {isEditing ? (
           <>
@@ -406,6 +436,20 @@ function TopicCard({
                   Odbij
                 </button>
               </>
+            )}
+
+            {canOpenVoting && (
+              <button type="button" className="admin-news__action-btn agenda-item__vote-btn" disabled={busy}
+                onClick={() => setVoting(topic, VOTING_STATUS.OPEN)}>
+                Otvori glasanje
+              </button>
+            )}
+
+            {isChair && topic.votingStatus === VOTING_STATUS.OPEN && (
+              <button type="button" className="admin-news__action-btn agenda-item__vote-btn" disabled={busy}
+                onClick={() => setVoting(topic, VOTING_STATUS.CLOSED)}>
+                Zatvori glasanje
+              </button>
             )}
 
             {onAssign && (

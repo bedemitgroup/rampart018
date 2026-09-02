@@ -7,6 +7,7 @@ import {
   shortName,
   RSVP_ICONS,
   RSVP_SHORT,
+  VOTE_ICONS,
 } from '../../constants/assembly';
 
 /**
@@ -18,10 +19,16 @@ import {
  *   - the ring pulses only while he is actually connected,
  *   - the corner mark is what he answered when the sitting was announced.
  */
-export default function AssemblyHall({ seats, currentUserId }) {
+export default function AssemblyHall({ seats, currentUserId, tally }) {
   const [selectedId, setSelectedId] = useState(null);
 
   const selected = seats.find((s) => s.userId === selectedId) ?? null;
+
+  // Built from the tally rather than carried on the seat: attendance and a
+  // ballot are different facts about the same person, and merging them into one
+  // field is how a seat ends up unable to say which it is showing.
+  const voting = Boolean(tally);
+  const voteOf = new Map((tally?.votes ?? []).map((v) => [v.userId, v.choice]));
 
   const counts = {
     live: seats.filter((s) => s.isLive).length,
@@ -49,7 +56,8 @@ export default function AssemblyHall({ seats, currentUserId }) {
       ) : (
         <ul className="hall__grid">
           {seats.map((seat) => {
-            const state = seatState(seat);
+            const vote = voteOf.get(seat.userId);
+            const state = seatState(seat, { voting, vote });
             const isMe = seat.userId === currentUserId;
 
             return (
@@ -64,14 +72,14 @@ export default function AssemblyHall({ seats, currentUserId }) {
                   ].filter(Boolean).join(' ')}
                   onClick={() => setSelectedId(seat.userId === selectedId ? null : seat.userId)}
                   aria-pressed={seat.userId === selectedId}
-                  aria-label={`${seat.username} — ${seatStateLabel(seat)}`}
+                  aria-label={`${seat.username} — ${seatStateLabel(seat, { voting, vote })}`}
                 >
-                  {seat.isLive && <span className="seat__pulse" aria-hidden="true" />}
+                  {seat.isLive && !voting && <span className="seat__pulse" aria-hidden="true" />}
 
-                  {seat.response && (
-                    <span className="seat__rsvp" aria-hidden="true">
-                      {RSVP_ICONS[seat.response]}
-                    </span>
+                  {vote ? (
+                    <span className="seat__rsvp" aria-hidden="true">{VOTE_ICONS[vote]}</span>
+                  ) : seat.response && (
+                    <span className="seat__rsvp" aria-hidden="true">{RSVP_ICONS[seat.response]}</span>
                   )}
 
                   <span className="seat__initials" aria-hidden="true">{initials(seat.username)}</span>
@@ -116,18 +124,35 @@ export default function AssemblyHall({ seats, currentUserId }) {
               <dt>Veza</dt>
               <dd>{selected.isLive ? 'Priključen sada' : 'Nije priključen'}</dd>
             </div>
+            {voting && (
+              <div>
+                <dt>Glas</dt>
+                <dd>{voteOf.get(selected.userId) ?? 'Još nije glasao'}</dd>
+              </div>
+            )}
           </dl>
         </div>
       )}
 
       <ul className="hall__legend">
-        <li><span className="hall__swatch hall__swatch--live" />Priključen</li>
-        <li><span className="hall__swatch hall__swatch--present" />Prisutan</li>
-        <li><span className="hall__swatch hall__swatch--yes" />Najavio dolazak</li>
-        <li><span className="hall__swatch hall__swatch--online" />Najavio online</li>
-        <li><span className="hall__swatch hall__swatch--maybe" />Nije siguran</li>
-        <li><span className="hall__swatch hall__swatch--no" />Ne dolazi</li>
-        <li><span className="hall__swatch hall__swatch--silent" />Bez odgovora</li>
+        {voting ? (
+          <>
+            <li><span className="hall__swatch hall__swatch--for" />Za</li>
+            <li><span className="hall__swatch hall__swatch--against" />Protiv</li>
+            <li><span className="hall__swatch hall__swatch--abstain" />Uzdržan</li>
+            <li><span className="hall__swatch hall__swatch--silent" />Nije glasao</li>
+          </>
+        ) : (
+          <>
+            <li><span className="hall__swatch hall__swatch--live" />Priključen</li>
+            <li><span className="hall__swatch hall__swatch--present" />Prisutan</li>
+            <li><span className="hall__swatch hall__swatch--yes" />Najavio dolazak</li>
+            <li><span className="hall__swatch hall__swatch--online" />Najavio online</li>
+            <li><span className="hall__swatch hall__swatch--maybe" />Nije siguran</li>
+            <li><span className="hall__swatch hall__swatch--no" />Ne dolazi</li>
+            <li><span className="hall__swatch hall__swatch--silent" />Bez odgovora</li>
+          </>
+        )}
       </ul>
     </div>
   );

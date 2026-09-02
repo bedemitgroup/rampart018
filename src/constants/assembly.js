@@ -36,6 +36,29 @@ export const TOPIC_STATUS_TONES = {
   [TOPIC_STATUS.WITHDRAWN]: 'withdrawn',
 };
 
+export const VOTE_CHOICE = {
+  FOR: 'Za',
+  AGAINST: 'Protiv',
+  ABSTAINED: 'Uzdržan',
+};
+
+export const OUTCOME = {
+  PASSED: 'Usvojeno',
+  FAILED: 'Odbijeno',
+  PENDING: 'U toku',
+  NOT_OPENED: 'Nije glasano',
+};
+
+// The three buttons, in the order a ballot paper has them.
+export const VOTE_OPTIONS = [
+  { value: VOTE_CHOICE.FOR, label: 'ZA', icon: '✓', tone: 'for' },
+  { value: VOTE_CHOICE.AGAINST, label: 'PROTIV', icon: '✕', tone: 'against' },
+  { value: VOTE_CHOICE.ABSTAINED, label: 'UZDRŽAN', icon: '−', tone: 'abstain' },
+];
+
+export const VOTE_TONES = Object.fromEntries(VOTE_OPTIONS.map((o) => [o.value, o.tone]));
+export const VOTE_ICONS = Object.fromEntries(VOTE_OPTIONS.map((o) => [o.value, o.icon]));
+
 export const CHECK_IN_MODE = {
   IN_PERSON: 'Uživo',
   ONLINE: 'Online',
@@ -68,14 +91,22 @@ export const SESSION_STATUS_TONES = {
  * and the precedence here is the reason: being connected outranks having
  * checked in, which outranks what you answered a week ago.
  */
-export function seatState(seat) {
+export function seatState(seat, { voting = false, vote = null } = {}) {
+  // While a ballot is on the floor the room is about one question and nothing
+  // else, so the attendance colours are dropped entirely rather than ranked
+  // below the vote. They share the green: a connected member who has not voted
+  // yet would otherwise be indistinguishable from one who voted for.
+  if (voting) return vote ? VOTE_TONES[vote] ?? 'silent' : 'silent';
+
   if (seat.isLive) return 'live';
   if (seat.checkedInAt) return 'present';
   if (!seat.response) return 'silent';
   return RSVP_TONES[seat.response] ?? 'silent';
 }
 
-export function seatStateLabel(seat) {
+export function seatStateLabel(seat, { voting = false, vote = null } = {}) {
+  if (voting) return vote ? `Glasao: ${vote}` : 'Nije glasao';
+
   if (seat.isLive) return 'Priključen';
   if (seat.checkedInAt) return `Prisutan (${seat.checkInMode ?? 'uživo'})`;
   if (!seat.response) return 'Nije se izjasnio';
