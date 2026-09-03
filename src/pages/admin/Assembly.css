@@ -260,18 +260,67 @@
   animation: assembly-blink 2s ease-in-out infinite;
 }
 
-/* auto-fill rather than a breakpoint per device: the chamber simply reflows
-   from four columns on a phone to a dozen on a laptop. */
-.hall__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-  gap: var(--space-3);
+/* The chamber.
+ *
+ * Seat size and row width are set from JS off the measured container width, so
+ * the same hemicycle fits a phone and a laptop rather than degrading into a
+ * plain grid on the narrow one. Everything here reads --seat-size, --seat-gap
+ * and the per-seat --seat-lift; nothing is hardcoded to a
+ * breakpoint.
+ */
+.hemicycle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--seat-gap, 8px);
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.hemicycle__row {
+  display: flex;
+  /* Set per row: the arcs open up as they go back. */
+  gap: var(--row-spread, var(--seat-gap, 8px));
+  justify-content: center;
   padding: 0;
-  margin: 0;
+  /* Room for the seats that rise out of this arc, so a wide row never climbs
+     into the one in front of it. */
+  margin: var(--row-depth, 0) 0 0;
   list-style: none;
 }
 
-.hall__grid > li { display: flex; }
+.hemicycle__slot {
+  display: flex;
+  width: var(--seat-size, 76px);
+  /* Only a lift: the seat sits on the curve of its arc but stays upright, so
+     the name on it is never read at an angle. */
+  transform: translateY(var(--seat-lift, 0));
+}
+
+/* The podium. Set apart with air and a rule rather than another colour: the
+   colours on a seat already mean attendance or a vote, and a fourth meaning
+   layered onto the same tile would make all of them harder to read. */
+.hemicycle__podium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid #eef1f5;
+}
+
+.hemicycle__podium-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a8b0bd;
+}
+
+/* The chair sits level and square on: he is the one everyone else faces. */
+.hemicycle__row--podium .hemicycle__slot { transform: none; }
+.hemicycle__row--podium .seat { border-color: #c9d2de; }
 
 .seat {
   position: relative;
@@ -280,9 +329,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 76px;
-  padding: var(--space-2) 4px;
+  gap: 2px;
+  height: var(--seat-size, 76px);
+  padding: var(--space-1) 3px;
+  overflow: hidden;
   font-family: inherit;
   cursor: pointer;
   background: var(--color-bg-light);
@@ -295,7 +345,9 @@
 .seat:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; }
 
 .seat__initials {
-  font-size: var(--font-size-lg);
+  /* Scaled off the tile rather than off a breakpoint: a crowded assembly gets
+     38px tiles, and fixed 18px initials there collide with the corner mark. */
+  font-size: clamp(0.68rem, calc(var(--seat-size, 76px) * 0.26), 1.125rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -315,9 +367,9 @@
    never competes with the fill, which is where he stands now. */
 .seat__rsvp {
   position: absolute;
-  top: 3px;
-  right: 5px;
-  font-size: 0.7rem;
+  top: 2px;
+  right: 4px;
+  font-size: clamp(0.5rem, calc(var(--seat-size, 76px) * 0.15), 0.72rem);
   line-height: 1;
   opacity: 0.75;
 }
@@ -456,9 +508,7 @@
 @media (max-width: 600px) {
   .hall { padding: var(--space-4) var(--space-3); }
   .assembly-me { padding: var(--space-4); }
-  .hall__grid { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
-  .seat { min-height: 66px; }
-  .seat__initials { font-size: var(--font-size-base); }
+  .hemicycle { padding-top: var(--space-3); }
   .rsvp-btn { flex: 1 1 130px; justify-content: center; }
 }
 
@@ -470,6 +520,8 @@
   }
 
   .seat__pulse { opacity: 0.9; }
+  /* The curve is decoration; the seating order carries the meaning on its own. */
+  .hemicycle__slot { transform: none; }
   .rsvp-btn:hover:not(:disabled),
   .seat:hover { transform: none; }
 }

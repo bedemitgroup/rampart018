@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { roleLabel } from '../../constants/roles';
 import {
+  arrangeHall,
+  hallHeight,
   initials,
+  rowGeometry,
+  seatArc,
   seatState,
   seatStateLabel,
   shortName,
@@ -10,30 +14,163 @@ import {
   VOTE_ICONS,
 } from '../../constants/assembly';
 
+// The smallest a seat may get before its initials stop being legible, and the
+// largest one is worth making. Between the two the chamber sizes itself from
+// the room it is given — which is what lets the same hemicycle work on a phone
+// and on a laptop instead of collapsing into a plain list on one of them.
+//
+// The floor is 42 rather than something comfortable because a full assembly on
+// a phone has to choose: fewer, bigger tiles and the arcs flatten into a grid,
+// or smaller tiles and a real chamber. Thirty people at 54px gave six rows of
+// five, all the same width, 540px tall. At 42px they give four proper arcs in
+// 290px — which is also what the board in a real chamber looks like: coloured
+// squares, no names.
+const MIN_SEAT = 36;
+const MAX_SEAT = 78;
+const SEAT_GAP = 8;
+
+// The presidium sits square on rather than on an arc: the chair is the one
+// everyone else faces.
+const FLAT = { spread: SEAT_GAP, halfWidth: 0, depth: 0 };
+
+// Below this the name under the initials has nowhere to go, so the tile keeps
+// only the initials and the full name moves to the tap-panel.
+const NAME_THRESHOLD = 62;
+
+// How much vertical room the chamber may take before the tiles start shrinking.
+// The point of the room is that you can see all of it while a vote is running:
+// thirty people at full size came out 790px tall, which means scrolling past
+// half the assembly to watch a ballot.
+const MAX_HALL_HEIGHT = 460;
+
 /**
- * The chamber: one tile per member of the roll.
+ * The chamber.
  *
- * A tile carries all three layers at once, because they answer different
- * questions and the room needs all three at a glance:
- *   - the fill is where he stands now (connected / present / what he answered),
- *   - the ring pulses only while he is actually connected,
- *   - the corner mark is what he answered when the sitting was announced.
+ * One tile per member of the roll, laid out the way the room actually sits:
+ * whoever chairs at the podium, the roles that carry a section of the work in
+ * the front arcs, and the rest of the membership behind them.
+ *
+ * A tile carries three things at once, because the room needs all three at a
+ * glance: the fill is where he stands now, the ring pulses only while he is
+ * really connected, and the corner mark is what he answered when the sitting
+ * was called — or, once a ballot is on the floor, how he voted.
  */
 export default function AssemblyHall({ seats, currentUserId, tally }) {
   const [selectedId, setSelectedId] = useState(null);
+  const [width, setWidth] = useState(0);
+  const frameRef = useRef(null);
+
+  // The layout depends on how wide the chamber actually is, and no media query
+  // can answer that here: this sits in a panel whose width changes with the
+  // sidebar, not only with the viewport.
+  useLayoutEffect(() => {
+    const el = frameRef.current;
+    if (!el) return undefined;
+
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(el);
+    setWidth(el.getBoundingClientRect().width);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // A seat can vanish from the roll while its panel is open — someone is
+  // deactivated, or the roll simply reloads.
+  useEffect(() => {
+    if (selectedId && !seats.some((s) => s.userId === selectedId)) setSelectedId(null);
+  }, [seats, selectedId]);
 
   const selected = seats.find((s) => s.userId === selectedId) ?? null;
 
-  // Built from the tally rather than carried on the seat: attendance and a
-  // ballot are different facts about the same person, and merging them into one
-  // field is how a seat ends up unable to say which it is showing.
   const voting = Boolean(tally);
   const voteOf = new Map((tally?.votes ?? []).map((v) => [v.userId, v.choice]));
+
+  // Sizing is two passes, and it has to be.
+  //
+  // The first asks how many seats could fit in a row at the smallest legible
+  // size — that is what caps the arcs so a wide chamber never overflows. The
+  // second sizes the seats to the row that actually got filled: a hall of nine
+  // ends up with arcs of three and four, and sizing those off the theoretical
+  // maximum would leave tiny tiles adrift in a wide panel.
+  const usable = Math.max(width, MIN_SEAT);
+  const maxPerRow = Math.max(3, Math.min(13,
+    Math.floor((usable + SEAT_GAP) / (MIN_SEAT + SEAT_GAP))));
+
+  const { presidium, rows } = arrangeHall(seats, maxPerRow, {
+    frameWidth: usable,
+    gap: SEAT_GAP,
+    nameSeat: NAME_THRESHOLD,
+  });
+
+  // The podium wraps like any other row. Nothing stops an association from
+  // handing the Skupstina role to six people, and an unwrapped flat row of six
+  // runs straight off the side of a phone.
+  const podiumRows = [];
+  for (let i = 0; i < presidium.length; i += maxPerRow) {
+    podiumRows.push(presidium.slice(i, i + maxPerRow));
+  }
+
+  const widestRow = Math.max(
+    1,
+    ...podiumRows.map((r) => r.length),
+    ...rows.map((r) => r.length),
+  );
+
+  // As big as the widest arc allows...
+  const widthLimit = Math.max(MIN_SEAT, Math.min(MAX_SEAT,
+    Math.floor((usable - (widestRow - 1) * SEAT_GAP) / widestRow)));
+
+  // ...and then no bigger than keeps the whole room on screen. Stepping down
+  // rather than solving for it: height depends on the arc depth, which depends
+  // on the tile size, so there is no closed form worth writing here.
+  const rowSizes = [...podiumRows.map((r) => r.length), ...rows.map((r) => r.length)];
+  let seatSize = widthLimit;
+  while (
+    seatSize > MIN_SEAT
+    && hallHeight({ rowSizes, seatSize, frameWidth: usable, gap: SEAT_GAP }) > MAX_HALL_HEIGHT
+  ) {
+    seatSize -= 2;
+  }
 
   const counts = {
     live: seats.filter((s) => s.isLive).length,
     present: seats.filter((s) => s.checkedInAt && !s.isLive).length,
     away: seats.filter((s) => !s.checkedInAt && !s.isLive).length,
+  };
+
+  const renderSeat = (seat, index, count, geometry) => {
+    const vote = voteOf.get(seat.userId);
+    const state = seatState(seat, { voting, vote });
+
+    return (
+      <li key={seat.userId} className="hemicycle__slot" style={seatArc(index, count, geometry)}>
+        <button
+          type="button"
+          className={[
+            'seat',
+            `seat--${state}`,
+            seat.userId === currentUserId ? 'seat--me' : '',
+            seat.userId === selectedId ? 'seat--selected' : '',
+          ].filter(Boolean).join(' ')}
+          onClick={() => setSelectedId(seat.userId === selectedId ? null : seat.userId)}
+          aria-pressed={seat.userId === selectedId}
+          aria-label={`${seat.username} — ${roleLabel(seat.role)} — ${seatStateLabel(seat, { voting, vote })}`}
+        >
+          {seat.isLive && !voting && <span className="seat__pulse" aria-hidden="true" />}
+
+          {vote ? (
+            <span className="seat__rsvp" aria-hidden="true">{VOTE_ICONS[vote]}</span>
+          ) : seat.response && (
+            <span className="seat__rsvp" aria-hidden="true">{RSVP_ICONS[seat.response]}</span>
+          )}
+
+          <span className="seat__initials" aria-hidden="true">{initials(seat.username)}</span>
+          {seatSize >= NAME_THRESHOLD && (
+            <span className="seat__name">{shortName(seat.username)}</span>
+          )}
+        </button>
+      </li>
+    );
   };
 
   return (
@@ -51,45 +188,57 @@ export default function AssemblyHall({ seats, currentUserId, tally }) {
         </span>
       </div>
 
-      {seats.length === 0 ? (
-        <p className="admin-news__empty">Nema članova sa pravom učešća.</p>
-      ) : (
-        <ul className="hall__grid">
-          {seats.map((seat) => {
-            const vote = voteOf.get(seat.userId);
-            const state = seatState(seat, { voting, vote });
-            const isMe = seat.userId === currentUserId;
+      <div
+        className="hemicycle"
+        ref={frameRef}
+        style={{ '--seat-size': `${seatSize}px`, '--seat-gap': `${SEAT_GAP}px` }}
+      >
+        {seats.length === 0 ? (
+          <p className="admin-news__empty">Nema članova sa pravom učešća.</p>
+        ) : (
+          <>
+            {podiumRows.length > 0 && (
+              <div className="hemicycle__podium">
+                <span className="hemicycle__podium-label">Predsedava</span>
+                {podiumRows.map((row) => (
+                  <ul
+                    className="hemicycle__row hemicycle__row--podium"
+                    key={row[0].userId}
+                    style={{ '--row-spread': `${SEAT_GAP}px` }}
+                  >
+                    {row.map((seat, i) => renderSeat(seat, i, row.length, FLAT))}
+                  </ul>
+                ))}
+              </div>
+            )}
 
-            return (
-              <li key={seat.userId}>
-                <button
-                  type="button"
-                  className={[
-                    'seat',
-                    `seat--${state}`,
-                    isMe ? 'seat--me' : '',
-                    seat.userId === selectedId ? 'seat--selected' : '',
-                  ].filter(Boolean).join(' ')}
-                  onClick={() => setSelectedId(seat.userId === selectedId ? null : seat.userId)}
-                  aria-pressed={seat.userId === selectedId}
-                  aria-label={`${seat.username} — ${seatStateLabel(seat, { voting, vote })}`}
+            {rows.map((row, rowIndex) => {
+              const geometry = rowGeometry({
+                count: row.length,
+                rowIndex,
+                rowCount: rows.length,
+                seatSize,
+                frameWidth: usable,
+                gap: SEAT_GAP,
+              });
+
+              return (
+                <ul
+                  className="hemicycle__row"
+                  key={row[0].userId}
+                  aria-label={`${rowIndex + 1}. red`}
+                  style={{
+                    '--row-spread': `${geometry.spread}px`,
+                    '--row-depth': `${geometry.depth}px`,
+                  }}
                 >
-                  {seat.isLive && !voting && <span className="seat__pulse" aria-hidden="true" />}
-
-                  {vote ? (
-                    <span className="seat__rsvp" aria-hidden="true">{VOTE_ICONS[vote]}</span>
-                  ) : seat.response && (
-                    <span className="seat__rsvp" aria-hidden="true">{RSVP_ICONS[seat.response]}</span>
-                  )}
-
-                  <span className="seat__initials" aria-hidden="true">{initials(seat.username)}</span>
-                  <span className="seat__name">{shortName(seat.username)}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  {row.map((seat, i) => renderSeat(seat, i, row.length, geometry))}
+                </ul>
+              );
+            })}
+          </>
+        )}
+      </div>
 
       {selected && (
         <div className="hall__detail" role="status">
