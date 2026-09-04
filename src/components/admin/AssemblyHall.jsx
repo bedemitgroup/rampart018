@@ -12,6 +12,7 @@ import {
   RSVP_ICONS,
   RSVP_SHORT,
   VOTE_ICONS,
+  CHECK_IN_MODE,
 } from '../../constants/assembly';
 
 // The smallest a seat may get before its initials stop being legible, and the
@@ -55,7 +56,7 @@ const MAX_HALL_HEIGHT = 460;
  * really connected, and the corner mark is what he answered when the sitting
  * was called — or, once a ballot is on the floor, how he voted.
  */
-export default function AssemblyHall({ seats, currentUserId, tally }) {
+export default function AssemblyHall({ seats, currentUserId, tally, onOverrideAttendance, busy }) {
   const [selectedId, setSelectedId] = useState(null);
   const [width, setWidth] = useState(0);
   const frameRef = useRef(null);
@@ -280,6 +281,36 @@ export default function AssemblyHall({ seats, currentUserId, tally }) {
               </div>
             )}
           </dl>
+
+          {onOverrideAttendance && (
+            <div className="hall__detail-actions">
+              <span className="hall__detail-hint">Ispravi spisak prisutnih:</span>
+              <button
+                type="button"
+                className="admin-news__action-btn"
+                disabled={busy}
+                onClick={() => onOverrideAttendance(selected, CHECK_IN_MODE.IN_PERSON)}
+              >
+                U sali
+              </button>
+              <button
+                type="button"
+                className="admin-news__action-btn"
+                disabled={busy}
+                onClick={() => onOverrideAttendance(selected, CHECK_IN_MODE.ONLINE)}
+              >
+                Online
+              </button>
+              <button
+                type="button"
+                className="admin-news__action-btn admin-news__action-btn--delete"
+                disabled={busy}
+                onClick={() => onOverrideAttendance(selected, null)}
+              >
+                Nije došao
+              </button>
+            </div>
+          )}
         </div>
       )}
 

@@ -46,6 +46,9 @@ export const ACTION_LABELS = {
   'Assembly.Voting.Open': 'Otvorio glasanje',
   'Assembly.Voting.Close': 'Zatvorio glasanje',
 
+  'Assembly.Attendance.Override': 'Ispravio spisak prisutnih',
+  'Assembly.Points.Award': 'Upisao poene za sednicu',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',

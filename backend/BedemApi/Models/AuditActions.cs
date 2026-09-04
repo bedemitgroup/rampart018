@@ -58,6 +58,12 @@ public static class AuditActions
     public const string AssemblyVotingOpen = "Assembly.Voting.Open";
     public const string AssemblyVotingClose = "Assembly.Voting.Close";
 
+    // Skupstina - the record. Attendance overrides are logged because they move
+    // somebody's score; the award itself is one row per sitting, not per member,
+    // or a thirty-strong assembly would bury everything else in the log.
+    public const string AssemblyAttendanceOverride = "Assembly.Attendance.Override";
+    public const string AssemblyPointsAward = "Assembly.Points.Award";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -84,6 +90,7 @@ public static class AuditActions
         AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
         AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
         AssemblyVotingOpen, AssemblyVotingClose,
+        AssemblyAttendanceOverride, AssemblyPointsAward,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };

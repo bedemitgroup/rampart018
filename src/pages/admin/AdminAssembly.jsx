@@ -137,6 +137,14 @@ export default function AdminAssembly() {
     setSeats((prev) => prev.map((s) => (s.userId === seat.userId ? { ...seat, isLive: s.isLive } : s)));
   });
 
+  // Checking in is self-service, so a member who was plainly in the room but
+  // forgot to press the button would carry a -1 for it. The chair keeps the
+  // roll, as he would on paper.
+  const overrideAttendance = (seat, mode) => act(async () => {
+    const next = await api.overrideAssemblyAttendance(session.id, seat.userId, mode);
+    setSeats((prev) => prev.map((s) => (s.userId === next.userId ? { ...next, isLive: s.isLive } : s)));
+  });
+
   const setStatus = (status) => act(async () => {
     setSession(await api.setAssemblySessionStatus(session.id, status));
   });
@@ -360,6 +368,8 @@ export default function AdminAssembly() {
             seats={seats}
             currentUserId={user?.id}
             tally={tally?.votingStatus === VOTING_STATUS.OPEN ? tally : null}
+            busy={busy}
+            onOverrideAttendance={canEdit && isLiveSession ? overrideAttendance : null}
           />
         </>
       )}

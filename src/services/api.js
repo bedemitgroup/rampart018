@@ -113,6 +113,11 @@ export const api = {
   setAssemblyVoting: (id, status) => request(`/api/assembly/topics/${id}/voting`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getAssemblyTally: (id) => request(`/api/assembly/topics/${id}/tally`),
   castAssemblyVote: (id, choice) => request(`/api/assembly/topics/${id}/votes`, { method: 'POST', body: JSON.stringify({ choice }) }),
+  overrideAssemblyAttendance: (sessionId, userId, mode) =>
+    request(`/api/assembly/sessions/${sessionId}/attendance/${userId}`, { method: 'PUT', body: JSON.stringify({ mode }) }),
+  getAssemblyStandings: (year) =>
+    request(`/api/assembly/points${year ? `?year=${year}` : ''}`),
+  getAssemblySessionRecord: (id) => request(`/api/assembly/sessions/${id}/record`),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

@@ -54,4 +54,5 @@ public class AssemblySession
 
     public ICollection<AssemblyAttendance> Attendances { get; set; } = new List<AssemblyAttendance>();
     public ICollection<AssemblyTopic> Topics { get; set; } = new List<AssemblyTopic>();
+    public ICollection<AssemblyPoint> Points { get; set; } = new List<AssemblyPoint>();
 }

@@ -54,16 +54,31 @@ public static class Roles
     /// look at what the others are doing; only his own section gets buttons.
     /// A Visitor is absent — registering on the site is not membership.
     ///
-    /// Coincides with <see cref="AssemblyParticipants"/> today, but answers a
-    /// different question, so the two are kept apart.
+    /// Wider than <see cref="AssemblyParticipants"/>: an Admin reads everything
+    /// and chairs the assembly, but does not sit in it.
     /// </summary>
     public const string ViewPanel = $"{Member},{Moderator},{Finance},{Assembly},{Admin}";
 
     /// <summary>
-    /// Who takes part in an assembly session — everyone the organisation admitted.
-    /// A Visitor is deliberately absent: registering on the site is not membership.
+    /// Who actually sits in the assembly: has a seat in the hall, counts towards
+    /// the quorum, is scored for turning up, and votes.
+    ///
+    /// A Visitor is absent because registering on the site is not membership.
+    /// An Admin is absent for a different reason: administering the site is not
+    /// being a member of the association. He still runs a sitting — that is
+    /// <see cref="ManageAssembly"/> — but running the room and deciding in it
+    /// are separate things, and a technical account should not carry a vote.
     /// </summary>
-    public const string AssemblyParticipants = $"{Member},{Moderator},{Finance},{Assembly},{Admin}";
+    public const string AssemblyParticipants = $"{Member},{Moderator},{Finance},{Assembly}";
+
+    /// <summary>
+    /// The same roll as <see cref="AssemblyParticipants"/>, in the shape a query
+    /// wants. Kept beside it so the two can never say different things.
+    /// </summary>
+    public static readonly IReadOnlyList<string> AssemblyRoll = new[]
+    {
+        Member, Moderator, Finance, Assembly
+    };
 
     /// <summary>Every role, for validation when an admin changes someone's role.</summary>
     public static readonly IReadOnlyList<string> All = new[]

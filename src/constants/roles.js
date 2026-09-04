@@ -62,9 +62,14 @@ export const canManageSubmissions = (user) => holds(user, ROLES.MODERATOR, ROLES
 export const canManageComments = (user) => holds(user, ROLES.MODERATOR, ROLES.ADMIN);
 export const canManageUsers = (user) => holds(user, ROLES.ADMIN);
 
-// Registering on the site is not membership, so a Visitor never votes.
+// Who actually sits in the assembly: has a seat in the hall, counts towards the
+// quorum, is scored for turning up, and votes. Mirrors Roles.AssemblyParticipants.
+//
+// A Visitor is absent because registering on the site is not membership. An
+// Admin is absent for a different reason: he runs a sitting (canManageAssembly)
+// but does not decide in it, so a technical account carries no vote.
 export const canVoteInAssembly = (user) =>
-  holds(user, ROLES.MEMBER, ROLES.MODERATOR, ROLES.FINANCE, ROLES.ASSEMBLY, ROLES.ADMIN);
+  holds(user, ROLES.MEMBER, ROLES.MODERATOR, ROLES.FINANCE, ROLES.ASSEMBLY);
 
 // Reading the panel and writing in it are separate: everyone the organisation
 // admitted may look at what the others are doing, but only his own section

@@ -18,7 +18,9 @@ namespace BedemApi.Hubs;
 /// validation, the audit trail and the rate limits are — a second copy of those
 /// rules living in a hub method is how the two drift apart.
 /// </remarks>
-[Authorize(Roles = Roles.AssemblyParticipants)]
+// Watching, not sitting: an Admin holds no seat in the hall but has to see the
+// room he chairs, so this is the wider ViewPanel rather than the roll.
+[Authorize(Roles = Roles.ViewPanel)]
 public class AssemblyHub : Hub
 {
     /// <summary>
@@ -67,7 +69,7 @@ public class AssemblyHub : Hub
             .Select(u => new { u.IsActive, u.Role })
             .FirstOrDefaultAsync();
 
-        if (live is null || !AssemblyEligibility.CanTakePart(live.IsActive, live.Role))
+        if (live is null || !AssemblyEligibility.CanWatch(live.IsActive, live.Role))
         {
             Context.Abort();
             return;

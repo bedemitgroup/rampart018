@@ -116,6 +116,23 @@ public static class AssemblyVoteChoice
     public static bool IsKnown(string? value) => value != null && All.Contains(value);
 }
 
+/// <summary>
+/// What turning up is worth. One place, so the association can change what it
+/// rewards without anyone hunting through the controller for the numbers —
+/// and past sittings keep whatever they were awarded, because
+/// <see cref="AssemblyPoint.Points"/> stores the result rather than the rule.
+/// </summary>
+public static class AssemblyPointRule
+{
+    /// <summary>On the floor, in the room or on the call. Both count the same.</summary>
+    public const int Present = 1;
+
+    /// <summary>Did not turn up.</summary>
+    public const int Absent = -1;
+
+    public static int For(bool attended) => attended ? Present : Absent;
+}
+
 /// <summary>The verdict on a closed ballot. Computed, never stored.</summary>
 public static class AssemblyOutcome
 {

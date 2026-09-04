@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<AssemblyAttendance> AssemblyAttendances => Set<AssemblyAttendance>();
     public DbSet<AssemblyTopic> AssemblyTopics => Set<AssemblyTopic>();
     public DbSet<AssemblyVote> AssemblyVotes => Set<AssemblyVote>();
+    public DbSet<AssemblyPoint> AssemblyPoints => Set<AssemblyPoint>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -218,6 +219,26 @@ public class AppDbContext : DbContext
              .OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(x => new { x.TopicId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblyPoint>(e =>
+        {
+            // Restrict on both sides, like the ballots: an awarded score is a
+            // record of a sitting that happened, and deleting either the sitting
+            // or the account must not quietly erase it.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Points)
+             .HasForeignKey(x => x.SessionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One score per member per sitting. Closing is terminal so it cannot
+            // run twice, but this is the net under that rule.
+            e.HasIndex(x => new { x.SessionId, x.UserId }).IsUnique();
         });
 
         FinanceSeed.Apply(modelBuilder);

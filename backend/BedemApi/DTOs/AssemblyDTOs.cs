@@ -185,6 +185,72 @@ public record AssemblyTallyResponse(
 );
 
 // ---------------------------------------------------------------------------
+// The record: points and roll calls
+// ---------------------------------------------------------------------------
+
+/// <summary>
+/// The chairman correcting the roll. Mode is one of AssemblyCheckInMode, or
+/// null to strike someone off.
+/// </summary>
+public record OverrideAttendanceRequest(string? Mode);
+
+/// <summary>One member's standing: what one year holds, and what all of them do.</summary>
+public record AssemblyStandingResponse(
+    int UserId,
+    string Username,
+    string Role,
+    int SessionsInYear,
+    int PresentInYear,
+    int AbsentInYear,
+    int PointsInYear,
+    int SessionsTotal,
+    int PresentTotal,
+    int AbsentTotal,
+    int PointsTotal
+);
+
+public record AssemblyStandingsResponse(
+    int Year,
+    IReadOnlyList<int> AvailableYears,
+    IReadOnlyList<AssemblyStandingResponse> Standings
+);
+
+/// <summary>What one member was awarded at one sitting.</summary>
+public record AssemblyPointResponse(
+    int UserId,
+    string Username,
+    bool Attended,
+    string? Mode,
+    int Points
+);
+
+/// <summary>
+/// One decided item and the roll call behind it: not just how many were for,
+/// but who. The votes are already public in the hall while a ballot runs; this
+/// is the same information after the fact.
+/// </summary>
+public record AssemblyTopicRecordResponse(
+    int TopicId,
+    string Title,
+    string Description,
+    string VotingStatus,
+    string Outcome,
+    int For,
+    int Against,
+    int Abstained,
+    IReadOnlyList<AssemblyRollCallEntry> RollCall
+);
+
+public record AssemblyRollCallEntry(int UserId, string Username, string Choice);
+
+/// <summary>Everything a closed sitting left behind.</summary>
+public record AssemblySessionRecordResponse(
+    AssemblySessionResponse Session,
+    IReadOnlyList<AssemblyPointResponse> Points,
+    IReadOnlyList<AssemblyTopicRecordResponse> Topics
+);
+
+// ---------------------------------------------------------------------------
 // Live payloads (SignalR)
 // ---------------------------------------------------------------------------
 

@@ -181,10 +181,9 @@ export function isoToLocalInput(iso) {
  * Who sits at the podium: the role whose whole job is running the assembly,
  * and nobody else.
  *
- * An Admin may open a sitting too, but administering the site is not chairing
- * the room, and putting the webmaster at the head of the chamber says something
- * about the association that is not true. He sits on the floor with the other
- * roles that carry a section of the work.
+ * An Admin may open a sitting too, but he is not in the chamber at all — the
+ * server leaves him off the roll, because administering the site is not being
+ * a member of the association.
  *
  * If nobody holds this role the podium row simply does not appear — which is
  * honest, because then nobody holds that office.
@@ -195,10 +194,12 @@ const PRESIDIUM_ROLES = [ROLES.ASSEMBLY];
  * The order the floor fills up in: the roles that carry a section of the
  * association's work sit closest to the podium, plain members behind them.
  * Anything unknown falls to the back rather than to the front.
+ *
+ * Admin is absent because he holds no seat at all — the server leaves him off
+ * the roll, so no tile ever reaches this list for him.
  */
 const SEAT_ORDER = [
   ROLES.ASSEMBLY,
-  ROLES.ADMIN,
   ROLES.MODERATOR,
   ROLES.FINANCE,
   ROLES.MEMBER,

@@ -280,7 +280,18 @@ public class AssemblyController : ControllerBase
         }
 
         if (request.Status == AssemblySessionStatus.Finished)
+        {
             session.ClosedAt = DateTime.UtcNow;
+
+            // Queued, not saved: the scores and the closing land in the same
+            // SaveChanges below, so there is never a closed sitting without a
+            // record nor a record for a sitting that failed to close.
+            var awarded = await AwardPointsAsync(session);
+
+            _audit.Record(AuditActions.AssemblyPointsAward,
+                AuditEntityTypes.AssemblySession, session.Id.ToString(),
+                $"{session.Title} — {awarded} članova");
+        }
 
         session.Status = request.Status;
         session.UpdatedAt = DateTime.UtcNow;
@@ -733,6 +744,172 @@ public class AssemblyController : ControllerBase
         return Ok(new { message = "Tačka obrisana." });
     }
 
+    /// <summary>
+    /// The chairman correcting the roll for someone else.
+    /// </summary>
+    /// <remarks>
+    /// Checking in is self-service, and someone who is plainly in the room but
+    /// forgot to press the button would otherwise carry a −1 for it. Allowed
+    /// only while the sitting runs: once it is closed the scores are written and
+    /// the record stops being editable.
+    /// </remarks>
+    [HttpPut("sessions/{id:int}/attendance/{userId:int}")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblySeatResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> OverrideAttendance(
+        int id, int userId, [FromBody] OverrideAttendanceRequest request)
+    {
+        if (request.Mode != null && !AssemblyCheckInMode.IsKnown(request.Mode))
+            return BadRequest(new { message = "Nepoznat način prisustva." });
+
+        var session = await _db.AssemblySessions.FindAsync(id);
+        if (session is null) return NotFound();
+
+        if (session.Status != AssemblySessionStatus.InProgress)
+            return BadRequest(new { message = "Spisak prisutnih se ispravlja samo dok sednica traje." });
+
+        var member = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.Username, u.IsActive, u.Role })
+            .FirstOrDefaultAsync();
+
+        if (member is null || !AssemblyEligibility.CanTakePart(member.IsActive, member.Role))
+            return BadRequest(new { message = "Taj nalog nije na spisku učesnika." });
+
+        var row = await UpsertAttendanceAsync(id, userId);
+        row.CheckedInAt = request.Mode is null ? null : DateTime.UtcNow;
+        row.CheckInMode = request.Mode;
+        row.UpdatedAt = DateTime.UtcNow;
+
+        // Logged by name: this moves somebody else's score, so who did it has to
+        // be answerable from the log alone.
+        _audit.Record(AuditActions.AssemblyAttendanceOverride,
+            AuditEntityTypes.AssemblySession, session.Id.ToString(),
+            $"{member.Username} — {(request.Mode is null ? "odsutan" : $"prisutan ({request.Mode})")}");
+
+        await _db.SaveChangesAsync();
+
+        return Ok(await BroadcastSeatAsync(id, userId));
+    }
+
+    // -----------------------------------------------------------------------
+    // The record
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Attendance standings: one row per member, for a chosen year and for all
+    /// time. Readable by the whole membership — the same people who watched the
+    /// hall while it was happening.
+    /// </summary>
+    [HttpGet("points")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [ProducesResponseType(typeof(AssemblyStandingsResponse), 200)]
+    public async Task<IActionResult> GetStandings([FromQuery] int? year)
+    {
+        // Members × sittings, so a few hundred rows at the outside. Summed here
+        // rather than in two grouped queries, which would be more SQL for less
+        // clarity at this size.
+        var points = await _db.AssemblyPoints.AsNoTracking()
+            .Include(p => p.Session)
+            .Include(p => p.User)
+            .ToListAsync();
+
+        var availableYears = points
+            .Select(p => p.Session.ScheduledAt.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToList();
+
+        var selectedYear = year is int wanted && availableYears.Contains(wanted)
+            ? wanted
+            : availableYears.FirstOrDefault(DateTime.UtcNow.Year);
+
+        var standings = points
+            .GroupBy(p => p.UserId)
+            .Select(g =>
+            {
+                var forYear = g.Where(p => p.Session.ScheduledAt.Year == selectedYear).ToList();
+
+                // The current account name, not the snapshot: the table is about
+                // who these people are now. The snapshot is what the per-sitting
+                // record shows, and that is where it belongs.
+                var latest = g.OrderByDescending(p => p.AwardedAt).First();
+
+                return new AssemblyStandingResponse(
+                    g.Key,
+                    latest.User?.Username ?? latest.MemberUsername,
+                    latest.User?.Role ?? Roles.Member,
+                    forYear.Count,
+                    forYear.Count(p => p.Attended),
+                    forYear.Count(p => !p.Attended),
+                    forYear.Sum(p => p.Points),
+                    g.Count(),
+                    g.Count(p => p.Attended),
+                    g.Count(p => !p.Attended),
+                    g.Sum(p => p.Points));
+            })
+            .OrderByDescending(s => s.PointsInYear)
+            .ThenByDescending(s => s.PointsTotal)
+            .ThenBy(s => s.Username)
+            .ToList();
+
+        return Ok(new AssemblyStandingsResponse(selectedYear, availableYears, standings));
+    }
+
+    /// <summary>
+    /// What one sitting left behind: the scores it awarded, and the roll call on
+    /// every item that was put to a vote.
+    /// </summary>
+    [HttpGet("sessions/{id:int}/record")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [ProducesResponseType(typeof(AssemblySessionRecordResponse), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetSessionRecord(int id)
+    {
+        var session = await LoadSessionAsync(id);
+        if (session is null) return NotFound();
+
+        var points = await _db.AssemblyPoints.AsNoTracking()
+            .Where(p => p.SessionId == id)
+            .OrderByDescending(p => p.Points)
+            .ThenBy(p => p.MemberUsername)
+            .Select(p => new AssemblyPointResponse(
+                p.UserId, p.MemberUsername, p.Attended, p.Mode, p.Points))
+            .ToListAsync();
+
+        var decided = await InAgendaOrder(_db.AssemblyTopics.AsNoTracking()
+                .Where(t => t.SessionId == id && t.VotingStatus != AssemblyVotingStatus.NotOpened))
+            .ToListAsync();
+
+        var topics = new List<AssemblyTopicRecordResponse>();
+
+        foreach (var topic in decided)
+        {
+            // Reuses the same summing the live hall does, so the archive can
+            // never disagree with what the room saw.
+            var tally = await BuildTallyAsync(topic.Id);
+
+            var rollCall = await _db.AssemblyVotes.AsNoTracking()
+                .Where(v => v.TopicId == topic.Id)
+                .OrderBy(v => v.Choice)
+                .ThenBy(v => v.VoterUsername)
+                .Select(v => new AssemblyRollCallEntry(v.UserId, v.VoterUsername, v.Choice))
+                .ToListAsync();
+
+            topics.Add(new AssemblyTopicRecordResponse(
+                topic.Id, topic.Title, topic.Description, topic.VotingStatus,
+                tally.Outcome, tally.For, tally.Against, tally.Abstained, rollCall));
+        }
+
+        var eligibleCount = await AssemblyEligibility.Roll(_db).CountAsync();
+
+        return Ok(new AssemblySessionRecordResponse(
+            ToResponse(session, eligibleCount, CurrentUserId), points, topics));
+    }
+
     // -----------------------------------------------------------------------
     // Ballots
     // -----------------------------------------------------------------------
@@ -956,6 +1133,61 @@ public class AssemblyController : ControllerBase
             quorum is null || votes.Count >= quorum,
             outcome,
             votes);
+    }
+
+    /// <summary>
+    /// Scores everyone on the roll for a sitting that is closing, and queues the
+    /// rows without saving — the caller's SaveChanges commits them together with
+    /// the closing itself.
+    /// </summary>
+    /// <remarks>
+    /// The roll is taken at this moment, so somebody admitted after the sitting
+    /// is not marked absent from it, and somebody who has since left still keeps
+    /// what he earned. Turning up is judged by <c>CheckedInAt</c> alone: an RSVP
+    /// is what you said a week ago, not whether you came.
+    /// </remarks>
+    private async Task<int> AwardPointsAsync(AssemblySession session)
+    {
+        var roll = await AssemblyEligibility.Roll(_db)
+            .AsNoTracking()
+            .Select(u => new { u.Id, u.Username })
+            .ToListAsync();
+
+        var attendance = await _db.AssemblyAttendances.AsNoTracking()
+            .Where(a => a.SessionId == session.Id)
+            .ToDictionaryAsync(a => a.UserId);
+
+        // Closing is terminal so this cannot run twice, but a sitting that
+        // somehow already has scores must not collect a second set.
+        var already = await _db.AssemblyPoints
+            .Where(p => p.SessionId == session.Id)
+            .Select(p => p.UserId)
+            .ToListAsync();
+
+        var awarded = 0;
+
+        foreach (var member in roll)
+        {
+            if (already.Contains(member.Id)) continue;
+
+            attendance.TryGetValue(member.Id, out var row);
+            var attended = row?.CheckedInAt != null;
+
+            _db.AssemblyPoints.Add(new AssemblyPoint
+            {
+                SessionId = session.Id,
+                UserId = member.Id,
+                MemberUsername = member.Username,
+                Attended = attended,
+                Mode = attended ? row!.CheckInMode : null,
+                Points = AssemblyPointRule.For(attended),
+                AwardedAt = DateTime.UtcNow
+            });
+
+            awarded += 1;
+        }
+
+        return awarded;
     }
 
     private Task<AssemblySession?> LoadSessionAsync(int id) =>
