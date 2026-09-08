@@ -71,7 +71,7 @@ export default function ONama() {
           <span className="page-hero__badge">O nama</span>
           <h1 className="page-hero__title">Ko je Bedem?</h1>
           <p className="page-hero__subtitle">
-            Nezavisno građansko udruženje posvećeno zaštiti prava, transparentnosti
+            Nezavisno udruženje građana posvećeno zaštiti prava, transparentnosti
             i izgradnji pravednog društva.
           </p>
         </div>

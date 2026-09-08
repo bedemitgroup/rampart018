@@ -26,7 +26,10 @@
 }
 
 .footer__logo-icon {
-  font-size: 1.75rem;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: block;
 }
 
 .footer__logo-name {
@@ -147,6 +150,16 @@
 .footer__bottom p {
   font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.45);
+}
+
+.footer__bottom a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.footer__bottom a:hover {
+  color: white;
 }
 
 /* Responsive */
