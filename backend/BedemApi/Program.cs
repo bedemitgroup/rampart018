@@ -99,6 +99,12 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<IAssemblyPresenceTracker, AssemblyPresenceTracker>();
 builder.Services.AddSingleton<IAssemblyNotifier, AssemblyNotifier>();
 
+// Peticije. Signatures are special-category personal data with a published
+// retention period, and this is what actually enforces it. Relies on the same
+// single-replica constraint as the hall above - two copies would race on the
+// same rows.
+builder.Services.AddHostedService<PetitionRetentionService>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();

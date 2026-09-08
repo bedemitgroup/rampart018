@@ -9,7 +9,6 @@ const initialForm = {
   location: '',
   onlineUrl: '',
   description: '',
-  quorumRequired: '',
 };
 
 export default function AdminAssemblySessionForm() {
@@ -39,7 +38,6 @@ export default function AdminAssemblySessionForm() {
           location: session.location ?? '',
           onlineUrl: session.onlineUrl ?? '',
           description: session.description ?? '',
-          quorumRequired: session.quorumRequired == null ? '' : String(session.quorumRequired),
         });
       } catch (err) {
         if (!cancelled) setLoadError(err.message);
@@ -71,7 +69,6 @@ export default function AdminAssemblySessionForm() {
       location: form.location || null,
       onlineUrl: form.onlineUrl || null,
       description: form.description || null,
-      quorumRequired: form.quorumRequired === '' ? null : Number(form.quorumRequired),
     };
 
     setSubmitting(true);
@@ -159,25 +156,6 @@ export default function AdminAssemblySessionForm() {
             onChange={(e) => update('onlineUrl', e.target.value)}
             placeholder="https://..."
           />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="quorumRequired">
-            Kvorum <span className="form-optional">(opciono)</span>
-          </label>
-          <input
-            id="quorumRequired"
-            type="number"
-            min="0"
-            className="form-input"
-            value={form.quorumRequired}
-            onChange={(e) => update('quorumRequired', e.target.value)}
-            placeholder="npr. 5"
-          />
-          <p className="form-hint">
-            Koliko članova mora biti prisutno. Prikazuje se kao informacija i ne
-            blokira sednicu.
-          </p>
         </div>
 
         <div className="form-group">

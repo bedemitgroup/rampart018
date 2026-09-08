@@ -42,6 +42,15 @@ public static class Roles
     /// <summary>Comment moderation: approving pending comments and deleting them.</summary>
     public const string ManageComments = $"{Moderator},{Admin}";
 
+    /// <summary>
+    /// Write access to petitions: writing them, opening and closing collection,
+    /// and reading the signatures. Folded into the Moderator's area rather than
+    /// given a role of its own — petitions are campaigning, which is what he
+    /// already runs — but note that this is the one permission in the ladder
+    /// that opens a list of special-category personal data.
+    /// </summary>
+    public const string ManagePetitions = $"{Moderator},{Admin}";
+
     /// <summary>Accounts, roles and the audit log.</summary>
     public const string ManageUsers = Admin;
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import HoneypotField, { HONEYPOT_NAME } from '../components/HoneypotField';
 import './PridruziSe.css';
@@ -690,12 +691,13 @@ export default function PridruziSe() {
                       Statutom udruženja
                     </a>{' '}
                     i{' '}
-                    <a
-                      href="#"
+                    <Link
+                      to="/politika-privatnosti"
                       className="problem-form__link"
+                      target="_blank"
                     >
                       politikom privatnosti
-                    </a>
+                    </Link>
                     .{' '}
                     <span className="required-star">
                       *

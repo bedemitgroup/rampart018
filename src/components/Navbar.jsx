@@ -9,6 +9,7 @@ const navLinks = [
   { to: '/', label: 'Početna', end: true },
   { to: '/o-nama', label: 'O nama' },
   { to: '/finansije', label: 'Finansije' },
+  { to: '/peticije', label: 'Peticije' },
   { to: '/problem', label: 'Podeli problem' },
   { to: '/pridruzi-se', label: 'Pridruži se' },
 ];

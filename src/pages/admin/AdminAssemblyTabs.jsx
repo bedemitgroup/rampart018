@@ -6,6 +6,7 @@ const TABS = [
   { to: '/admin/skupstina/dnevni-red', label: 'Dnevni red' },
   { to: '/admin/skupstina/sednice', label: 'Sednice' },
   { to: '/admin/skupstina/evidencija', label: 'Evidencija' },
+  { to: '/admin/skupstina/pravila', label: 'Pravila' },
 ];
 
 /**

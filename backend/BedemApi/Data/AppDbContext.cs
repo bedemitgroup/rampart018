@@ -24,6 +24,9 @@ public class AppDbContext : DbContext
     public DbSet<AssemblyTopic> AssemblyTopics => Set<AssemblyTopic>();
     public DbSet<AssemblyVote> AssemblyVotes => Set<AssemblyVote>();
     public DbSet<AssemblyPoint> AssemblyPoints => Set<AssemblyPoint>();
+    public DbSet<AssemblySettings> AssemblySettings => Set<AssemblySettings>();
+    public DbSet<Petition> Petitions => Set<Petition>();
+    public DbSet<PetitionSignature> PetitionSignatures => Set<PetitionSignature>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -239,6 +242,69 @@ public class AppDbContext : DbContext
             // One score per member per sitting. Closing is terminal so it cannot
             // run twice, but this is the net under that rule.
             e.HasIndex(x => new { x.SessionId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblySettings>(e =>
+        {
+            e.HasOne(x => x.UpdatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.UpdatedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One row, seeded, so nothing anywhere has to handle its absence.
+            // The defaults are what a Serbian association statute usually says:
+            // quorate at more than half the roll, decisions by a majority of the
+            // ballots cast.
+            e.HasData(new AssemblySettings
+            {
+                Id = 1,
+                QuorumPercent = 50,
+                MajorityRule = AssemblyMajorityRule.OfVotesCast
+            });
+        });
+
+        // Peticije
+        modelBuilder.Entity<Petition>(e =>
+        {
+            e.HasIndex(p => p.Slug).IsUnique();
+
+            e.HasOne(p => p.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(p => p.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(p => p.Status);
+
+            // The retention job sweeps on this: closed, not yet purged.
+            e.HasIndex(p => p.ClosedAt);
+        });
+
+        modelBuilder.Entity<PetitionSignature>(e =>
+        {
+            // Restrict on the petition, unlike the Cascade an RSVP gets: these
+            // rows are not deleted as a side effect of anything. They go when
+            // the signer withdraws or when retention expires, both of which are
+            // explicit acts, and the schema refuses every other route.
+            e.HasOne(s => s.Petition)
+             .WithMany(p => p.Signatures)
+             .HasForeignKey(s => s.PetitionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(s => s.User)
+             .WithMany()
+             .HasForeignKey(s => s.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One signature per account per petition, the same net
+            // AssemblyVote puts under one ballot per member per topic.
+            e.HasIndex(s => new { s.PetitionId, s.UserId }).IsUnique();
+
+            // The public list reads exactly this slice.
+            e.HasIndex(s => new { s.PetitionId, s.PublicDisplay });
+
+            // "What have I signed", and the withdrawal lookup.
+            e.HasIndex(s => s.UserId);
         });
 
         FinanceSeed.Apply(modelBuilder);

@@ -61,6 +61,25 @@ export const VOTE_OPTIONS = [
 export const VOTE_TONES = Object.fromEntries(VOTE_OPTIONS.map((o) => [o.value, o.tone]));
 export const VOTE_ICONS = Object.fromEntries(VOTE_OPTIONS.map((o) => [o.value, o.icon]));
 
+// Mirrors AssemblyMajorityRule on the server. Which one applies is the
+// association's own choice, written into its statute — the Zakon o udruženjima
+// fixes neither the quorum nor the majority, it only requires the statute to
+// say how decisions are made.
+export const MAJORITY_RULE = {
+  OF_VOTES_CAST: 'Datih glasova',
+  OF_PRESENT: 'Prisutnih članova',
+  OF_ALL: 'Svih članova',
+};
+
+export const MAJORITY_RULE_HELP = {
+  [MAJORITY_RULE.OF_VOTES_CAST]:
+    'Prolazi ako je ZA više od PROTIV. Uzdržan se broji i prikazuje, ali ne ulazi u račun — uzdržati se znači skloniti se u stranu.',
+  [MAJORITY_RULE.OF_PRESENT]:
+    'Prolazi ako je ZA više od polovine prijavljenih na sednici. Uzdržan tada radi protiv predloga, jer ostaje u imeniocu.',
+  [MAJORITY_RULE.OF_ALL]:
+    'Prolazi ako je ZA više od polovine celog spiska, bez obzira ko je došao. Najstroža varijanta.',
+};
+
 export const CHECK_IN_MODE = {
   IN_PERSON: 'Uživo',
   ONLINE: 'Online',

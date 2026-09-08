@@ -1,0 +1,365 @@
+/* Petition detail. Article + sidebar, the same shape as Vest.css, with the
+   signature counter and signing form where the comments sit there. */
+
+.peticija-page {
+  padding-block: var(--space-10) var(--space-16);
+  background: var(--color-bg-light);
+  min-height: 60vh;
+}
+
+.peticija-status,
+.peticija-notfound {
+  text-align: center;
+  color: var(--color-neutral);
+  padding: var(--space-20) var(--space-4);
+}
+
+.peticija-notfound h1 {
+  color: var(--color-primary);
+  margin-bottom: var(--space-6);
+}
+
+.peticija-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  font-size: var(--font-size-sm);
+}
+
+.peticija-breadcrumb__back {
+  background: none;
+  border: none;
+  color: var(--color-secondary);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.peticija-breadcrumb a {
+  color: var(--color-neutral);
+}
+
+.peticija-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .peticija-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Article ------------------------------------------------------------ */
+
+.peticija-article {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-8);
+}
+
+.peticija-article__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  margin-bottom: var(--space-4);
+}
+
+.peticija-article__title {
+  font-size: var(--font-size-3xl);
+  line-height: 1.2;
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+}
+
+.peticija-article__recipient {
+  color: var(--color-neutral);
+  margin-bottom: var(--space-6);
+}
+
+.peticija-article__recipient strong {
+  color: var(--color-text);
+}
+
+.peticija-article__image {
+  width: 100%;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.peticija-article__summary {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--color-text);
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--color-secondary);
+  margin-bottom: var(--space-6);
+}
+
+.peticija-article__body p {
+  line-height: 1.8;
+  margin-bottom: var(--space-4);
+}
+
+.peticija-article__archived {
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+  color: var(--color-neutral);
+  font-size: var(--font-size-sm);
+}
+
+/* --- Public signatories -------------------------------------------------- */
+
+.peticija-signatories {
+  margin-top: var(--space-10);
+  padding-top: var(--space-8);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.peticija-signatories__title {
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.peticija-signatories__note {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  margin-bottom: var(--space-5);
+}
+
+.peticija-signatories__list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.peticija-signatories__list li {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+  font-size: var(--font-size-sm);
+}
+
+.peticija-signatories__list span {
+  color: var(--color-neutral);
+}
+
+.peticija-signatories__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+}
+
+/* --- Sidebar ------------------------------------------------------------- */
+
+.peticija-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--space-4));
+}
+
+@media (max-width: 900px) {
+  .peticija-sidebar {
+    position: static;
+  }
+}
+
+.peticija-counter {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.peticija-counter__number {
+  font-size: var(--font-size-5xl);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.peticija-counter__word {
+  color: var(--color-neutral);
+  margin-bottom: var(--space-5);
+}
+
+.peticija-counter__deadline {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+}
+
+.peticija-signed,
+.peticija-closed {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.peticija-signed__text {
+  font-weight: 600;
+  color: var(--color-accent2);
+}
+
+.peticija-signed__link {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+}
+
+.peticija-sidebar__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  text-align: center;
+}
+
+/* --- Sign form ----------------------------------------------------------- */
+
+.peticija-sign {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.peticija-sign--done {
+  text-align: center;
+}
+
+.peticija-sign__icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-2);
+}
+
+.peticija-sign__title {
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
+}
+
+.peticija-sign__text {
+  color: var(--color-neutral);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+}
+
+.peticija-sign__note {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  margin-bottom: var(--space-5);
+}
+
+.peticija-sign__link {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.peticija-sign__error {
+  margin-bottom: var(--space-3);
+}
+
+.peticija-sign__submit {
+  width: 100%;
+}
+
+/* The one line on the page that stops a signer from believing they have filed
+   a narodna inicijativa. Quiet, but never hidden. */
+.peticija-sign__legal {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  line-height: 1.5;
+}
+
+/* Checkbox. Duplicated from Problem.css the way PridruziSe.css duplicates it —
+   these classes are per-page in this codebase. */
+.peticija-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.peticija-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.peticija-checkbox__box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-neutral);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  background: white;
+}
+
+.peticija-checkbox input:checked + .peticija-checkbox__box {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.peticija-checkbox input:checked + .peticija-checkbox__box::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+  display: block;
+}
+
+.peticija-checkbox--error .peticija-checkbox__box {
+  border-color: var(--color-accent);
+}
+
+.form-input--error {
+  border-color: var(--color-accent);
+}
+
+.form-error {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  margin-top: var(--space-1);
+  font-weight: 500;
+}
+
+.required-star {
+  color: var(--color-accent);
+}

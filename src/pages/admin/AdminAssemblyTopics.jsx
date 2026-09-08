@@ -410,6 +410,7 @@ function TopicCard({
       {tally && topic.votingStatus === VOTING_STATUS.CLOSED && (
         <p className={`agenda-item__result agenda-item__result--${tally.outcome === OUTCOME.PASSED ? 'passed' : 'failed'}`}>
           {tally.outcome} — za {tally.for}, protiv {tally.against}, uzdržano {tally.abstained}
+          {!tally.quorumMet && <span className="agenda-item__no-quorum">bez kvoruma</span>}
         </p>
       )}
 

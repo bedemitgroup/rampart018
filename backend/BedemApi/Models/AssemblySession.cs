@@ -36,13 +36,6 @@ public class AssemblySession
 
     public string Status { get; set; } = AssemblySessionStatus.Scheduled;
 
-    /// <summary>
-    /// How many eligible members must be present for the sitting to decide.
-    /// Null means the association has no quorum rule, which is the default —
-    /// the number is shown either way, it just does not block a ballot.
-    /// </summary>
-    public int? QuorumRequired { get; set; }
-
     public int CreatedByUserId { get; set; }
     public User CreatedByUser { get; set; } = null!;
 

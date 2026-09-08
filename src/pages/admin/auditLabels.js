@@ -49,6 +49,18 @@ export const ACTION_LABELS = {
   'Assembly.Attendance.Override': 'Ispravio spisak prisutnih',
   'Assembly.Points.Award': 'Upisao poene za sednicu',
 
+  'Petition.Create': 'Napravio peticiju',
+  'Petition.Update': 'Izmenio peticiju',
+  'Petition.Open': 'Otvorio peticiju za potpisivanje',
+  'Petition.Close': 'Zatvorio peticiju',
+  'Petition.Delete': 'Obrisao peticiju',
+  'Petition.MoveUp': 'Pomerio peticiju gore',
+  'Petition.MoveDown': 'Pomerio peticiju dole',
+  'Petition.PurgeSignatures': 'Obrisao potpise',
+  'Petition.SignaturesExport': 'Izvezao spisak potpisnika',
+
+  'Assembly.Rules.Update': 'Izmenio pravila glasanja',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',
@@ -64,6 +76,7 @@ export const ENTITY_LABELS = {
   FinanceQuarter: 'Kvartal',
   AssemblySession: 'Sednica skupštine',
   AssemblyTopic: 'Tačka dnevnog reda',
+  Petition: 'Peticija',
   User: 'Nalog',
 };
 
@@ -78,6 +91,11 @@ const DESTRUCTIVE = new Set([
   'Assembly.Session.Delete',
   'Assembly.Topic.Reject',
   'Assembly.Topic.Delete',
+  'Petition.Delete',
+  'Petition.PurgeSignatures',
+  // Not destructive, but it is the row an admin most needs to spot: a copy of
+  // special-category personal data left the panel.
+  'Petition.SignaturesExport',
   'User.Deactivate',
 ]);
 

@@ -1009,3 +1009,90 @@
   .record { padding: var(--space-3) var(--space-4); }
   .record-chip { flex: 1 1 130px; }
 }
+
+/* --- Voting rules --------------------------------------------------------- */
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.rules__field { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.rules__inline { display: flex; align-items: center; gap: var(--space-2); }
+.rules__percent { width: 6rem; }
+.rules__unit { font-size: var(--font-size-sm); color: #6b7280; }
+
+.rules__choices { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Each option carries its own explanation: which majority applies is the one
+   setting here whose consequence is not obvious from its name. */
+.rules__choice {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.rules__choice:hover { border-color: var(--color-secondary); }
+
+.rules__choice--active {
+  border-color: var(--color-secondary);
+  background: rgba(15, 138, 141, 0.06);
+}
+
+.rules__choice input { margin-top: 3px; }
+.rules__choice-title { display: block; color: var(--color-primary); }
+
+.rules__choice-help {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.rules__actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.rules__meta {
+  margin: var(--space-3) 0 0;
+  font-size: 0.78rem;
+  color: #8a92a0;
+}
+
+/* --- "Taken without a quorum" -------------------------------------------- */
+
+.ballot__threshold { margin-bottom: var(--space-3); }
+.ballot__rule { color: #a8b0bd; }
+
+.ballot__no-quorum,
+.agenda-item__no-quorum {
+  display: inline-block;
+  padding: 1px 8px;
+  margin-left: var(--space-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: #8a6100;
+  background: rgba(181, 127, 11, 0.18);
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 600px) {
+  .rules { padding: var(--space-4); }
+}

@@ -250,6 +250,7 @@ function SessionRecord({ record, currentUserId }) {
               <h5 className="record__topic-title">{t.title}</h5>
               <span className={`agenda-item__result agenda-item__result--${t.outcome === OUTCOME.PASSED ? 'passed' : 'failed'}`}>
                 {t.outcome}
+                {!t.quorumMet && <span className="agenda-item__no-quorum">bez kvoruma</span>}
               </span>
             </div>
             <p className="record__topic-body">{t.description}</p>

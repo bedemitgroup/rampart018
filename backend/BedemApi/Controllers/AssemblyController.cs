@@ -180,7 +180,7 @@ public class AssemblyController : ControllerBase
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreateSession([FromBody] CreateAssemblySessionRequest request)
     {
-        var error = ValidateSession(request.Title, request.OnlineUrl, request.QuorumRequired);
+        var error = ValidateSession(request.Title, request.OnlineUrl);
         if (error != null) return BadRequest(new { message = error });
 
         var session = new AssemblySession
@@ -192,7 +192,6 @@ public class AssemblyController : ControllerBase
             Location = Blank(request.Location),
             OnlineUrl = Blank(request.OnlineUrl),
             Description = Blank(request.Description),
-            QuorumRequired = request.QuorumRequired,
             Status = AssemblySessionStatus.Scheduled,
             CreatedByUserId = CurrentUserId
         };
@@ -225,7 +224,7 @@ public class AssemblyController : ControllerBase
         if (session.Status is AssemblySessionStatus.Finished or AssemblySessionStatus.Cancelled)
             return BadRequest(new { message = "Završena ili otkazana sednica se više ne menja." });
 
-        var error = ValidateSession(request.Title, request.OnlineUrl, request.QuorumRequired);
+        var error = ValidateSession(request.Title, request.OnlineUrl);
         if (error != null) return BadRequest(new { message = error });
 
         session.Title = request.Title.Trim();
@@ -233,7 +232,6 @@ public class AssemblyController : ControllerBase
         session.Location = Blank(request.Location);
         session.OnlineUrl = Blank(request.OnlineUrl);
         session.Description = Blank(request.Description);
-        session.QuorumRequired = request.QuorumRequired;
         session.UpdatedAt = DateTime.UtcNow;
 
         _audit.Record(AuditActions.AssemblySessionUpdate,
@@ -796,6 +794,51 @@ public class AssemblyController : ControllerBase
     }
 
     // -----------------------------------------------------------------------
+    // The rules this association decides by
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// The quorum and the majority, as the statute defines them.
+    /// </summary>
+    /// <remarks>
+    /// Readable by the whole membership rather than only the chair: a member is
+    /// entitled to know what his vote is being counted against.
+    /// </remarks>
+    [HttpGet("rules")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [ProducesResponseType(typeof(AssemblyRulesResponse), 200)]
+    public async Task<IActionResult> GetRules() => Ok(await BuildRulesResponseAsync());
+
+    /// <summary>Change them — which in practice means the statute changed.</summary>
+    [HttpPut("rules")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(AssemblyRulesResponse), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> UpdateRules([FromBody] UpdateAssemblyRulesRequest request)
+    {
+        if (request.QuorumPercent is < 0 or > 100)
+            return BadRequest(new { message = "Kvorum se izražava u procentima, od 0 do 100." });
+
+        if (!AssemblyMajorityRule.IsKnown(request.MajorityRule))
+            return BadRequest(new { message = "Nepoznat način računanja većine." });
+
+        var rules = await CurrentRulesAsync();
+
+        rules.QuorumPercent = request.QuorumPercent;
+        rules.MajorityRule = request.MajorityRule;
+        rules.UpdatedAt = DateTime.UtcNow;
+        rules.UpdatedByUserId = CurrentUserId;
+
+        _audit.Record(AuditActions.AssemblyRulesUpdate, AuditEntityTypes.AssemblySession, null,
+            $"kvorum {request.QuorumPercent}% · većina: {request.MajorityRule}");
+
+        await _db.SaveChangesAsync();
+
+        return Ok(await BuildRulesResponseAsync());
+    }
+
+    // -----------------------------------------------------------------------
     // The record
     // -----------------------------------------------------------------------
 
@@ -901,7 +944,8 @@ public class AssemblyController : ControllerBase
 
             topics.Add(new AssemblyTopicRecordResponse(
                 topic.Id, topic.Title, topic.Description, topic.VotingStatus,
-                tally.Outcome, tally.For, tally.Against, tally.Abstained, rollCall));
+                tally.Outcome, tally.For, tally.Against, tally.Abstained,
+                tally.QuorumMet, rollCall));
         }
 
         var eligibleCount = await AssemblyEligibility.Roll(_db).CountAsync();
@@ -965,6 +1009,20 @@ public class AssemblyController : ControllerBase
 
             topic.VotingStatus = AssemblyVotingStatus.Closed;
             topic.VotingClosedAt = DateTime.UtcNow;
+
+            // Frozen here, and for a different reason than the outcome. The
+            // ballots stop changing at this moment, so the verdict can always be
+            // recomputed — but attendance does not stop changing, and neither
+            // does the quorum threshold, which is a setting. Without the
+            // snapshot a decision taken today would silently gain or lose its
+            // "bez kvoruma" mark the next time somebody edits the rules.
+            var rules = await CurrentRulesAsync();
+
+            topic.PresentAtClose = await _db.AssemblyAttendances
+                .CountAsync(a => a.SessionId == sessionId && a.CheckedInAt != null);
+
+            topic.QuorumMetAtClose = AssemblyMajority.HasQuorum(
+                rules.QuorumPercent, topic.PresentAtClose, topic.EligibleVotersAtOpen);
         }
 
         topic.UpdatedAt = DateTime.UtcNow;
@@ -1079,9 +1137,42 @@ public class AssemblyController : ControllerBase
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Counts the ballots on one item. Nothing here is stored: the outcome, the
-    /// quorum and every count are summed from the rows each time they are asked
-    /// for, so the verdict can never drift away from the ballots behind it.
+    /// The association's rules, tracked so the caller can edit them.
+    /// </summary>
+    /// <remarks>
+    /// The row is seeded with Id 1, so there is no "create it if missing" branch
+    /// to get wrong. FirstAsync rather than FindAsync(1) in case a future
+    /// migration ever renumbers it.
+    /// </remarks>
+    private Task<AssemblySettings> CurrentRulesAsync() =>
+        _db.AssemblySettings.OrderBy(x => x.Id).FirstAsync();
+
+    private async Task<AssemblyRulesResponse> BuildRulesResponseAsync()
+    {
+        var rules = await _db.AssemblySettings.AsNoTracking()
+            .Include(x => x.UpdatedByUser)
+            .OrderBy(x => x.Id)
+            .FirstAsync();
+
+        var eligible = await AssemblyEligibility.Roll(_db).CountAsync();
+
+        return new AssemblyRulesResponse(
+            rules.QuorumPercent,
+            rules.MajorityRule,
+            AssemblyMajorityRule.All,
+            eligible,
+            // What the percentage means in people today, so the screen never
+            // leaves that arithmetic to whoever is reading it.
+            AssemblyMajority.QuorumThreshold(rules.QuorumPercent, eligible),
+            rules.UpdatedByUser?.Username,
+            rules.UpdatedAt);
+    }
+
+    /// <summary>
+    /// Counts the ballots on one item. The outcome and the counts are summed
+    /// from the rows each time, so the verdict can never drift away from the
+    /// ballots behind it — the one exception is the quorum on a closed ballot,
+    /// which is read back from the snapshot taken when it closed.
     /// </summary>
     private async Task<AssemblyTallyResponse> BuildTallyAsync(int topicId)
     {
@@ -1105,17 +1196,41 @@ public class AssemblyController : ControllerBase
             ? await AssemblyEligibility.Roll(_db).CountAsync()
             : topic.EligibleVotersAtOpen;
 
-        var quorum = topic.Session?.QuorumRequired;
+        var rules = await CurrentRulesAsync();
+
+        // Counted from who checked in, not from how many ballots arrived. A
+        // quorum asks whether enough of the association turned up; a member who
+        // is in the room and says nothing still counts towards it.
+        var present = topic.SessionId is int sessionId
+            ? await _db.AssemblyAttendances.CountAsync(
+                a => a.SessionId == sessionId && a.CheckedInAt != null)
+            : 0;
+
+        var closed = topic.VotingStatus == AssemblyVotingStatus.Closed;
+
+        // A closed ballot reports the verdict it was given, not one recomputed
+        // from today's attendance and today's threshold.
+        var presentForQuorum = closed ? topic.PresentAtClose : present;
+        var quorumThreshold = AssemblyMajority.QuorumThreshold(rules.QuorumPercent, eligible);
+        var quorumMet = closed && topic.QuorumMetAtClose is bool frozen
+            ? frozen
+            : AssemblyMajority.HasQuorum(rules.QuorumPercent, present, eligible);
+
+        var requiredFor = AssemblyMajority.RequiredFor(
+            rules.MajorityRule, againstCount, presentForQuorum, eligible);
 
         var outcome = topic.VotingStatus switch
         {
             AssemblyVotingStatus.NotOpened => AssemblyOutcome.NotOpened,
             AssemblyVotingStatus.Open => AssemblyOutcome.Pending,
 
-            // Simple majority of the ballots actually cast. Abstentions are
-            // counted and shown but do not sink a proposal — abstaining is
-            // standing aside, not voting against.
-            _ => forCount > againstCount ? AssemblyOutcome.Passed : AssemblyOutcome.Failed
+            // Whichever majority the statute picked. Quorum deliberately does
+            // not enter here: a sitting held without one still decides, the
+            // decision simply carries the mark that says so.
+            _ => AssemblyMajority.Passes(
+                    rules.MajorityRule, forCount, againstCount, presentForQuorum, eligible)
+                ? AssemblyOutcome.Passed
+                : AssemblyOutcome.Failed
         };
 
         return new AssemblyTallyResponse(
@@ -1127,10 +1242,13 @@ public class AssemblyController : ControllerBase
             abstained,
             Math.Max(0, eligible - votes.Count),
             eligible,
-            quorum,
-            // Shown as information, never enforced: whether a sitting was
-            // quorate is the association's call, not the software's.
-            quorum is null || votes.Count >= quorum,
+            presentForQuorum,
+            quorumThreshold,
+            // Reported, never enforced: a sitting without a quorum may still
+            // decide, and the decision simply carries the mark.
+            quorumMet,
+            rules.MajorityRule,
+            requiredFor,
             outcome,
             votes);
     }
@@ -1358,16 +1476,13 @@ public class AssemblyController : ControllerBase
             AssemblyTopicRules.WhyCannotEdit(t, isChair, currentUserId) is null,
             AssemblyTopicRules.WhyCannotDelete(t, isChair, currentUserId) is null);
 
-    private static string? ValidateSession(string? title, string? onlineUrl, int? quorum)
+    private static string? ValidateSession(string? title, string? onlineUrl)
     {
         if (string.IsNullOrWhiteSpace(title))
             return "Naziv sednice je obavezan.";
 
         if (title.Trim().Length > MaxTitleLength)
             return $"Naziv sednice ne sme biti duži od {MaxTitleLength} znakova.";
-
-        if (quorum is < 0)
-            return "Kvorum ne može biti negativan.";
 
         // The link is rendered as an href, so the scheme is checked here rather
         // than trusting React to refuse a javascript: URL.
@@ -1435,7 +1550,6 @@ public class AssemblyController : ControllerBase
             s.OnlineUrl,
             s.Description,
             s.Status,
-            s.QuorumRequired,
             s.CreatedByUser?.Username ?? "?",
             s.OpenedAt,
             s.ClosedAt,

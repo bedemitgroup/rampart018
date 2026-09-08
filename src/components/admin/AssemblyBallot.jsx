@@ -54,17 +54,27 @@ export default function AssemblyBallot({
 
       <p className="ballot__meta">
         Glasalo {cast} od {tally.eligibleVoters} · nije glasalo {tally.notVoted}
-        {tally.quorumRequired != null && (
-          <span className={tally.quorumMet ? 'ballot__quorum--met' : 'ballot__quorum--short'}>
-            {' · kvorum '}
-            {tally.quorumMet ? 'ispunjen' : `nije ispunjen (traži se ${tally.quorumRequired})`}
-          </span>
-        )}
+        {' · '}
+        <span className={tally.quorumMet ? 'ballot__quorum--met' : 'ballot__quorum--short'}>
+          prisutno {tally.presentCount} od potrebnih {tally.quorumRequired}
+          {tally.quorumMet ? '' : ' — bez kvoruma'}
+        </span>
       </p>
+
+      {open && (
+        <p className="ballot__meta ballot__threshold">
+          Za usvajanje je potrebno <strong>{tally.requiredFor}</strong>{' '}
+          {tally.requiredFor === 1 ? 'glas' : 'glasova'} ZA
+          <span className="ballot__rule"> · većina {tally.majorityRule.toLowerCase()}</span>
+        </p>
+      )}
 
       {!open && (
         <p className={`ballot__verdict ballot__verdict--${tally.outcome === OUTCOME.PASSED ? 'passed' : 'failed'}`}>
           {tally.outcome}
+          {/* The decision stands either way — the mark is what says the room
+              was thin when it was taken. */}
+          {!tally.quorumMet && <span className="ballot__no-quorum">bez kvoruma</span>}
         </p>
       )}
 

@@ -15,16 +15,14 @@ public record CreateAssemblySessionRequest(
     DateTimeOffset ScheduledAt,
     string? Location,
     string? OnlineUrl,
-    string? Description,
-    int? QuorumRequired);
+    string? Description);
 
 public record UpdateAssemblySessionRequest(
     string Title,
     DateTimeOffset ScheduledAt,
     string? Location,
     string? OnlineUrl,
-    string? Description,
-    int? QuorumRequired);
+    string? Description);
 
 /// <summary>Status is one of AssemblySessionStatus.</summary>
 public record SetAssemblySessionStatusRequest(string Status);
@@ -37,7 +35,6 @@ public record AssemblySessionResponse(
     string? OnlineUrl,
     string? Description,
     string Status,
-    int? QuorumRequired,
     string CreatedByUsername,
     DateTime? OpenedAt,
     DateTime? ClosedAt,
@@ -178,8 +175,18 @@ public record AssemblyTallyResponse(
     int Abstained,
     int NotVoted,
     int EligibleVoters,
-    int? QuorumRequired,
+
+    // Quorum is about who turned up, not about who got round to pressing a
+    // button, so it is counted from the attendance and reported alongside it.
+    int PresentCount,
+    int QuorumRequired,
     bool QuorumMet,
+
+    // What it would have taken to carry, so the room can be told the threshold
+    // while the ballot is still open rather than only the verdict afterwards.
+    string MajorityRule,
+    int RequiredFor,
+
     string Outcome,
     IReadOnlyList<AssemblyVoteMarkResponse> Votes
 );
@@ -187,6 +194,38 @@ public record AssemblyTallyResponse(
 // ---------------------------------------------------------------------------
 // The record: points and roll calls
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Public figures
+// ---------------------------------------------------------------------------
+
+/// <summary>
+/// Everyone the association counts as a member with a say — the same roll the
+/// assembly sits on, so the front page cannot claim one number while the
+/// chamber shows another.
+/// </summary>
+public record PublicStatsResponse(int ActiveMembers);
+
+// ---------------------------------------------------------------------------
+// The rules this association decides by
+// ---------------------------------------------------------------------------
+
+public record AssemblyRulesResponse(
+    int QuorumPercent,
+    string MajorityRule,
+    IReadOnlyList<string> MajorityRules,
+
+    // What the percentage works out to against today's roll, so the screen can
+    // say "50% of 9 — five must be present" instead of leaving the arithmetic
+    // to whoever is reading it.
+    int EligibleCount,
+    int QuorumThreshold,
+
+    string? UpdatedByUsername,
+    DateTime? UpdatedAt
+);
+
+public record UpdateAssemblyRulesRequest(int QuorumPercent, string MajorityRule);
 
 /// <summary>
 /// The chairman correcting the roll. Mode is one of AssemblyCheckInMode, or
@@ -238,6 +277,7 @@ public record AssemblyTopicRecordResponse(
     int For,
     int Against,
     int Abstained,
+    bool QuorumMet,
     IReadOnlyList<AssemblyRollCallEntry> RollCall
 );
 

@@ -57,7 +57,9 @@ const milestones = [
   {
     year: '2026',
     title: 'Danas',
-    desc: 'Više od 1.200 aktivnih članova, 48 uspešnih akcija i svakodnevna podrška građanima.',
+    // No membership figure here on purpose: the live one is on the front page,
+    // and a second number written into prose is a second number to keep true.
+    desc: 'Rastuće članstvo, 48 uspešnih akcija i svakodnevna podrška građanima.',
   },
 ];
 

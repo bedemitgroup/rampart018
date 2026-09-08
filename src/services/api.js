@@ -118,6 +118,30 @@ export const api = {
   getAssemblyStandings: (year) =>
     request(`/api/assembly/points${year ? `?year=${year}` : ''}`),
   getAssemblySessionRecord: (id) => request(`/api/assembly/sessions/${id}/record`),
+  getAssemblyRules: () => request('/api/assembly/rules'),
+  updateAssemblyRules: (data) => request('/api/assembly/rules', { method: 'PUT', body: JSON.stringify(data) }),
+  getPublicStats: () => request('/api/stats'),
+  getPetitions: () => request('/api/petitions'),
+  getPetitionBySlug: (slug) => request(`/api/petitions/${slug}`),
+  getPetitionById: (id) => request(`/api/petitions/${id}`),
+  createPetition: (data) => request('/api/petitions', { method: 'POST', body: JSON.stringify(data) }),
+  updatePetition: (id, data) => request(`/api/petitions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  setPetitionStatus: (id, status) => request(`/api/petitions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  movePetition: (id, direction) => request(`/api/petitions/${id}/move`, { method: 'PUT', body: JSON.stringify({ direction }) }),
+  deletePetition: (id) => request(`/api/petitions/${id}`, { method: 'DELETE' }),
+  getPetitionSignatures: (slug, page = 1, pageSize = 50) =>
+    request(`/api/petitions/${slug}/signatures?page=${page}&pageSize=${pageSize}`),
+  signPetition: (id, data) => request(`/api/petitions/${id}/signatures`, { method: 'POST', body: JSON.stringify(data) }),
+  withdrawPetitionSignature: (id) => request(`/api/petitions/${id}/signatures/me`, { method: 'DELETE' }),
+  getMyPetitionSignatures: () => request('/api/petitions/my-signatures'),
+  getAllPetitionSignatures: (id, page = 1, pageSize = 50) =>
+    request(`/api/petitions/${id}/signatures/all?page=${page}&pageSize=${pageSize}`),
+  // A POST, and not because it writes anything the caller reads back: the
+  // server records the export in the audit log. See PetitionsController.
+  exportPetitionSignatures: (id) =>
+    request(`/api/petitions/${id}/signatures/export`, { method: 'POST' }),
+  purgePetitionSignatures: (id) =>
+    request(`/api/petitions/${id}/purge-signatures`, { method: 'POST' }),
   uploadNewsImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

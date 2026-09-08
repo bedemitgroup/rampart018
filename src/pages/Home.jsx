@@ -39,16 +39,33 @@ function formatDate(isoString) {
   return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}.`;
 }
 
+// Dot-grouped the Serbian way, so 1200 reads as 1.200 rather than 1,200.
+const memberFormat = new Intl.NumberFormat('sr-RS', { maximumFractionDigits: 0 });
+
 export default function Home() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeMembers, setActiveMembers] = useState(null);
 
   useEffect(() => {
     api.getNews()
       .then(setNews)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
+  }, []);
+
+  // The real roll, not a figure typed into the markup. Same count the assembly
+  // seats itself from, so the front page and the chamber can never disagree.
+  // Kept out of the loading gate above: a stat tile is not worth holding the
+  // news back for, and it shows a dash until the number arrives.
+  useEffect(() => {
+    let cancelled = false;
+    api.getPublicStats()
+      .then((stats) => { if (!cancelled) setActiveMembers(stats.activeMembers); })
+      .catch(() => { /* the tile stays a dash; nothing else on the page cares */ });
+
+    return () => { cancelled = true; };
   }, []);
 
   return (
@@ -78,10 +95,13 @@ export default function Home() {
         {/* Stats bar */}
         <div className="home-stats">
           {[
-            { value: '1.200+', label: 'Aktivnih članova' },
-            { value: '48',     label: 'Uspešnih akcija' },
-            { value: '5',      label: 'Godina borbe' },
-            { value: '12',     label: 'Opština' },
+            {
+              value: activeMembers === null ? '—' : memberFormat.format(activeMembers),
+              label: 'Aktivnih članova',
+            },
+            { value: '48', label: 'Uspešnih akcija' },
+            { value: '5',  label: 'Godina borbe' },
+            { value: '12', label: 'Opština' },
           ].map(({ value, label }) => (
             <div key={label} className="home-stats__item">
               <span className="home-stats__value">{value}</span>

@@ -117,6 +117,30 @@ public static class AssemblyVoteChoice
 }
 
 /// <summary>
+/// How a majority is counted. Which one applies is the association's own choice,
+/// written in its statute — the law delegates it — so this is a setting rather
+/// than a rule baked into the tally.
+/// </summary>
+public static class AssemblyMajorityRule
+{
+    /// <summary>More ayes than noes. Abstaining stands aside.</summary>
+    public const string OfVotesCast = "Datih glasova";
+
+    /// <summary>More than half of everyone checked in. Abstaining works against.</summary>
+    public const string OfPresent = "Prisutnih članova";
+
+    /// <summary>More than half of the whole roll, however few turned up.</summary>
+    public const string OfAllMembers = "Svih članova";
+
+    public static readonly IReadOnlyList<string> All = new[]
+    {
+        OfVotesCast, OfPresent, OfAllMembers
+    };
+
+    public static bool IsKnown(string? value) => value != null && All.Contains(value);
+}
+
+/// <summary>
 /// What turning up is worth. One place, so the association can change what it
 /// rewards without anyone hunting through the controller for the numbers —
 /// and past sittings keep whatever they were awarded, because

@@ -24,6 +24,15 @@ public static class RateLimitPolicies
     /// </summary>
     public const string AssemblyLive = "assembly-live";
 
+    /// <summary>
+    /// Signing a petition. Tighter than votes because the ceiling is not a
+    /// matter of comfort: a signature writes a name, a city and a political
+    /// opinion, and a script that could walk through accounts would be building
+    /// a list of them. Partitioned by user first, so one account cannot spread
+    /// its attempts across addresses.
+    /// </summary>
+    public const string PetitionSign = "petition-sign";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         Register,
@@ -33,6 +42,7 @@ public static class RateLimitPolicies
         MembershipApplications,
         Votes,
         AdminWrites,
-        AssemblyLive
+        AssemblyLive,
+        PetitionSign
     };
 }

@@ -64,6 +64,35 @@ public static class AuditActions
     public const string AssemblyAttendanceOverride = "Assembly.Attendance.Override";
     public const string AssemblyPointsAward = "Assembly.Points.Award";
 
+    /// <summary>The quorum and majority the association decides by.</summary>
+    public const string AssemblyRulesUpdate = "Assembly.Rules.Update";
+
+    // Peticije. The petition is logged; the signatures on it are not, and that
+    // asymmetry is deliberate. A signature reveals a political opinion, and this
+    // log is built to be permanent — "Marko potpisao peticiju X" would be a
+    // second copy of that opinion, one that survives both the withdrawal of his
+    // consent and the retention purge. Same reasoning as the assembly ballots
+    // above: the decision to open and close is logged, the votes are not.
+    public const string PetitionCreate = "Petition.Create";
+    public const string PetitionUpdate = "Petition.Update";
+    public const string PetitionOpen = "Petition.Open";
+    public const string PetitionClose = "Petition.Close";
+    public const string PetitionDelete = "Petition.Delete";
+    public const string PetitionMoveUp = "Petition.MoveUp";
+    public const string PetitionMoveDown = "Petition.MoveDown";
+
+    /// <summary>Signatures deleted — by the retention job or by hand.</summary>
+    public const string PetitionPurgeSignatures = "Petition.PurgeSignatures";
+
+    /// <summary>
+    /// Somebody pulled the signature list out of the panel. Logged precisely
+    /// because the individual signatures are not: an export moves special
+    /// categories of personal data onto somebody's laptop, and that is the one
+    /// event about this data worth a permanent trail. The row names the
+    /// petition and the person who exported it, never the signers.
+    /// </summary>
+    public const string PetitionSignaturesExport = "Petition.SignaturesExport";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -90,7 +119,10 @@ public static class AuditActions
         AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
         AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
         AssemblyVotingOpen, AssemblyVotingClose,
-        AssemblyAttendanceOverride, AssemblyPointsAward,
+        AssemblyAttendanceOverride, AssemblyPointsAward, AssemblyRulesUpdate,
+        PetitionCreate, PetitionUpdate, PetitionOpen, PetitionClose,
+        PetitionDelete, PetitionMoveUp, PetitionMoveDown,
+        PetitionPurgeSignatures, PetitionSignaturesExport,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };
@@ -110,10 +142,11 @@ public static class AuditEntityTypes
     public const string User = "User";
     public const string AssemblySession = "AssemblySession";
     public const string AssemblyTopic = "AssemblyTopic";
+    public const string Petition = "Petition";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
         News, FinanceEntry, FinanceCategory, FinanceYear, FinanceQuarter,
-        AssemblySession, AssemblyTopic, User
+        AssemblySession, AssemblyTopic, Petition, User
     };
 }

@@ -9,6 +9,10 @@ import Finansije from './pages/Finansije';
 import Problem from './pages/Problem';
 import PridruziSe from './pages/PridruziSe';
 import Vest from './pages/Vest';
+import Peticije from './pages/Peticije';
+import Peticija from './pages/Peticija';
+import MojiPotpisi from './pages/MojiPotpisi';
+import PolitikaPrivatnosti from './pages/PolitikaPrivatnosti';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminNews from './pages/admin/AdminNews';
 import AdminNewsForm from './pages/admin/AdminNewsForm';
@@ -22,9 +26,13 @@ import AdminAssembly from './pages/admin/AdminAssembly';
 import AdminAssemblySessions from './pages/admin/AdminAssemblySessions';
 import AdminAssemblyTopics from './pages/admin/AdminAssemblyTopics';
 import AdminAssemblyRecord from './pages/admin/AdminAssemblyRecord';
+import AdminAssemblyRules from './pages/admin/AdminAssemblyRules';
 import AdminAssemblySessionForm from './pages/admin/AdminAssemblySessionForm';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAuditLog from './pages/admin/AdminAuditLog';
+import AdminPeticije from './pages/admin/AdminPeticije';
+import AdminPeticijaForm from './pages/admin/AdminPeticijaForm';
+import AdminPeticijaPotpisi from './pages/admin/AdminPeticijaPotpisi';
 import RequirePermission from './pages/admin/RequirePermission';
 import {
   adminLandingPath,
@@ -32,6 +40,7 @@ import {
   canManageAssembly,
   canManageFinance,
   canManageNews,
+  canManagePetitions,
   canManageUsers,
 } from './constants/roles';
 import { useAuth } from './context/AuthContext';
@@ -50,6 +59,12 @@ export default function App() {
           <Route path="/problem" element={<Problem />} />
           <Route path="/pridruzi-se" element={<PridruziSe />} />
           <Route path="/vest/:slug" element={<Vest />} />
+          <Route path="/peticije" element={<Peticije />} />
+          <Route path="/peticije/:slug" element={<Peticija />} />
+          {/* No guard: the page asks for a login itself, the way the comments
+              do, so a shared link never dead-ends on a redirect. */}
+          <Route path="/moji-potpisi" element={<MojiPotpisi />} />
+          <Route path="/politika-privatnosti" element={<PolitikaPrivatnosti />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminIndex />} />
 
@@ -66,6 +81,17 @@ export default function App() {
               <Route path="skupstina/dnevni-red" element={<AdminAssemblyTopics />} />
               <Route path="skupstina/sednice" element={<AdminAssemblySessions />} />
               <Route path="skupstina/evidencija" element={<AdminAssemblyRecord />} />
+              <Route path="skupstina/pravila" element={<AdminAssemblyRules />} />
+              <Route path="peticije" element={<AdminPeticije />} />
+            </Route>
+
+            {/* The signature list is not a read-only view like the others: it
+                is a list of names, cities and political opinions, so it stays
+                behind the write permission even for looking. */}
+            <Route element={<RequirePermission allow={canManagePetitions} />}>
+              <Route path="peticije/nova" element={<AdminPeticijaForm />} />
+              <Route path="peticije/:id/izmena" element={<AdminPeticijaForm />} />
+              <Route path="peticije/:id/potpisi" element={<AdminPeticijaPotpisi />} />
             </Route>
 
             <Route element={<RequirePermission allow={canManageNews} />}>

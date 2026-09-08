@@ -3,6 +3,7 @@ using System;
 using BedemApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BedemApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904200407_AddAssemblySettings")]
+    partial class AddAssemblySettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -783,140 +786,6 @@ namespace BedemApi.Migrations
                     b.ToTable("News");
                 });
 
-            modelBuilder.Entity("BedemApi.Models.Petition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ClosedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ClosesAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("FinalSignatureCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Goal")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("OpenedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Recipient")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("SignaturesPurgedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Summary")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClosedAt");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("Petitions");
-                });
-
-            modelBuilder.Entity("BedemApi.Models.PetitionSignature", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConsentText")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConsentVersion")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PetitionId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("PublicDisplay")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PublicDisplayConsentText")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("SignedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("PetitionId", "PublicDisplay");
-
-                    b.HasIndex("PetitionId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("PetitionSignatures");
-                });
-
             modelBuilder.Entity("BedemApi.Models.ProblemReport", b =>
                 {
                     b.Property<int>("Id")
@@ -1008,7 +877,7 @@ namespace BedemApi.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
                             IsActive = true,
-                            PasswordHash = "$2a$11$OTmfoSVn.7nCDJWWccHH7ePUiH7lfoOkxSlvtASUDXJmpckqkESdO",
+                            PasswordHash = "$2a$11$Q4d0PsLTCyWrkoQAYwVqBuV0IIOBeLdG.RnmYfFOu.5CJAGprjMQm",
                             Role = "Admin",
                             Username = "admin"
                         });
@@ -1197,36 +1066,6 @@ namespace BedemApi.Migrations
                     b.Navigation("AuthorUser");
                 });
 
-            modelBuilder.Entity("BedemApi.Models.Petition", b =>
-                {
-                    b.HasOne("BedemApi.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-                });
-
-            modelBuilder.Entity("BedemApi.Models.PetitionSignature", b =>
-                {
-                    b.HasOne("BedemApi.Models.Petition", "Petition")
-                        .WithMany("Signatures")
-                        .HasForeignKey("PetitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BedemApi.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Petition");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("BedemApi.Models.Vote", b =>
                 {
                     b.HasOne("BedemApi.Models.Comment", "Comment")
@@ -1267,11 +1106,6 @@ namespace BedemApi.Migrations
             modelBuilder.Entity("BedemApi.Models.FinanceCategory", b =>
                 {
                     b.Navigation("Entries");
-                });
-
-            modelBuilder.Entity("BedemApi.Models.Petition", b =>
-                {
-                    b.Navigation("Signatures");
                 });
 
             modelBuilder.Entity("BedemApi.Models.User", b =>

@@ -1,0 +1,179 @@
+/* Public petition list. The card grid follows Home.css; the progress bar and
+   the status badge are new here and are re-used by Peticija.jsx. */
+
+.peticije-status {
+  text-align: center;
+  color: var(--color-neutral);
+  padding: var(--space-8) 0;
+}
+
+.peticije-status--error {
+  color: var(--color-accent);
+}
+
+.peticije-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-8);
+}
+
+.peticija-card {
+  background: var(--color-bg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.peticija-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.peticija-card__image {
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--color-bg-light);
+}
+
+.peticija-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.peticija-card__body {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.peticija-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.peticija-card__date {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+}
+
+.peticija-card__title {
+  font-size: var(--font-size-xl);
+  line-height: 1.3;
+  color: var(--color-primary);
+}
+
+.peticija-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.peticija-card__title a:hover {
+  color: var(--color-secondary);
+}
+
+.peticija-card__recipient {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+}
+
+.peticija-card__recipient strong {
+  color: var(--color-text);
+}
+
+.peticija-card__summary {
+  color: var(--color-text);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.peticija-card__cta {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+}
+
+.peticije-mine {
+  text-align: center;
+  margin-top: var(--space-10);
+}
+
+.peticije-mine a {
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+/* --- Status badge ------------------------------------------------------- */
+
+.peticije-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.peticije-badge--open {
+  background: rgba(46, 139, 87, 0.12);
+  color: var(--color-accent2);
+}
+
+.peticije-badge--closed {
+  background: rgba(176, 183, 195, 0.25);
+  color: var(--color-text);
+}
+
+/* Archived means the signatures were deleted, not that the campaign failed —
+   worth a colour of its own so nobody reads it as "closed, but worse". */
+.peticije-badge--archived {
+  background: rgba(23, 63, 115, 0.10);
+  color: var(--color-primary);
+}
+
+.peticije-badge--draft {
+  background: rgba(181, 127, 11, 0.15);
+  color: var(--color-warning);
+}
+
+/* --- Progress ----------------------------------------------------------- */
+
+.peticije-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.peticije-progress__track {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  overflow: hidden;
+}
+
+.peticije-progress__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-secondary), var(--color-accent2));
+  transition: width var(--transition-slow);
+}
+
+.peticije-progress__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+}
+
+.peticije-progress__labels strong {
+  color: var(--color-text);
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { api } from '../services/api';
 import HoneypotField, { HONEYPOT_NAME } from '../components/HoneypotField';
@@ -536,12 +537,13 @@ export default function Problem() {
 
                     <span>
                       Saglasan/na sam sa{' '}
-                      <a
-                        href="#"
+                      <Link
+                        to="/politika-privatnosti"
                         className="problem-form__link"
+                        target="_blank"
                       >
                         politikom privatnosti
-                      </a>{' '}
+                      </Link>{' '}
                       i obradom ličnih podataka u svrhu postupanja
                       po prijavi.{' '}
                       <span className="required-star">*</span>

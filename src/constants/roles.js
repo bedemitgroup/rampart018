@@ -24,7 +24,7 @@ export const ROLE_LABELS = {
 // have to keep the table in his head.
 export const ROLE_DESCRIPTIONS = {
   [ROLES.ADMIN]: 'Puna prava nad sajtom, nalozima i dnevnikom izmena.',
-  [ROLES.MODERATOR]: 'Aktivni član + upravlja vestima, prijavama i zahtevima za članstvo.',
+  [ROLES.MODERATOR]: 'Aktivni član + upravlja vestima, peticijama, prijavama i zahtevima za članstvo.',
   [ROLES.FINANCE]: 'Aktivni član + upravlja finansijama.',
   [ROLES.ASSEMBLY]: 'Aktivni član + saziva skupštinu i vodi dnevni red.',
   [ROLES.MEMBER]: 'Član udruženja: glasa na skupštini, komentariše i lajkuje.',
@@ -60,6 +60,11 @@ export const canManageFinance = (user) => holds(user, ROLES.FINANCE, ROLES.ADMIN
 export const canManageAssembly = (user) => holds(user, ROLES.ASSEMBLY, ROLES.ADMIN);
 export const canManageSubmissions = (user) => holds(user, ROLES.MODERATOR, ROLES.ADMIN);
 export const canManageComments = (user) => holds(user, ROLES.MODERATOR, ROLES.ADMIN);
+
+// Petitions sit in the Moderator's area because they are campaigning, but note
+// what this one opens that the others do not: a list of names, cities and, by
+// implication, political opinions.
+export const canManagePetitions = (user) => holds(user, ROLES.MODERATOR, ROLES.ADMIN);
 export const canManageUsers = (user) => holds(user, ROLES.ADMIN);
 
 // Who actually sits in the assembly: has a seat in the hall, counts towards the

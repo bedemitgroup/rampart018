@@ -54,6 +54,22 @@ public class AssemblyTopic
     /// </summary>
     public int EligibleVotersAtOpen { get; set; }
 
+    /// <summary>
+    /// How many members were checked in when the ballot closed.
+    /// </summary>
+    public int PresentAtClose { get; set; }
+
+    /// <summary>
+    /// Whether the sitting was quorate at that moment. Frozen rather than
+    /// recomputed, and for a different reason than the outcome: the votes stop
+    /// changing when the ballot closes, but attendance does not — the chairman
+    /// corrects the roll while the sitting runs — and the quorum threshold
+    /// itself is a setting somebody can change next year. Without the snapshot
+    /// a decision taken last spring would silently gain or lose its "bez
+    /// kvoruma" mark every time the rules are edited.
+    /// </summary>
+    public bool? QuorumMetAtClose { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

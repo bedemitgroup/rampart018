@@ -8,6 +8,7 @@ import './Admin.css';
 // about oversight of the staff itself, so they stay with the Admin.
 const sections = [
   { to: '/admin/news', label: 'Vesti', allow: canAccessAdmin },
+  { to: '/admin/peticije', label: 'Peticije', allow: canAccessAdmin },
   { to: '/admin/finance', label: 'Finansije', allow: canAccessAdmin },
   { to: '/admin/skupstina', label: 'Skupština', allow: canAccessAdmin },
   { to: '/admin/problems', label: 'Prijave problema', allow: canAccessAdmin },
