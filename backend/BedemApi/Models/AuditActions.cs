@@ -17,6 +17,9 @@ public static class AuditActions
     public const string NewsMoveUp = "News.MoveUp";
     public const string NewsMoveDown = "News.MoveDown";
 
+    /// <summary>The "aktuelno" line across the top of the front page.</summary>
+    public const string NewsNoticeUpdate = "News.Notice.Update";
+
     // Finance — entries
     public const string FinanceEntryCreate = "Finance.Entry.Create";
     public const string FinanceEntryUpdate = "Finance.Entry.Update";
@@ -108,7 +111,7 @@ public static class AuditActions
     public static readonly IReadOnlyList<string> All = new[]
     {
         NewsCreate, NewsUpdate, NewsPublish, NewsUnpublish, NewsDelete,
-        NewsMoveUp, NewsMoveDown,
+        NewsMoveUp, NewsMoveDown, NewsNoticeUpdate,
         FinanceEntryCreate, FinanceEntryUpdate, FinanceEntryDelete,
         FinanceCategoryCreate, FinanceCategoryUpdate, FinanceCategoryDelete,
         FinanceCategoryMoveUp, FinanceCategoryMoveDown,

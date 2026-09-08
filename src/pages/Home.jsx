@@ -47,6 +47,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeMembers, setActiveMembers] = useState(null);
+  const [notice, setNotice] = useState('');
+  const [noticeOpen, setNoticeOpen] = useState(false);
 
   useEffect(() => {
     api.getNews()
@@ -68,18 +70,66 @@ export default function Home() {
     return () => { cancelled = true; };
   }, []);
 
+  // The "aktuelno" line is editable from the news panel, so it comes off the API
+  // rather than living in the markup. If the call fails the bar just stays empty.
+  useEffect(() => {
+    let cancelled = false;
+    api.getSiteNotice()
+      .then((data) => { if (!cancelled) setNotice(data.text || ''); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="home">
-      {/* Breaking bar */}
-      <div className="home-breaking">
-        <div className="container home-breaking__inner">
-          <span className="home-breaking__label">Aktuelno</span>
-          <span className="home-breaking__text">
-            Sledeća javna akcija: Protest ispred Skupštine Beograda — subota, 2. avgusta u 11h
-          </span>
-          <Link to="/problem" className="home-breaking__link">Prijavi problem →</Link>
+      {/* Breaking bar — full text inline on desktop, a tap-to-open popup on phones */}
+      {notice && (
+        <div className="home-breaking">
+          <div className="container home-breaking__inner">
+            <button
+              type="button"
+              className="home-breaking__label home-breaking__label--btn"
+              onClick={() => setNoticeOpen(true)}
+            >
+              Aktuelno
+            </button>
+            <span className="home-breaking__text">{notice}</span>
+            <Link to="/problem" className="home-breaking__link">Prijavi problem →</Link>
+          </div>
         </div>
-      </div>
+      )}
+
+      {noticeOpen && (
+        <div
+          className="home-notice-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Aktuelno"
+          onClick={() => setNoticeOpen(false)}
+        >
+          <div className="home-notice-modal__box" onClick={(e) => e.stopPropagation()}>
+            <div className="home-notice-modal__head">
+              <span className="home-breaking__label">Aktuelno</span>
+              <button
+                type="button"
+                className="home-notice-modal__close"
+                onClick={() => setNoticeOpen(false)}
+                aria-label="Zatvori"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="home-notice-modal__text">{notice}</p>
+            <Link
+              to="/problem"
+              className="btn btn--primary btn--sm"
+              onClick={() => setNoticeOpen(false)}
+            >
+              Prijavi problem →
+            </Link>
+          </div>
+        </div>
+      )}
 
       <main className="container home-main">
         {loading && <p className="home-status">Učitavanje vesti...</p>}

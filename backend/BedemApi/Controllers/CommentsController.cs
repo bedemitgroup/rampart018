@@ -72,6 +72,45 @@ public class CommentsController : ControllerBase
     }
 
     /// <summary>
+    /// Every pending comment across every article, for the moderation panel.
+    /// Deleted ones are already gone; this is the approve-or-bin queue.
+    /// </summary>
+    [HttpGet("pending")]
+    [Authorize(Roles = Roles.ManageComments)]
+    [ProducesResponseType(typeof(IEnumerable<PendingCommentResponse>), 200)]
+    public async Task<IActionResult> GetPending()
+    {
+        var pending = await _db.Comments
+            .Include(c => c.User)
+            .Where(c => !c.IsApproved && !c.IsDeleted)
+            .OrderBy(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.Id,
+                c.Content,
+                Username = c.User.Username,
+                c.CreatedAt,
+                c.VestSlug,
+            })
+            .ToListAsync();
+
+        var slugs = pending.Select(c => c.VestSlug).Distinct().ToList();
+        var titles = await _db.News
+            .Where(n => slugs.Contains(n.Slug))
+            .ToDictionaryAsync(n => n.Slug, n => n.Title);
+
+        var result = pending.Select(c => new PendingCommentResponse(
+            c.Id,
+            c.Content,
+            c.Username,
+            c.CreatedAt,
+            c.VestSlug,
+            titles.TryGetValue(c.VestSlug, out var t) ? t : null));
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Create a new comment on an article. Open to every signed-in account,
     /// Visitors included — talking is the one thing a fresh account may do.
     /// Auto-approved for whoever moderates comments.

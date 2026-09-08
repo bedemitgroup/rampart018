@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_LABELS, ROLES, canManageNews } from '../../constants/roles';
+import { ROLE_LABELS, ROLES, canManageNews, canManageComments } from '../../constants/roles';
 import ReadOnlyNotice from './ReadOnlyNotice';
+import AdminCommentsPanel from './AdminCommentsPanel';
+import AdminNoticeEditor from './AdminNoticeEditor';
 
 function formatDate(isoString) {
   const d = new Date(isoString);
@@ -14,6 +16,7 @@ function formatDate(isoString) {
 export default function AdminNews() {
   const { user } = useAuth();
   const canEdit = canManageNews(user);
+  const canModerateComments = canManageComments(user);
 
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,10 @@ export default function AdminNews() {
     }
   }
 
+  // The article the front page frames as the lead: the first published one in
+  // display order. Drafts sit in the same list but never lead the site.
+  const mainNewsId = news.find(n => n.isPublished)?.id ?? null;
+
   return (
     <div className="admin-news">
       <div className="admin-news__header">
@@ -92,7 +99,10 @@ export default function AdminNews() {
           </thead>
           <tbody>
             {news.map((n, index) => (
-              <tr key={n.id}>
+              <tr
+                key={n.id}
+                className={n.id === mainNewsId ? 'admin-news__row--main' : undefined}
+              >
                 {canEdit && (
                 <td className="admin-news__move-cell">
                   <button
@@ -115,7 +125,12 @@ export default function AdminNews() {
                   </button>
                 </td>
                 )}
-                <td className="admin-news__title-cell">{n.title}</td>
+                <td className="admin-news__title-cell">
+                  {n.id === mainNewsId && (
+                    <span className="admin-news__main-badge">★ Glavna vest</span>
+                  )}
+                  {n.title}
+                </td>
                 <td>{n.category}</td>
                 <td>{n.authorName}</td>
                 <td>{formatDate(n.createdAt)}</td>
@@ -141,6 +156,20 @@ export default function AdminNews() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {canEdit && (
+        <>
+          <hr className="admin-news__divider" />
+          <AdminNoticeEditor />
+        </>
+      )}
+
+      {canModerateComments && (
+        <>
+          <hr className="admin-news__divider" />
+          <AdminCommentsPanel />
+        </>
       )}
     </div>
   );

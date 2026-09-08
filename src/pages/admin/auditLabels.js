@@ -12,6 +12,7 @@ export const ACTION_LABELS = {
   'News.Delete': 'Obrisao vest',
   'News.MoveUp': 'Pomerio vest gore',
   'News.MoveDown': 'Pomerio vest dole',
+  'News.Notice.Update': 'Izmenio traku „Aktuelno“',
 
   'Finance.Entry.Create': 'Uneo stavku',
   'Finance.Entry.Update': 'Izmenio stavku',

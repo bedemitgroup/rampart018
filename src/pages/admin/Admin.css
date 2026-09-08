@@ -44,8 +44,16 @@
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
+/* Same teal as the "Postani član" call to action — the light-grey hover was
+   barely visible against the white sidebar. */
 .admin__nav-link:hover {
-  background: var(--color-bg-light);
+  background: var(--color-secondary);
+  color: white;
+}
+
+/* Keep the active item readable when the pointer is also on it. */
+.admin__nav-link--active:hover {
+  background: var(--color-primary);
 }
 
 .admin__nav-link--active {
@@ -143,6 +151,175 @@
 
 .admin-news__move-cell {
   white-space: nowrap;
+}
+
+/* The article the front page leads with — framed so anyone opening the panel
+   sees at a glance which one is "glavna vest". */
+.admin-news__row--main td {
+  background: rgba(15, 138, 141, 0.07);
+  border-top: 2px solid var(--color-secondary);
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.admin-news__row--main td:first-child {
+  border-left: 3px solid var(--color-secondary);
+}
+
+.admin-news__row--main td:last-child {
+  border-right: 2px solid var(--color-secondary);
+}
+
+.admin-news__main-badge {
+  display: inline-block;
+  margin-right: var(--space-2);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-secondary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.admin-news__divider {
+  border: none;
+  border-top: 1px solid var(--color-bg-light);
+  margin: var(--space-8) 0;
+}
+
+/* --- Comment moderation queue --------------------------------------------- */
+.admin-comments__header,
+.admin-notice > h2 {
+  margin-bottom: var(--space-3);
+}
+
+.admin-comments__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.admin-comments__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-comments__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.admin-comments__refresh {
+  background: none;
+  border: 1px solid var(--color-bg-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.admin-comments__refresh:hover:not(:disabled) {
+  background: var(--color-bg-light);
+}
+
+.admin-comments__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-comments__item {
+  border: 1px solid var(--color-bg-light);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+}
+
+.admin-comments__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral);
+  margin-bottom: var(--space-2);
+}
+
+.admin-comments__author {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.admin-comments__sep {
+  color: var(--color-neutral);
+}
+
+.admin-comments__vest {
+  color: var(--color-secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-comments__vest:hover {
+  text-decoration: underline;
+}
+
+.admin-comments__content {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-comments__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* --- "Aktuelno" line editor -------------------------------------------- */
+.admin-notice__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 640px;
+}
+
+.admin-notice__textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.admin-notice__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 /* Pagination */

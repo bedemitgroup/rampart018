@@ -20,3 +20,17 @@ public record CommentResponse(
     bool IsApproved,
     bool? UserVote // true=liked, false=disliked, null=no vote
 );
+
+/// <summary>
+/// A pending comment as the admin panel lists it: no vote counts, but it carries
+/// which article it is waiting on so a moderator can clear the whole queue from
+/// one place.
+/// </summary>
+public record PendingCommentResponse(
+    int Id,
+    string Content,
+    string Username,
+    DateTime CreatedAt,
+    string VestSlug,
+    string? VestTitle
+);

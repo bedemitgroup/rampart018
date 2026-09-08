@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<AssemblyVote> AssemblyVotes => Set<AssemblyVote>();
     public DbSet<AssemblyPoint> AssemblyPoints => Set<AssemblyPoint>();
     public DbSet<AssemblySettings> AssemblySettings => Set<AssemblySettings>();
+    public DbSet<SiteNotice> SiteNotices => Set<SiteNotice>();
     public DbSet<Petition> Petitions => Set<Petition>();
     public DbSet<PetitionSignature> PetitionSignatures => Set<PetitionSignature>();
 
@@ -261,6 +262,23 @@ public class AppDbContext : DbContext
                 Id = 1,
                 QuorumPercent = 50,
                 MajorityRule = AssemblyMajorityRule.OfVotesCast
+            });
+        });
+
+        modelBuilder.Entity<SiteNotice>(e =>
+        {
+            e.HasOne(x => x.UpdatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.UpdatedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One row, seeded, so nothing has to handle its absence. The text is
+            // the placeholder the front page shipped with.
+            e.HasData(new SiteNotice
+            {
+                Id = 1,
+                Text = "Sledeća javna akcija: Protest ispred Skupštine Beograda — subota, 2. avgusta u 11h"
             });
         });
 
