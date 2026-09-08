@@ -42,10 +42,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="navbar__logo" onClick={closeMenu}>
-            <span className="navbar__logo-icon">⚖</span>
+            <img src="/logo-mark-white.svg" alt="" className="navbar__logo-icon" width="32" height="32" />
             <span className="navbar__logo-text">
               <span className="navbar__logo-name">Bedem</span>
-              <span className="navbar__logo-tagline">Građansko udruženje</span>
+              <span className="navbar__logo-tagline">Udruženje građana</span>
             </span>
           </Link>
 
@@ -116,10 +116,10 @@ export default function Navbar() {
         {/* Drawer header */}
         <div className="navbar__drawer-header">
           <Link to="/" className="navbar__logo" onClick={closeMenu}>
-            <span className="navbar__logo-icon">⚖</span>
+            <img src="/logo-mark-white.svg" alt="" className="navbar__logo-icon" width="32" height="32" />
             <span className="navbar__logo-text">
               <span className="navbar__logo-name">Bedem</span>
-              <span className="navbar__logo-tagline">Građansko udruženje</span>
+              <span className="navbar__logo-tagline">Udruženje građana</span>
             </span>
           </Link>
           <button className="navbar__drawer-close" onClick={closeMenu} aria-label="Zatvori meni">

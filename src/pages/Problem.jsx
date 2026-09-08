@@ -235,6 +235,7 @@ export default function Problem() {
               </ul>
             </div>
 
+            {/* Karta "Hitna pomoć" privremeno sakrivena — vratiti kad bude pravog telefona
             <div className="problem-info__card problem-info__card--highlight">
               <h3>📞 Hitna pomoć</h3>
 
@@ -254,6 +255,7 @@ export default function Problem() {
                 Pon–Pet, 9:00–17:00
               </p>
             </div>
+            */}
           </div>
 
           <div className="problem-form-wrap">

@@ -16,13 +16,13 @@ import './PolitikaPrivatnosti.css';
 // signature's stored version can be matched to the text that was in force.
 const VERSION = '2026-09-04';
 
-// TODO before launch: replace every one of these with the association's real
-// registration details, exactly as they appear in the APR register.
+// Registracioni podaci iz APR-a (companywall.rs/firma/bedem-018/MMxIwZNU0).
+// TODO before launch: potvrditi tačan naziv iz rešenja APR-a.
 const CONTROLLER = {
-  name: '[POPUNITI: pun naziv udruženja iz APR-a]',
-  address: '[POPUNITI: adresa sedišta]',
-  registrationNumber: '[POPUNITI: matični broj]',
-  email: '[POPUNITI: kontakt email za zaštitu podataka]',
+  name: 'Udruženje građana „BEDEM 018"',
+  address: 'Ilindenska 66, 18103 Niš',
+  registrationNumber: '28419635',
+  email: 'bedem018@gmail.com',
 };
 
 function Placeholder({ children }) {
