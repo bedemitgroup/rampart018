@@ -96,6 +96,12 @@ public static class AuditActions
     /// </summary>
     public const string PetitionSignaturesExport = "Petition.SignaturesExport";
 
+    // Comment moderation. Approving and deleting a single comment is routine and
+    // not logged; barring an account from commenting is a sanction against a
+    // person, so it is.
+    public const string CommentBanUser = "Comment.BanUser";
+    public const string CommentUnbanUser = "Comment.UnbanUser";
+
     // Accounts
     public const string UserCreateAccount = "User.CreateAccount";
 
@@ -126,6 +132,7 @@ public static class AuditActions
         PetitionCreate, PetitionUpdate, PetitionOpen, PetitionClose,
         PetitionDelete, PetitionMoveUp, PetitionMoveDown,
         PetitionPurgeSignatures, PetitionSignaturesExport,
+        CommentBanUser, CommentUnbanUser,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate
     };

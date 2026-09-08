@@ -14,13 +14,19 @@ namespace BedemApi.Controllers;
 [Route("api/comments")]
 public class CommentsController : ControllerBase
 {
+    /// <summary>How long a comment ban lasts. One knob, so the button label,
+    /// the audit line and the enforced date can never disagree.</summary>
+    private const int CommentBanDays = 10;
+
     private readonly AppDbContext _db;
     private readonly IHoneypotGuard _honeypot;
+    private readonly IAuditLogger _audit;
 
-    public CommentsController(AppDbContext db, IHoneypotGuard honeypot)
+    public CommentsController(AppDbContext db, IHoneypotGuard honeypot, IAuditLogger audit)
     {
         _db = db;
         _honeypot = honeypot;
+        _audit = audit;
     }
 
     /// <summary>Get comments for a specific article slug. Moderators/Admins also see pending comments.</summary>
@@ -64,7 +70,12 @@ public class CommentsController : ControllerBase
                 c.Votes.Count(v => v.IsLike),
                 c.Votes.Count(v => !v.IsLike),
                 c.IsApproved,
-                userVote
+                userVote,
+                // Author identity is a moderator-only field: a signed-in reader
+                // has no business knowing which account id wrote what.
+                isModerator ? c.UserId : null,
+                isModerator ? c.User.Role : null,
+                isModerator ? c.User.CommentBannedUntil : null
             );
         });
 
@@ -91,6 +102,9 @@ public class CommentsController : ControllerBase
                 Username = c.User.Username,
                 c.CreatedAt,
                 c.VestSlug,
+                c.UserId,
+                AuthorRole = c.User.Role,
+                AuthorBannedUntil = c.User.CommentBannedUntil,
             })
             .ToListAsync();
 
@@ -105,7 +119,10 @@ public class CommentsController : ControllerBase
             c.Username,
             c.CreatedAt,
             c.VestSlug,
-            titles.TryGetValue(c.VestSlug, out var t) ? t : null));
+            titles.TryGetValue(c.VestSlug, out var t) ? t : null,
+            c.UserId,
+            c.AuthorRole,
+            c.AuthorBannedUntil));
 
         return Ok(result);
     }
@@ -151,6 +168,17 @@ public class CommentsController : ControllerBase
             return BadRequest(new { message = "VestSlug and Content are required." });
 
         var userId = int.Parse(User.FindFirstValue("userId")!);
+
+        // A comment ban is the whole point of this check: while it is in the
+        // future the account may sign in and read, but not post.
+        var author = await _db.Users.FindAsync(userId);
+        if (author is null) return Unauthorized();
+        if (author.CommentBannedUntil is { } until && until > DateTime.UtcNow)
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                message = $"Privremeno vam je onemogućeno komentarisanje do {until:dd.MM.yyyy}."
+            });
+
         var isAutoApproved = User.IsIn(Roles.ManageComments);
 
         var comment = new Comment
@@ -203,5 +231,70 @@ public class CommentsController : ControllerBase
         comment.IsDeleted = true;
         await _db.SaveChangesAsync();
         return Ok(new { message = "Comment deleted." });
+    }
+
+    /// <summary>
+    /// Bar an account from posting comments for <see cref="CommentBanDays"/> days.
+    /// The moderator reaches for this from the pending queue when someone posts
+    /// something against the rules: delete the comment, bar the person. The
+    /// account is otherwise untouched — it still signs in, votes and reads.
+    /// </summary>
+    [HttpPost("users/{userId}/ban")]
+    [Authorize(Roles = Roles.ManageComments)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(BanCommenterResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> BanCommenter(int userId)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        var actorId = int.Parse(User.FindFirstValue("userId")!);
+        if (user.Id == actorId)
+            return BadRequest(new { message = "Ne možete banovati sami sebe." });
+
+        // Staff are not silenced with a comment ban — if one of them is a
+        // problem, that is a role decision for an Admin, and a heavier one.
+        if (Roles.Staff.Split(',').Contains(user.Role))
+            return BadRequest(new { message = "Nalog sa ulogom ne može biti banovan ovim putem." });
+
+        user.CommentBannedUntil = DateTime.UtcNow.AddDays(CommentBanDays);
+
+        _audit.Record(
+            AuditActions.CommentBanUser, AuditEntityTypes.User,
+            user.Id.ToString(), $"{user.Username} (do {user.CommentBannedUntil:dd.MM.yyyy})");
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new BanCommenterResponse(
+            $"Korisnik {user.Username} ne može da komentariše do {user.CommentBannedUntil:dd.MM.yyyy}.",
+            user.CommentBannedUntil));
+    }
+
+    /// <summary>Lift a comment ban early. The counterpart of
+    /// <see cref="BanCommenter"/>.</summary>
+    [HttpPost("users/{userId}/unban")]
+    [Authorize(Roles = Roles.ManageComments)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(BanCommenterResponse), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UnbanCommenter(int userId)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (user.CommentBannedUntil == null)
+            return Ok(new BanCommenterResponse($"Korisnik {user.Username} nije banovan.", null));
+
+        user.CommentBannedUntil = null;
+
+        _audit.Record(
+            AuditActions.CommentUnbanUser, AuditEntityTypes.User,
+            user.Id.ToString(), user.Username);
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new BanCommenterResponse($"Ban za korisnika {user.Username} je skinut.", null));
     }
 }

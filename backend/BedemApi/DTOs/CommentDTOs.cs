@@ -18,7 +18,14 @@ public record CommentResponse(
     int Likes,
     int Dislikes,
     bool IsApproved,
-    bool? UserVote // true=liked, false=disliked, null=no vote
+    bool? UserVote, // true=liked, false=disliked, null=no vote
+    // The next three are filled only for a moderator/admin viewing the thread —
+    // everyone else gets null. They are what the inline "ban this commenter"
+    // button needs: who the author is, whether barring him is even allowed
+    // (staff are not banned, their role is), and whether he already is barred.
+    int? AuthorUserId = null,
+    string? AuthorRole = null,
+    DateTime? AuthorBannedUntil = null
 );
 
 /// <summary>
@@ -32,5 +39,12 @@ public record PendingCommentResponse(
     string Username,
     DateTime CreatedAt,
     string VestSlug,
-    string? VestTitle
+    string? VestTitle,
+    // The author, so the queue can bar him in one click, plus his role (staff
+    // are not banned) and whether he is already barred.
+    int AuthorUserId,
+    string AuthorRole,
+    DateTime? AuthorBannedUntil
 );
+
+public record BanCommenterResponse(string Message, DateTime? BannedUntil);

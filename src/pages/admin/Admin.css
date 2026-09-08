@@ -298,7 +298,28 @@
 .admin-comments__actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-4);
+}
+
+.admin-comments__banned {
+  background: rgba(178, 34, 52, 0.12);
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: var(--font-size-xs, 0.75rem);
+  padding: 0.1rem 0.5rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.admin-comments__note {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(46, 139, 87, 0.08);
+  border-left: 3px solid var(--color-accent2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
 }
 
 /* --- "Aktuelno" line editor -------------------------------------------- */

@@ -62,6 +62,9 @@ export const ACTION_LABELS = {
 
   'Assembly.Rules.Update': 'Izmenio pravila glasanja',
 
+  'Comment.BanUser': 'Zabranio komentarisanje (10 dana)',
+  'Comment.UnbanUser': 'Skinuo zabranu komentarisanja',
+
   'User.CreateAccount': 'Kreirao nalog',
   'User.CreateModerator': 'Kreirao moderatora',
   'User.ChangeRole': 'Promenio rolu',
@@ -97,6 +100,7 @@ const DESTRUCTIVE = new Set([
   // Not destructive, but it is the row an admin most needs to spot: a copy of
   // special-category personal data left the panel.
   'Petition.SignaturesExport',
+  'Comment.BanUser',
   'User.Deactivate',
 ]);
 
