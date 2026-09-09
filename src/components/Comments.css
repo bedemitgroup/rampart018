@@ -175,6 +175,22 @@
   background: #8f1520;
 }
 
+.comment-btn--ban {
+  background: none;
+  border: 1.5px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+.comment-btn--ban:hover {
+  background: rgba(178, 34, 52, 0.08);
+}
+
+.comment-badge--banned {
+  margin-left: 0.4rem;
+  background: rgba(178, 34, 52, 0.15);
+  color: var(--color-accent);
+}
+
 /* Pending section */
 .comments-pending-section {
   margin-top: 1.5rem;

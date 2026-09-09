@@ -22,12 +22,16 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const data = await api.login({ email, password });
     localStorage.setItem('bedem_token', data.token);
-    setUser({ username: data.username, email: data.email, role: data.role });
+    // id comes along because the assembly hall is built on "which seat is
+    // mine"; without it user.id stays undefined until the next page load.
+    setUser({ id: data.id, username: data.username, email: data.email, role: data.role });
   }
 
-  async function register(username, email, password) {
-    await api.register({ username, email, password });
-    await login(email, password);
+  // Takes the whole payload so the honeypot field rides along without becoming
+  // an unnamed fourth positional argument.
+  async function register(data) {
+    await api.register(data);
+    await login(data.email, data.password);
   }
 
   function logout() {

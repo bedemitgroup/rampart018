@@ -42,6 +42,8 @@ services:
       JwtSettings__Audience: ${JWT_AUDIENCE}
     ports:
       - "5000:5000"
+    volumes:
+      - news_uploads:/app/wwwroot/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,3 +63,4 @@ services:
 
 volumes:
   postgres_data:
+  news_uploads:

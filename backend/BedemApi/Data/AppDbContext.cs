@@ -10,6 +10,24 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Vote> Votes => Set<Vote>();
+    public DbSet<News> News => Set<News>();
+    public DbSet<MembershipApplication> MembershipApplications => Set<MembershipApplication>();
+    public DbSet<ProblemReport> ProblemReports => Set<ProblemReport>();
+    public DbSet<BotSubmission> BotSubmissions => Set<BotSubmission>();
+    public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
+    public DbSet<FinanceEntry> FinanceEntries => Set<FinanceEntry>();
+    public DbSet<FinanceYear> FinanceYears => Set<FinanceYear>();
+    public DbSet<FinanceQuarter> FinanceQuarters => Set<FinanceQuarter>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AssemblySession> AssemblySessions => Set<AssemblySession>();
+    public DbSet<AssemblyAttendance> AssemblyAttendances => Set<AssemblyAttendance>();
+    public DbSet<AssemblyTopic> AssemblyTopics => Set<AssemblyTopic>();
+    public DbSet<AssemblyVote> AssemblyVotes => Set<AssemblyVote>();
+    public DbSet<AssemblyPoint> AssemblyPoints => Set<AssemblyPoint>();
+    public DbSet<AssemblySettings> AssemblySettings => Set<AssemblySettings>();
+    public DbSet<SiteNotice> SiteNotices => Set<SiteNotice>();
+    public DbSet<Petition> Petitions => Set<Petition>();
+    public DbSet<PetitionSignature> PetitionSignatures => Set<PetitionSignature>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,7 +38,7 @@ public class AppDbContext : DbContext
         {
             e.HasIndex(u => u.Email).IsUnique();
             e.HasIndex(u => u.Username).IsUnique();
-            e.Property(u => u.Role).HasDefaultValue("User");
+            e.Property(u => u.Role).HasDefaultValue(Roles.Visitor);
         });
 
         // Comment -> User
@@ -59,6 +77,256 @@ public class AppDbContext : DbContext
              .HasFilter("\"CommentId\" IS NULL AND \"VestSlug\" != ''");
         });
 
+        // News -> User (author)
+        modelBuilder.Entity<News>(e =>
+        {
+            e.HasIndex(n => n.Slug).IsUnique();
+
+            e.HasOne(n => n.AuthorUser)
+             .WithMany()
+             .HasForeignKey(n => n.AuthorUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Honeypot hits. No relationship to User on purpose - this is evidence,
+        // and it must outlive the account that produced it.
+        modelBuilder.Entity<BotSubmission>(e =>
+        {
+            e.HasIndex(b => b.CreatedAt);
+            e.HasIndex(b => b.IpAddress);
+        });
+
+        // Finance
+        modelBuilder.Entity<FinanceCategory>(e =>
+        {
+            e.HasIndex(c => new { c.Type, c.DisplayOrder });
+        });
+
+        modelBuilder.Entity<FinanceEntry>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+
+            // Restrict on both sides: an entry is a booked figure, so neither
+            // retiring a category nor deleting a user may quietly erase it.
+            e.HasOne(x => x.Category)
+             .WithMany(c => c.Entries)
+             .HasForeignKey(x => x.CategoryId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.Date);
+        });
+
+        modelBuilder.Entity<FinanceYear>(e =>
+        {
+            e.HasIndex(y => y.Year).IsUnique();
+            e.Property(y => y.ReserveFund).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<FinanceQuarter>(e =>
+        {
+            e.HasIndex(q => new { q.Year, q.Quarter }).IsUnique();
+        });
+
+        // Audit trail. Like BotSubmission, no relationship to User on purpose:
+        // the record of what an account did must outlive the account.
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.HasIndex(a => a.CreatedAt);
+            e.HasIndex(a => a.ActorUserId);
+            e.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+
+        // Skupština
+        modelBuilder.Entity<AssemblySession>(e =>
+        {
+            e.HasOne(x => x.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.ScheduledAt);
+
+            // At most one sitting may be in progress. The hall, the presence
+            // tracker and "which session am I in" all assume it, so the schema
+            // states it once instead of four controller guards that can drift.
+            e.HasIndex(x => x.Status)
+             .IsUnique()
+             .HasDatabaseName("IX_AssemblySessions_SingleInProgress")
+             .HasFilter($"\"Status\" = '{AssemblySessionStatus.InProgress}'");
+        });
+
+        modelBuilder.Entity<AssemblyAttendance>(e =>
+        {
+            // Cascade is right here and only here: an RSVP is an intention
+            // about one sitting and means nothing without it.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Attendances)
+             .HasForeignKey(x => x.SessionId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.SessionId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblyTopic>(e =>
+        {
+            // Restrict, not Cascade, and deliberately so: a topic that has been
+            // voted on is a record of a decision, and deleting the sitting it
+            // hung on must not take the ballots with it — the same principle
+            // the AuditLog block below states. The controller refuses first,
+            // with a sentence; this is the net under that rule.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Topics)
+             .HasForeignKey(x => x.SessionId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.ProposedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.ProposedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.ReviewedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.ReviewedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.SessionId, x.DisplayOrder });
+            e.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<AssemblyVote>(e =>
+        {
+            // Same reasoning as the topic edge: a cast ballot outlives the row
+            // it hangs on. An open ballot is dropped explicitly, row by row.
+            e.HasOne(x => x.Topic)
+             .WithMany(t => t.Votes)
+             .HasForeignKey(x => x.TopicId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // .WithMany() with no navigation on User: it already carries an
+            // ICollection<Vote> for news likes, and a second collection beside
+            // it would only invite the two to be confused.
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.TopicId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblyPoint>(e =>
+        {
+            // Restrict on both sides, like the ballots: an awarded score is a
+            // record of a sitting that happened, and deleting either the sitting
+            // or the account must not quietly erase it.
+            e.HasOne(x => x.Session)
+             .WithMany(s => s.Points)
+             .HasForeignKey(x => x.SessionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.User)
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One score per member per sitting. Closing is terminal so it cannot
+            // run twice, but this is the net under that rule.
+            e.HasIndex(x => new { x.SessionId, x.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AssemblySettings>(e =>
+        {
+            e.HasOne(x => x.UpdatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.UpdatedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One row, seeded, so nothing anywhere has to handle its absence.
+            // The defaults are what a Serbian association statute usually says:
+            // quorate at more than half the roll, decisions by a majority of the
+            // ballots cast.
+            e.HasData(new AssemblySettings
+            {
+                Id = 1,
+                QuorumPercent = 50,
+                MajorityRule = AssemblyMajorityRule.OfVotesCast
+            });
+        });
+
+        modelBuilder.Entity<SiteNotice>(e =>
+        {
+            e.HasOne(x => x.UpdatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.UpdatedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One row, seeded, so nothing has to handle its absence. The text is
+            // the placeholder the front page shipped with.
+            e.HasData(new SiteNotice
+            {
+                Id = 1,
+                Text = "Sledeća javna akcija: Protest ispred Skupštine Beograda — subota, 2. avgusta u 11h"
+            });
+        });
+
+        // Peticije
+        modelBuilder.Entity<Petition>(e =>
+        {
+            e.HasIndex(p => p.Slug).IsUnique();
+
+            e.HasOne(p => p.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(p => p.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(p => p.Status);
+
+            // The retention job sweeps on this: closed, not yet purged.
+            e.HasIndex(p => p.ClosedAt);
+        });
+
+        modelBuilder.Entity<PetitionSignature>(e =>
+        {
+            // Restrict on the petition, unlike the Cascade an RSVP gets: these
+            // rows are not deleted as a side effect of anything. They go when
+            // the signer withdraws or when retention expires, both of which are
+            // explicit acts, and the schema refuses every other route.
+            e.HasOne(s => s.Petition)
+             .WithMany(p => p.Signatures)
+             .HasForeignKey(s => s.PetitionId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(s => s.User)
+             .WithMany()
+             .HasForeignKey(s => s.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // One signature per account per petition, the same net
+            // AssemblyVote puts under one ballot per member per topic.
+            e.HasIndex(s => new { s.PetitionId, s.UserId }).IsUnique();
+
+            // The public list reads exactly this slice.
+            e.HasIndex(s => new { s.PetitionId, s.PublicDisplay });
+
+            // "What have I signed", and the withdrawal lookup.
+            e.HasIndex(s => s.UserId);
+        });
+
+        FinanceSeed.Apply(modelBuilder);
+
         // Seed admin user
         modelBuilder.Entity<User>().HasData(new User
         {
@@ -66,7 +334,7 @@ public class AppDbContext : DbContext
             Username = "admin",
             Email = "admin@bedem.rs",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-            Role = "Admin",
+            Role = Roles.Admin,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             IsActive = true
         });

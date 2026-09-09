@@ -32,7 +32,7 @@
   flex-shrink: 0;
 }
 
-.navbar__logo-icon { font-size: 1.75rem; line-height: 1; }
+.navbar__logo-icon { width: 32px; height: 32px; flex-shrink: 0; display: block; }
 
 .navbar__logo-text {
   display: flex;

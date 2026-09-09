@@ -57,7 +57,9 @@ const milestones = [
   {
     year: '2026',
     title: 'Danas',
-    desc: 'Više od 1.200 aktivnih članova, 48 uspešnih akcija i svakodnevna podrška građanima.',
+    // No membership figure here on purpose: the live one is on the front page,
+    // and a second number written into prose is a second number to keep true.
+    desc: 'Rastuće članstvo, 48 uspešnih akcija i svakodnevna podrška građanima.',
   },
 ];
 
@@ -69,7 +71,7 @@ export default function ONama() {
           <span className="page-hero__badge">O nama</span>
           <h1 className="page-hero__title">Ko je Bedem?</h1>
           <p className="page-hero__subtitle">
-            Nezavisno građansko udruženje posvećeno zaštiti prava, transparentnosti
+            Nezavisno udruženje građana posvećeno zaštiti prava, transparentnosti
             i izgradnji pravednog društva.
           </p>
         </div>

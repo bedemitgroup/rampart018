@@ -1,0 +1,1098 @@
+/* The assembly hall and everything around it.
+ *
+ * Kept out of Admin.css deliberately: the chamber is its own visual system —
+ * a seat colour scale, a live pulse, its own responsive grid — and folding it
+ * into a 900-line file would bury both. Imported once, from AdminAssemblyTabs.
+ *
+ * The seat scale reuses the brand tokens rather than inventing colours:
+ *   accent2  green   here / voting for
+ *   accent   red     not coming / voting against
+ *   warning  amber   unsure / abstaining
+ *   neutral  grey    no answer
+ */
+
+/* --- Session header ------------------------------------------------------ */
+
+.assembly-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-neutral);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.assembly-head--scheduled { border-left-color: var(--color-secondary); }
+.assembly-head--live { border-left-color: var(--color-accent2); }
+.assembly-head--finished { border-left-color: var(--color-neutral); }
+.assembly-head--cancelled { border-left-color: var(--color-accent); }
+
+.assembly-head__main { flex: 1 1 320px; min-width: 0; }
+
+.assembly-head__status {
+  display: inline-block;
+  padding: 2px 10px;
+  margin-bottom: var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.assembly-head__title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.assembly-head__when {
+  margin: 0 0 var(--space-1);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.assembly-head__where,
+.assembly-head__note {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.assembly-head__where a { color: var(--color-secondary); }
+
+.assembly-head__side {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.assembly-head__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.assembly-head__counts div { text-align: center; }
+
+.assembly-head__counts dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.assembly-head__counts dd {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.assembly-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --- Connection state ----------------------------------------------------- */
+
+/* Never silent: a socket that died during a sitting must say so, or a member
+   sits in front of a hall that quietly stopped updating. */
+.assembly-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+.assembly-live__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.assembly-live--live {
+  color: #1c6b41;
+  background: rgba(46, 139, 87, 0.12);
+}
+
+.assembly-live--live .assembly-live__dot { animation: assembly-blink 2s ease-in-out infinite; }
+
+.assembly-live--connecting,
+.assembly-live--reconnecting {
+  color: #8a6100;
+  background: rgba(181, 127, 11, 0.14);
+}
+
+.assembly-live--offline {
+  color: #8f1b2a;
+  background: rgba(178, 34, 52, 0.12);
+}
+
+@keyframes assembly-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* --- Status pill (sessions table) ---------------------------------------- */
+
+.assembly-status {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  color: #6b7280;
+}
+
+.assembly-status--scheduled { background: rgba(15, 138, 141, 0.12); color: #0b6668; }
+.assembly-status--live { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.assembly-status--cancelled { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+/* --- My own answer -------------------------------------------------------- */
+
+.assembly-me {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-light);
+}
+
+.assembly-me__block { flex: 1 1 280px; }
+
+.assembly-me__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+}
+
+.assembly-me__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Deliberately generous: this is pressed on a phone, in a room, in a hurry. */
+.rsvp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-bg);
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast), transform var(--transition-fast);
+}
+
+.rsvp-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.rsvp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.rsvp-btn__icon { font-size: var(--font-size-base); line-height: 1; }
+
+.rsvp-btn--yes.rsvp-btn--active { background: var(--color-accent2); border-color: var(--color-accent2); color: #fff; }
+.rsvp-btn--online.rsvp-btn--active { background: var(--color-secondary); border-color: var(--color-secondary); color: #fff; }
+.rsvp-btn--maybe.rsvp-btn--active { background: var(--color-warning); border-color: var(--color-warning); color: #fff; }
+.rsvp-btn--no.rsvp-btn--active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+
+.rsvp-btn--yes:hover:not(:disabled) { border-color: var(--color-accent2); }
+.rsvp-btn--online:hover:not(:disabled) { border-color: var(--color-secondary); }
+.rsvp-btn--maybe:hover:not(:disabled) { border-color: var(--color-warning); }
+.rsvp-btn--no:hover:not(:disabled) { border-color: var(--color-accent); }
+
+/* --- The hall ------------------------------------------------------------- */
+
+.hall {
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.hall__tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid #eef1f5;
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.hall__tally-item { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hall__tally-item strong { font-size: var(--font-size-lg); color: var(--color-primary); }
+
+.hall__tally-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent2);
+  animation: assembly-blink 2s ease-in-out infinite;
+}
+
+/* The chamber.
+ *
+ * Seat size and row width are set from JS off the measured container width, so
+ * the same hemicycle fits a phone and a laptop rather than degrading into a
+ * plain grid on the narrow one. Everything here reads --seat-size, --seat-gap
+ * and the per-seat --seat-lift; nothing is hardcoded to a
+ * breakpoint.
+ */
+.hemicycle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--seat-gap, 8px);
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.hemicycle__row {
+  display: flex;
+  /* Set per row: the arcs open up as they go back. */
+  gap: var(--row-spread, var(--seat-gap, 8px));
+  justify-content: center;
+  padding: 0;
+  /* Room for the seats that rise out of this arc, so a wide row never climbs
+     into the one in front of it. */
+  margin: var(--row-depth, 0) 0 0;
+  list-style: none;
+}
+
+.hemicycle__slot {
+  display: flex;
+  width: var(--seat-size, 76px);
+  /* Only a lift: the seat sits on the curve of its arc but stays upright, so
+     the name on it is never read at an angle. */
+  transform: translateY(var(--seat-lift, 0));
+}
+
+/* The podium. Set apart with air and a rule rather than another colour: the
+   colours on a seat already mean attendance or a vote, and a fourth meaning
+   layered onto the same tile would make all of them harder to read. */
+.hemicycle__podium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid #eef1f5;
+}
+
+.hemicycle__podium-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a8b0bd;
+}
+
+/* The chair sits level and square on: he is the one everyone else faces. */
+.hemicycle__row--podium .hemicycle__slot { transform: none; }
+.hemicycle__row--podium .seat { border-color: #c9d2de; }
+
+.seat {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: var(--seat-size, 76px);
+  padding: var(--space-1) 3px;
+  overflow: hidden;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--color-bg-light);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.seat:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; }
+
+.seat__initials {
+  /* Scaled off the tile rather than off a breakpoint: a crowded assembly gets
+     38px tiles, and fixed 18px initials there collide with the corner mark. */
+  font-size: clamp(0.68rem, calc(var(--seat-size, 76px) * 0.26), 1.125rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.seat__name {
+  width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What he answered when the sitting was announced — a small corner mark, so it
+   never competes with the fill, which is where he stands now. */
+.seat__rsvp {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: clamp(0.5rem, calc(var(--seat-size, 76px) * 0.15), 0.72rem);
+  line-height: 1;
+  opacity: 0.75;
+}
+
+/* Seat states, in the precedence seatState() applies:
+   connected > checked in > what he answered > silence. */
+.seat--live {
+  color: #fff;
+  background: var(--color-accent2);
+  border-color: #24704a;
+}
+
+.seat--present {
+  color: #1c6b41;
+  background: rgba(46, 139, 87, 0.18);
+  border-color: rgba(46, 139, 87, 0.4);
+}
+
+.seat--yes { color: #1c6b41; background: rgba(46, 139, 87, 0.09); }
+.seat--online { color: #0b6668; background: rgba(15, 138, 141, 0.12); }
+.seat--maybe { color: #8a6100; background: rgba(181, 127, 11, 0.14); }
+.seat--no { color: #8f1b2a; background: rgba(178, 34, 52, 0.10); }
+
+.seat--silent {
+  color: #98a1ae;
+  background: var(--color-bg-light);
+  border-style: dashed;
+  border-color: #dde2ea;
+}
+
+.seat--me { box-shadow: 0 0 0 2px var(--color-primary); }
+.seat--selected { border-color: var(--color-primary); }
+
+/* The live ring. Presence lags reality by up to half a minute — the server only
+   notices a closed laptop on timeout — so this says "connected", not "here". */
+.seat__pulse {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--color-accent2);
+  border-radius: var(--radius-md);
+  animation: seat-pulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes seat-pulse {
+  0% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.14); }
+}
+
+/* --- Seat detail ---------------------------------------------------------- */
+
+.hall__detail {
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+  border: 1px solid #dde2ea;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+}
+
+.hall__detail-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.hall__detail-name { font-weight: 700; color: var(--color-primary); }
+.hall__detail-me { font-weight: 400; color: #8a92a0; }
+
+.hall__detail-close {
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  color: #8a92a0;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.hall__detail-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.hall__detail-rows dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.hall__detail-rows dd { margin: 0; font-size: var(--font-size-sm); }
+
+/* --- Legend --------------------------------------------------------------- */
+
+.hall__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  padding: 0;
+  margin: var(--space-5) 0 0;
+  font-size: 0.72rem;
+  color: #8a92a0;
+  list-style: none;
+}
+
+.hall__legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+.hall__swatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.hall__swatch--live { background: var(--color-accent2); }
+.hall__swatch--present { background: rgba(46, 139, 87, 0.4); }
+.hall__swatch--yes { background: rgba(46, 139, 87, 0.18); }
+.hall__swatch--online { background: rgba(15, 138, 141, 0.25); }
+.hall__swatch--maybe { background: rgba(181, 127, 11, 0.28); }
+.hall__swatch--no { background: rgba(178, 34, 52, 0.2); }
+.hall__swatch--silent { background: var(--color-bg-light); border-color: #dde2ea; border-style: dashed; }
+
+/* --- Responsive ----------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .assembly-head { padding: var(--space-4); }
+  .assembly-head__side { width: 100%; }
+  .assembly-head__counts { gap: var(--space-3); }
+}
+
+@media (max-width: 600px) {
+  .hall { padding: var(--space-4) var(--space-3); }
+  .assembly-me { padding: var(--space-4); }
+  .hemicycle { padding-top: var(--space-3); }
+  .rsvp-btn { flex: 1 1 130px; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seat__pulse,
+  .hall__tally-dot,
+  .assembly-live--live .assembly-live__dot {
+    animation: none;
+  }
+
+  .seat__pulse { opacity: 0.9; }
+  /* The curve is decoration; the seating order carries the meaning on its own. */
+  .hemicycle__slot { transform: none; }
+  .rsvp-btn:hover:not(:disabled),
+  .seat:hover { transform: none; }
+}
+
+/* --- Agenda --------------------------------------------------------------- */
+
+.agenda__for {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+.agenda__stale { color: #8f1b2a; font-weight: 600; }
+
+.agenda-form {
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  border: 1px solid #dde2ea;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-light);
+}
+
+.agenda-section { margin-bottom: var(--space-8); }
+
+.agenda-section__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin-bottom: var(--space-1);
+}
+
+.agenda-section__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+}
+
+.agenda-section__count {
+  padding: 1px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.agenda-section__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: #8a92a0;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* The left edge carries the status, so a long agenda can be skimmed down one
+   line rather than read badge by badge. */
+.agenda-item {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-neutral);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.agenda-item--accepted { border-left-color: var(--color-accent2); }
+.agenda-item--proposed { border-left-color: var(--color-warning); }
+.agenda-item--rejected { border-left-color: var(--color-accent); }
+.agenda-item--withdrawn { border-left-color: var(--color-neutral); opacity: 0.75; }
+
+.agenda-item__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.agenda-item__heading {
+  display: flex;
+  flex: 1;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.agenda-item__index {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-neutral);
+}
+
+.agenda-item__title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.agenda-item__body {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.agenda-item__meta,
+.agenda-item__note {
+  margin: 0 0 var(--space-2);
+  font-size: 0.78rem;
+  color: #8a92a0;
+}
+
+.agenda-item__note {
+  padding: var(--space-2) var(--space-3);
+  color: #6b7280;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-sm);
+}
+
+.agenda-item__mine { color: var(--color-secondary); font-weight: 600; }
+
+.agenda-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.agenda-badge {
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-light);
+  color: #6b7280;
+}
+
+.agenda-badge--accepted { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.agenda-badge--proposed { background: rgba(181, 127, 11, 0.16); color: #8a6100; }
+.agenda-badge--rejected { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+@media (max-width: 600px) {
+  .agenda-form { padding: var(--space-4); }
+  .agenda-item { padding: var(--space-3) var(--space-4); }
+  .agenda-item__head { flex-direction: column; gap: var(--space-2); }
+}
+
+/* --- Ballot --------------------------------------------------------------- */
+
+.ballot {
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid #e3e7ee;
+  border-left: 4px solid var(--color-secondary);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+}
+
+.ballot--closed { border-left-color: var(--color-neutral); }
+
+.ballot__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.ballot__flag {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  background: rgba(15, 138, 141, 0.14);
+  color: #0b6668;
+}
+
+.ballot--closed .ballot__flag { background: var(--color-bg-light); color: #6b7280; }
+
+.ballot__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+
+.ballot__body {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Same pure-CSS bar the finance page uses — no chart library for three numbers. */
+.ballot__bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ballot__bar-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.ballot__bar-head strong { font-size: var(--font-size-base); color: var(--color-primary); }
+
+.ballot__bar-track {
+  height: 10px;
+  overflow: hidden;
+  background: var(--color-bg-light);
+  border-radius: var(--radius-full);
+}
+
+.ballot__bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.ballot__bar-fill--for { background: var(--color-accent2); }
+.ballot__bar-fill--against { background: var(--color-accent); }
+.ballot__bar-fill--abstain { background: var(--color-warning); }
+
+.ballot__meta {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: #8a92a0;
+}
+
+.ballot__quorum--met { color: #1c6b41; font-weight: 600; }
+.ballot__quorum--short { color: #8a6100; font-weight: 600; }
+
+.ballot__verdict {
+  padding: var(--space-3);
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-md);
+}
+
+.ballot__verdict--passed { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.ballot__verdict--failed { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+
+.ballot__hint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: #6b7280;
+}
+
+/* Three targets, full width, tall enough to hit without looking. */
+.ballot__choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.vote-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: var(--space-3) var(--space-2);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-bg);
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast), transform var(--transition-fast);
+}
+
+.vote-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.vote-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.vote-btn__icon { font-size: var(--font-size-2xl); line-height: 1; }
+
+.vote-btn--for:hover:not(:disabled) { border-color: var(--color-accent2); }
+.vote-btn--against:hover:not(:disabled) { border-color: var(--color-accent); }
+.vote-btn--abstain:hover:not(:disabled) { border-color: var(--color-warning); }
+
+.vote-btn--for.vote-btn--active { background: var(--color-accent2); border-color: var(--color-accent2); color: #fff; }
+.vote-btn--against.vote-btn--active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.vote-btn--abstain.vote-btn--active { background: var(--color-warning); border-color: var(--color-warning); color: #fff; }
+
+/* --- Seats during a ballot ------------------------------------------------ */
+
+.seat--for { color: #fff; background: var(--color-accent2); border-color: #24704a; }
+.seat--against { color: #fff; background: var(--color-accent); border-color: #8f1b2a; }
+.seat--abstain { color: #fff; background: var(--color-warning); border-color: #8a6100; }
+
+.hall__swatch--for { background: var(--color-accent2); }
+.hall__swatch--against { background: var(--color-accent); }
+.hall__swatch--abstain { background: var(--color-warning); }
+
+/* --- Result line on an agenda item ---------------------------------------- */
+
+.agenda-item__result {
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.agenda-item__result--passed { background: rgba(46, 139, 87, 0.12); color: #1c6b41; }
+.agenda-item__result--failed { background: rgba(178, 34, 52, 0.10); color: #8f1b2a; }
+
+.agenda-item__vote-btn { font-weight: 700; }
+
+@media (max-width: 600px) {
+  .ballot { padding: var(--space-4); }
+  .vote-btn { min-height: 72px; font-size: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vote-btn:hover:not(:disabled) { transform: none; }
+  .ballot__bar-fill { transition: none; }
+}
+
+/* --- The record ----------------------------------------------------------- */
+
+/* The chair's correction of the roll, inside the panel that already opens on a
+   seat — that is where one member is already being looked at. */
+.hall__detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  border-top: 1px solid #dde2ea;
+}
+
+.hall__detail-hint {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.record-table-wrap { overflow-x: auto; }
+
+/* The table is width:100% from .admin-news__table, so on a phone it reported
+   itself as 343px wide while its last columns sat at 518 — squeezed out of the
+   box and clipped, with nothing to scroll because scrollWidth matched
+   clientWidth. A min-width makes the box tell the truth, and then the wrapper
+   scrolls as it was always meant to. */
+.record-table { min-width: 540px; }
+
+.record-table th { white-space: nowrap; }
+.record-table__subhead th {
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.record-table__me { background: rgba(15, 138, 141, 0.06); }
+
+.record-score--plus { color: #1c6b41; }
+.record-score--minus { color: #8f1b2a; }
+.record-score--zero { color: #8a92a0; }
+
+.record {
+  padding: var(--space-4) var(--space-5);
+  margin-top: var(--space-4);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.record__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+}
+
+.record__heading {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a92a0;
+}
+
+.record__heading:first-of-type { margin-top: 0; }
+
+/* Chips rather than another table: a roll call is a list of names, and reading
+   who voted which way is easier when the names sit together by choice. */
+.record__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.record-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
+}
+
+.record-chip__name { font-size: var(--font-size-sm); font-weight: 600; }
+.record-chip__meta { font-size: 0.68rem; opacity: 0.8; }
+
+.record-chip--present,
+.record-chip--for { background: rgba(46, 139, 87, 0.14); color: #1c6b41; }
+.record-chip--absent,
+.record-chip--against { background: rgba(178, 34, 52, 0.12); color: #8f1b2a; }
+.record-chip--abstain { background: rgba(181, 127, 11, 0.16); color: #8a6100; }
+
+.record__topic {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-md);
+}
+
+.record__topic-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.record__topic-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+}
+
+.record__topic-body {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.record__topic-tally,
+.record__none {
+  margin: 0 0 var(--space-2);
+  font-size: 0.78rem;
+  color: #8a92a0;
+}
+
+@media (max-width: 600px) {
+  .record { padding: var(--space-3) var(--space-4); }
+  .record-chip { flex: 1 1 130px; }
+}
+
+/* --- Voting rules --------------------------------------------------------- */
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid #e3e7ee;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.rules__field { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.rules__inline { display: flex; align-items: center; gap: var(--space-2); }
+.rules__percent { width: 6rem; }
+.rules__unit { font-size: var(--font-size-sm); color: #6b7280; }
+
+.rules__choices { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Each option carries its own explanation: which majority applies is the one
+   setting here whose consequence is not obvious from its name. */
+.rules__choice {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  border: 2px solid #dde2ea;
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.rules__choice:hover { border-color: var(--color-secondary); }
+
+.rules__choice--active {
+  border-color: var(--color-secondary);
+  background: rgba(15, 138, 141, 0.06);
+}
+
+.rules__choice input { margin-top: 3px; }
+.rules__choice-title { display: block; color: var(--color-primary); }
+
+.rules__choice-help {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.rules__actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.rules__meta {
+  margin: var(--space-3) 0 0;
+  font-size: 0.78rem;
+  color: #8a92a0;
+}
+
+/* --- "Taken without a quorum" -------------------------------------------- */
+
+.ballot__threshold { margin-bottom: var(--space-3); }
+.ballot__rule { color: #a8b0bd; }
+
+.ballot__no-quorum,
+.agenda-item__no-quorum {
+  display: inline-block;
+  padding: 1px 8px;
+  margin-left: var(--space-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: #8a6100;
+  background: rgba(181, 127, 11, 0.18);
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 600px) {
+  .rules { padding: var(--space-4); }
+}

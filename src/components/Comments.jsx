@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { canManageComments, ROLES } from '../constants/roles';
 import AuthModal from './AuthModal';
+import HoneypotField, { HONEYPOT_NAME } from './HoneypotField';
 import './Comments.css';
 
 function formatDate(isoString) {
@@ -9,6 +11,9 @@ function formatDate(isoString) {
   const months = ['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
   return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}.`;
 }
+
+// Staff are not silenced with a comment ban — mirrors Roles.Staff on the server.
+const STAFF_ROLES = [ROLES.ADMIN, ROLES.MODERATOR, ROLES.FINANCE, ROLES.ASSEMBLY];
 
 function Avatar({ username }) {
   return <div className="comment-avatar">{username ? username[0].toUpperCase() : '?'}</div>;
@@ -20,13 +25,14 @@ export default function Comments({ vestSlug }) {
   const [loadingComments, setLoadingComments] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [content, setContent] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [actionError, setActionError] = useState('');
 
-  const isMod = user && (user.role === 'Moderator' || user.role === 'Admin');
+  const isMod = canManageComments(user);
 
   useEffect(() => { loadComments(); }, [vestSlug]);
 
@@ -50,7 +56,11 @@ export default function Comments({ vestSlug }) {
     setSubmitError('');
     setSubmitSuccess(false);
     try {
-      await api.postComment({ vestSlug, content: content.trim() });
+      await api.postComment({
+        vestSlug,
+        content: content.trim(),
+        [HONEYPOT_NAME]: honeypot,
+      });
       setContent('');
       setSubmitSuccess(true);
     } catch (err) {
@@ -75,6 +85,22 @@ export default function Comments({ vestSlug }) {
     try {
       await api.deleteComment(id);
       setComments(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      setActionError(err.message);
+    }
+  }
+
+  // Rule-breaking comment: bar the author for 10 days and delete the comment.
+  async function handleBan(comment) {
+    if (!window.confirm(
+      `Zabraniti korisniku „${comment.username}" komentarisanje na 10 dana? ` +
+      `Ovaj komentar će biti obrisan.`
+    )) return;
+    setActionError('');
+    try {
+      await api.banCommenter(comment.authorUserId);
+      await api.deleteComment(comment.id);
+      setComments(prev => prev.filter(c => c.id !== comment.id));
     } catch (err) {
       setActionError(err.message);
     }
@@ -142,6 +168,7 @@ export default function Comments({ vestSlug }) {
                     isMod
                     onApprove={() => handleApprove(c.id)}
                     onDelete={() => handleDelete(c.id)}
+                    onBan={() => handleBan(c)}
                     onVote={handleVote}
                     currentUser={user}
                   />
@@ -176,6 +203,7 @@ export default function Comments({ vestSlug }) {
               rows={4}
               required
             />
+            <HoneypotField value={honeypot} onChange={setHoneypot} />
             {submitError && <p className="comments-submit-error">{submitError}</p>}
             {submitSuccess && (
               <p className="comments-submit-success">
@@ -192,8 +220,11 @@ export default function Comments({ vestSlug }) {
   );
 }
 
-function CommentCard({ comment, isMod, onApprove, onDelete, onVote, currentUser }) {
+function CommentCard({ comment, isMod, onApprove, onDelete, onBan, onVote, currentUser }) {
   const userVote = comment.userVote; // true=like, false=dislike, null=none
+  const bannedActive = comment.authorBannedUntil && new Date(comment.authorBannedUntil) > new Date();
+  const canBan = isMod && !comment.isApproved && comment.authorUserId != null
+    && !STAFF_ROLES.includes(comment.authorRole);
 
   return (
     <div className={`comment-card${isMod && !comment.isApproved ? ' comment-card--pending' : ''}`}>
@@ -205,6 +236,11 @@ function CommentCard({ comment, isMod, onApprove, onDelete, onVote, currentUser 
         </div>
         {isMod && !comment.isApproved && (
           <span className="comment-badge">Na čekanju</span>
+        )}
+        {isMod && bannedActive && (
+          <span className="comment-badge comment-badge--banned">
+            Zabrana do {formatDate(comment.authorBannedUntil)}
+          </span>
         )}
       </div>
 
@@ -236,6 +272,11 @@ function CommentCard({ comment, isMod, onApprove, onDelete, onVote, currentUser 
           <div className="comment-card__actions">
             <button className="comment-btn comment-btn--approve" onClick={onApprove}>Odobri</button>
             <button className="comment-btn comment-btn--delete" onClick={onDelete}>Obriši</button>
+            {canBan && (
+              <button className="comment-btn comment-btn--ban" onClick={onBan}>
+                Banuj na 10 dana
+              </button>
+            )}
           </div>
         )}
       </div>

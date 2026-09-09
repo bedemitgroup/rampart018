@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -9,6 +9,41 @@ import Finansije from './pages/Finansije';
 import Problem from './pages/Problem';
 import PridruziSe from './pages/PridruziSe';
 import Vest from './pages/Vest';
+import Peticije from './pages/Peticije';
+import Peticija from './pages/Peticija';
+import MojiPotpisi from './pages/MojiPotpisi';
+import PolitikaPrivatnosti from './pages/PolitikaPrivatnosti';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminNews from './pages/admin/AdminNews';
+import AdminNewsForm from './pages/admin/AdminNewsForm';
+import AdminProblems from './pages/admin/AdminProblems';
+import AdminMemberships from './pages/admin/AdminMemberships';
+import AdminFinance from './pages/admin/AdminFinance';
+import AdminFinanceForm from './pages/admin/AdminFinanceForm';
+import AdminFinanceCategories from './pages/admin/AdminFinanceCategories';
+import AdminFinanceYears from './pages/admin/AdminFinanceYears';
+import AdminAssembly from './pages/admin/AdminAssembly';
+import AdminAssemblySessions from './pages/admin/AdminAssemblySessions';
+import AdminAssemblyTopics from './pages/admin/AdminAssemblyTopics';
+import AdminAssemblyRecord from './pages/admin/AdminAssemblyRecord';
+import AdminAssemblyRules from './pages/admin/AdminAssemblyRules';
+import AdminAssemblySessionForm from './pages/admin/AdminAssemblySessionForm';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminAuditLog from './pages/admin/AdminAuditLog';
+import AdminPeticije from './pages/admin/AdminPeticije';
+import AdminPeticijaForm from './pages/admin/AdminPeticijaForm';
+import AdminPeticijaPotpisi from './pages/admin/AdminPeticijaPotpisi';
+import RequirePermission from './pages/admin/RequirePermission';
+import {
+  adminLandingPath,
+  canAccessAdmin,
+  canManageAssembly,
+  canManageFinance,
+  canManageNews,
+  canManagePetitions,
+  canManageUsers,
+} from './constants/roles';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
   return (
@@ -24,6 +59,61 @@ export default function App() {
           <Route path="/problem" element={<Problem />} />
           <Route path="/pridruzi-se" element={<PridruziSe />} />
           <Route path="/vest/:slug" element={<Vest />} />
+          <Route path="/peticije" element={<Peticije />} />
+          <Route path="/peticije/:slug" element={<Peticija />} />
+          {/* No guard: the page asks for a login itself, the way the comments
+              do, so a shared link never dead-ends on a redirect. */}
+          <Route path="/moji-potpisi" element={<MojiPotpisi />} />
+          <Route path="/politika-privatnosti" element={<PolitikaPrivatnosti />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminIndex />} />
+
+            {/* Lists are readable by the whole membership; the forms behind
+                them write, so those keep the stricter guard. */}
+            <Route element={<RequirePermission allow={canAccessAdmin} />}>
+              <Route path="news" element={<AdminNews />} />
+              <Route path="finance" element={<AdminFinance />} />
+              <Route path="finance/categories" element={<AdminFinanceCategories />} />
+              <Route path="finance/years" element={<AdminFinanceYears />} />
+              <Route path="problems" element={<AdminProblems />} />
+              <Route path="memberships" element={<AdminMemberships />} />
+              <Route path="skupstina" element={<AdminAssembly />} />
+              <Route path="skupstina/dnevni-red" element={<AdminAssemblyTopics />} />
+              <Route path="skupstina/sednice" element={<AdminAssemblySessions />} />
+              <Route path="skupstina/evidencija" element={<AdminAssemblyRecord />} />
+              <Route path="skupstina/pravila" element={<AdminAssemblyRules />} />
+              <Route path="peticije" element={<AdminPeticije />} />
+            </Route>
+
+            {/* The signature list is not a read-only view like the others: it
+                is a list of names, cities and political opinions, so it stays
+                behind the write permission even for looking. */}
+            <Route element={<RequirePermission allow={canManagePetitions} />}>
+              <Route path="peticije/nova" element={<AdminPeticijaForm />} />
+              <Route path="peticije/:id/izmena" element={<AdminPeticijaForm />} />
+              <Route path="peticije/:id/potpisi" element={<AdminPeticijaPotpisi />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageNews} />}>
+              <Route path="news/new" element={<AdminNewsForm />} />
+              <Route path="news/:id/edit" element={<AdminNewsForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageAssembly} />}>
+              <Route path="skupstina/sednice/nova" element={<AdminAssemblySessionForm />} />
+              <Route path="skupstina/sednice/:id/izmena" element={<AdminAssemblySessionForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageFinance} />}>
+              <Route path="finance/new" element={<AdminFinanceForm />} />
+              <Route path="finance/:id/edit" element={<AdminFinanceForm />} />
+            </Route>
+
+            <Route element={<RequirePermission allow={canManageUsers} />}>
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="audit" element={<AdminAuditLog />} />
+            </Route>
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -31,6 +121,14 @@ export default function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+}
+
+// /admin has no page of its own: it drops you into the first section your role
+// actually administers, which is not the same one for a Moderator and for
+// Finansije.
+function AdminIndex() {
+  const { user } = useAuth();
+  return <Navigate to={adminLandingPath(user)} replace />;
 }
 
 function NotFound() {

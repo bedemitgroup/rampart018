@@ -10,11 +10,11 @@ export default function Footer() {
         <div className="footer__grid">
           <div className="footer__brand">
             <div className="footer__logo">
-              <span className="footer__logo-icon">⚖</span>
+              <img src="/logo-mark-white.svg" alt="" className="footer__logo-icon" width="36" height="36" />
               <span className="footer__logo-name">Bedem</span>
             </div>
             <p className="footer__desc">
-              Građansko udruženje koje se bori za prava građana,
+              Udruženje Građana Bedem se bori za prava građana,
               transparentnost vlasti i pravdu u zajednici.
             </p>
             <div className="footer__socials">
@@ -42,8 +42,10 @@ export default function Footer() {
               <li><Link to="/">Početna</Link></li>
               <li><Link to="/o-nama">O nama</Link></li>
               <li><Link to="/finansije">Finansije</Link></li>
+              <li><Link to="/peticije">Peticije</Link></li>
               <li><Link to="/problem">Podeli problem</Link></li>
               <li><Link to="/pridruzi-se">Pridruži se</Link></li>
+              <li><Link to="/politika-privatnosti">Politika privatnosti</Link></li>
             </ul>
           </div>
 
@@ -52,23 +54,33 @@ export default function Footer() {
             <ul className="footer__contact">
               <li>
                 <span className="footer__contact-icon">📍</span>
-                Trg slobode 1, Novi Sad 21000
+                Ilindenska 66, 18103 Niš (Pantelej)
               </li>
               <li>
                 <span className="footer__contact-icon">📧</span>
-                <a href="mailto:kontakt@bedem.org.rs">kontakt@bedem.org.rs</a>
+                <a href="mailto:bedem018@gmail.com">bedem018@gmail.com</a>
               </li>
+              {/* Telefon privremeno sakriven — vratiti kad bude pravog broja
               <li>
                 <span className="footer__contact-icon">📞</span>
                 <a href="tel:+38121000000">+381 21 000 000</a>
               </li>
+              */}
             </ul>
           </div>
         </div>
 
         <div className="footer__bottom">
-          <p>© {year} Bedem — Građansko udruženje. Sva prava zadržana.</p>
-          <p>Registrovano u Agenciji za privredne registre</p>
+          <p>© {year} Udruženje Građana Bedem. Sva prava zadržana.</p>
+          <p>
+            <a
+              href="https://www.companywall.rs/firma/bedem-018/MMxIwZNU0"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Registrovano u Agenciji za privredne registre
+            </a>
+          </p>
         </div>
       </div>
     </footer>

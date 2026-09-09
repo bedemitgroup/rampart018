@@ -1,0 +1,162 @@
+namespace BedemApi.Models;
+
+/// <summary>
+/// Every action the audit log can record. The log stores the action name only —
+/// no before/after values — so the names are deliberately granular: turning a
+/// news article off is <see cref="NewsUnpublish"/> rather than a generic update,
+/// because "Marko ugasio vest" has to be answerable from the name alone.
+/// </summary>
+public static class AuditActions
+{
+    // News
+    public const string NewsCreate = "News.Create";
+    public const string NewsUpdate = "News.Update";
+    public const string NewsPublish = "News.Publish";
+    public const string NewsUnpublish = "News.Unpublish";
+    public const string NewsDelete = "News.Delete";
+    public const string NewsMoveUp = "News.MoveUp";
+    public const string NewsMoveDown = "News.MoveDown";
+
+    /// <summary>The "aktuelno" line across the top of the front page.</summary>
+    public const string NewsNoticeUpdate = "News.Notice.Update";
+
+    // Finance — entries
+    public const string FinanceEntryCreate = "Finance.Entry.Create";
+    public const string FinanceEntryUpdate = "Finance.Entry.Update";
+    public const string FinanceEntryDelete = "Finance.Entry.Delete";
+
+    // Finance — categories
+    public const string FinanceCategoryCreate = "Finance.Category.Create";
+    public const string FinanceCategoryUpdate = "Finance.Category.Update";
+    public const string FinanceCategoryDelete = "Finance.Category.Delete";
+    public const string FinanceCategoryMoveUp = "Finance.Category.MoveUp";
+    public const string FinanceCategoryMoveDown = "Finance.Category.MoveDown";
+
+    // Finance — years and quarters
+    public const string FinanceYearSave = "Finance.Year.Save";
+    public const string FinanceQuarterSetStatus = "Finance.Quarter.SetStatus";
+
+    // Skupstina - sessions
+    public const string AssemblySessionCreate = "Assembly.Session.Create";
+    public const string AssemblySessionUpdate = "Assembly.Session.Update";
+    public const string AssemblySessionOpen = "Assembly.Session.Open";
+    public const string AssemblySessionClose = "Assembly.Session.Close";
+    public const string AssemblySessionCancel = "Assembly.Session.Cancel";
+    public const string AssemblySessionDelete = "Assembly.Session.Delete";
+
+    // Skupstina - agenda topics
+    public const string AssemblyTopicPropose = "Assembly.Topic.Propose";
+    public const string AssemblyTopicUpdate = "Assembly.Topic.Update";
+    public const string AssemblyTopicApprove = "Assembly.Topic.Approve";
+    public const string AssemblyTopicReject = "Assembly.Topic.Reject";
+    public const string AssemblyTopicWithdraw = "Assembly.Topic.Withdraw";
+    public const string AssemblyTopicAssign = "Assembly.Topic.Assign";
+    public const string AssemblyTopicDelete = "Assembly.Topic.Delete";
+    public const string AssemblyTopicMoveUp = "Assembly.Topic.MoveUp";
+    public const string AssemblyTopicMoveDown = "Assembly.Topic.MoveDown";
+
+    // Skupstina - ballots. The decision to open or close a vote is logged; the
+    // ballots themselves are not, because AssemblyVote already is that record,
+    // with a timestamp, and a row per click would drown the log.
+    public const string AssemblyVotingOpen = "Assembly.Voting.Open";
+    public const string AssemblyVotingClose = "Assembly.Voting.Close";
+
+    // Skupstina - the record. Attendance overrides are logged because they move
+    // somebody's score; the award itself is one row per sitting, not per member,
+    // or a thirty-strong assembly would bury everything else in the log.
+    public const string AssemblyAttendanceOverride = "Assembly.Attendance.Override";
+    public const string AssemblyPointsAward = "Assembly.Points.Award";
+
+    /// <summary>The quorum and majority the association decides by.</summary>
+    public const string AssemblyRulesUpdate = "Assembly.Rules.Update";
+
+    // Peticije. The petition is logged; the signatures on it are not, and that
+    // asymmetry is deliberate. A signature reveals a political opinion, and this
+    // log is built to be permanent — "Marko potpisao peticiju X" would be a
+    // second copy of that opinion, one that survives both the withdrawal of his
+    // consent and the retention purge. Same reasoning as the assembly ballots
+    // above: the decision to open and close is logged, the votes are not.
+    public const string PetitionCreate = "Petition.Create";
+    public const string PetitionUpdate = "Petition.Update";
+    public const string PetitionOpen = "Petition.Open";
+    public const string PetitionClose = "Petition.Close";
+    public const string PetitionDelete = "Petition.Delete";
+    public const string PetitionMoveUp = "Petition.MoveUp";
+    public const string PetitionMoveDown = "Petition.MoveDown";
+
+    /// <summary>Signatures deleted — by the retention job or by hand.</summary>
+    public const string PetitionPurgeSignatures = "Petition.PurgeSignatures";
+
+    /// <summary>
+    /// Somebody pulled the signature list out of the panel. Logged precisely
+    /// because the individual signatures are not: an export moves special
+    /// categories of personal data onto somebody's laptop, and that is the one
+    /// event about this data worth a permanent trail. The row names the
+    /// petition and the person who exported it, never the signers.
+    /// </summary>
+    public const string PetitionSignaturesExport = "Petition.SignaturesExport";
+
+    // Comment moderation. Approving and deleting a single comment is routine and
+    // not logged; barring an account from commenting is a sanction against a
+    // person, so it is.
+    public const string CommentBanUser = "Comment.BanUser";
+    public const string CommentUnbanUser = "Comment.UnbanUser";
+
+    // Accounts
+    public const string UserCreateAccount = "User.CreateAccount";
+
+    /// <summary>
+    /// Superseded by <see cref="UserCreateAccount"/> once accounts could be
+    /// created with any staff role. Kept so old rows still render a label.
+    /// </summary>
+    public const string UserCreateModerator = "User.CreateModerator";
+    public const string UserChangeRole = "User.ChangeRole";
+    public const string UserDeactivate = "User.Deactivate";
+    public const string UserActivate = "User.Activate";
+
+    public static readonly IReadOnlyList<string> All = new[]
+    {
+        NewsCreate, NewsUpdate, NewsPublish, NewsUnpublish, NewsDelete,
+        NewsMoveUp, NewsMoveDown, NewsNoticeUpdate,
+        FinanceEntryCreate, FinanceEntryUpdate, FinanceEntryDelete,
+        FinanceCategoryCreate, FinanceCategoryUpdate, FinanceCategoryDelete,
+        FinanceCategoryMoveUp, FinanceCategoryMoveDown,
+        FinanceYearSave, FinanceQuarterSetStatus,
+        AssemblySessionCreate, AssemblySessionUpdate, AssemblySessionOpen,
+        AssemblySessionClose, AssemblySessionCancel, AssemblySessionDelete,
+        AssemblyTopicPropose, AssemblyTopicUpdate, AssemblyTopicApprove,
+        AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
+        AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
+        AssemblyVotingOpen, AssemblyVotingClose,
+        AssemblyAttendanceOverride, AssemblyPointsAward, AssemblyRulesUpdate,
+        PetitionCreate, PetitionUpdate, PetitionOpen, PetitionClose,
+        PetitionDelete, PetitionMoveUp, PetitionMoveDown,
+        PetitionPurgeSignatures, PetitionSignaturesExport,
+        CommentBanUser, CommentUnbanUser,
+        UserCreateAccount, UserCreateModerator, UserChangeRole,
+        UserDeactivate, UserActivate
+    };
+}
+
+/// <summary>
+/// The kinds of thing an audited action can target. Used as the entity filter
+/// on the admin page, so it is coarser than <see cref="AuditActions"/>.
+/// </summary>
+public static class AuditEntityTypes
+{
+    public const string News = "News";
+    public const string FinanceEntry = "FinanceEntry";
+    public const string FinanceCategory = "FinanceCategory";
+    public const string FinanceYear = "FinanceYear";
+    public const string FinanceQuarter = "FinanceQuarter";
+    public const string User = "User";
+    public const string AssemblySession = "AssemblySession";
+    public const string AssemblyTopic = "AssemblyTopic";
+    public const string Petition = "Petition";
+
+    public static readonly IReadOnlyList<string> All = new[]
+    {
+        News, FinanceEntry, FinanceCategory, FinanceYear, FinanceQuarter,
+        AssemblySession, AssemblyTopic, Petition, User
+    };
+}

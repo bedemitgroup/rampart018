@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ROLES, roleLabel, canAccessAdmin, adminLandingPath } from '../constants/roles';
 import AuthModal from './AuthModal';
 import './Navbar.css';
 
@@ -8,6 +9,7 @@ const navLinks = [
   { to: '/', label: 'Početna', end: true },
   { to: '/o-nama', label: 'O nama' },
   { to: '/finansije', label: 'Finansije' },
+  { to: '/peticije', label: 'Peticije' },
   { to: '/problem', label: 'Podeli problem' },
   { to: '/pridruzi-se', label: 'Pridruži se' },
 ];
@@ -40,10 +42,10 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="navbar__logo" onClick={closeMenu}>
-            <span className="navbar__logo-icon">⚖</span>
+            <img src="/logo-mark-white.svg" alt="" className="navbar__logo-icon" width="32" height="32" />
             <span className="navbar__logo-text">
               <span className="navbar__logo-name">Bedem</span>
-              <span className="navbar__logo-tagline">Građansko udruženje</span>
+              <span className="navbar__logo-tagline">Udruženje građana</span>
             </span>
           </Link>
 
@@ -69,10 +71,13 @@ export default function Navbar() {
                 <>
                   <span className="navbar__user">
                     <span className="navbar__username">{user.username}</span>
-                    {user.role && user.role !== 'User' && (
-                      <span className="navbar__role-badge">{user.role}</span>
+                    {user.role && user.role !== ROLES.VISITOR && (
+                      <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                     )}
                   </span>
+                  {canAccessAdmin(user) && (
+                    <Link to={adminLandingPath(user)} className="btn btn--outline navbar__btn">Admin</Link>
+                  )}
                   <button className="btn btn--outline navbar__btn" onClick={logout}>
                     Odjava
                   </button>
@@ -111,10 +116,10 @@ export default function Navbar() {
         {/* Drawer header */}
         <div className="navbar__drawer-header">
           <Link to="/" className="navbar__logo" onClick={closeMenu}>
-            <span className="navbar__logo-icon">⚖</span>
+            <img src="/logo-mark-white.svg" alt="" className="navbar__logo-icon" width="32" height="32" />
             <span className="navbar__logo-text">
               <span className="navbar__logo-name">Bedem</span>
-              <span className="navbar__logo-tagline">Građansko udruženje</span>
+              <span className="navbar__logo-tagline">Udruženje građana</span>
             </span>
           </Link>
           <button className="navbar__drawer-close" onClick={closeMenu} aria-label="Zatvori meni">
@@ -148,10 +153,15 @@ export default function Navbar() {
             <>
               <div className="navbar__drawer-user">
                 <span className="navbar__username">{user.username}</span>
-                {user.role && user.role !== 'User' && (
-                  <span className="navbar__role-badge">{user.role}</span>
+                {user.role && user.role !== ROLES.VISITOR && (
+                  <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                 )}
               </div>
+              {canAccessAdmin(user) && (
+                <Link to={adminLandingPath(user)} className="btn btn--outline navbar__drawer-btn" onClick={closeMenu}>
+                  Admin
+                </Link>
+              )}
               <button
                 className="btn btn--outline navbar__drawer-btn"
                 onClick={() => { logout(); closeMenu(); }}

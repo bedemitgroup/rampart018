@@ -1,3 +1,15 @@
+/* ── Loading / error / empty states ── */
+.home-status {
+  text-align: center;
+  color: var(--color-neutral);
+  padding: var(--space-16) 0;
+  font-size: var(--font-size-lg);
+}
+
+.home-status--error {
+  color: var(--color-accent);
+}
+
 /* ── Breaking bar ── */
 .home-breaking {
   background: var(--color-primary);
@@ -22,6 +34,73 @@
   padding: 2px 8px;
   border-radius: 2px;
   white-space: nowrap;
+}
+
+.home-breaking__label--btn {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ── "Aktuelno" popup (phones) ── */
+.home-notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: var(--space-4);
+  animation: overlayIn 0.15s ease;
+}
+
+@media (max-width: 640px) {
+  /* Sit the popup just under the navbar — near where the "Aktuelno" button
+     that opened it is — rather than at the bottom of the screen. */
+  .home-notice-modal {
+    align-items: flex-start;
+    padding-top: calc(var(--navbar-height, 70px) + var(--space-4));
+  }
+}
+
+.home-notice-modal__box {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  border-top: 4px solid var(--color-secondary);
+  padding: var(--space-5);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-xl);
+}
+
+.home-notice-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.home-notice-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-neutral);
+  padding: var(--space-1);
+}
+
+.home-notice-modal__text {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .home-breaking__text {
@@ -143,6 +222,7 @@
   border-radius: 6px;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
   opacity: 0.75;
+  object-fit: cover;
 }
 
 .news-item__title--sm {
@@ -206,6 +286,13 @@
 .news-featured__image-icon {
   font-size: 4rem;
   opacity: 0.5;
+}
+
+.news-featured__image-real {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .news-featured__image-caption {
@@ -308,6 +395,8 @@
   aspect-ratio: 16/9;
   background: linear-gradient(120deg, var(--color-bg-light) 0%, #dde2ea 100%);
   border-radius: var(--radius-sm, 4px);
+  object-fit: cover;
+  display: block;
 }
 
 .news-card__body {
@@ -429,7 +518,9 @@
     margin-top: var(--space-4);
   }
 
+  /* Glavna vest uvek prva na uskim ekranima, bez obzira na redosled u kodu */
   .home-grid__center {
+    order: -1;
     padding: 0;
   }
 
@@ -443,8 +534,24 @@
 }
 
 @media (max-width: 640px) {
-  .home-breaking {
+  /* Keep "Aktuelno" reachable on phones without the long text breaking the
+     layout: just the label, tappable, opening the popup. */
+  .home-breaking__inner {
+    justify-content: center;
+  }
+
+  .home-breaking__text,
+  .home-breaking__link {
     display: none;
+  }
+
+  .home-breaking__label--btn {
+    font-size: var(--font-size-sm);
+    padding: var(--space-1) var(--space-4);
+  }
+
+  .home-breaking__label--btn::after {
+    content: ' ▾';
   }
 
   /* News list mobile layout — tekst levo, slika desno */

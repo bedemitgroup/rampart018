@@ -1,0 +1,92 @@
+.privatnost-content {
+  max-width: 820px;
+}
+
+.privatnost-content h2 {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  margin-top: var(--space-10);
+  margin-bottom: var(--space-4);
+}
+
+.privatnost-content h2:first-child {
+  margin-top: 0;
+}
+
+.privatnost-content p {
+  line-height: 1.8;
+  margin-bottom: var(--space-4);
+}
+
+.privatnost-content a {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.privatnost-content code {
+  background: var(--color-bg-light);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.privatnost-list {
+  list-style: disc;
+  padding-left: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.privatnost-list li {
+  line-height: 1.8;
+  margin-bottom: var(--space-2);
+}
+
+/* Unfilled controller details. Loud on purpose — a placeholder that blends in
+   is a placeholder that ships. */
+.privatnost-placeholder {
+  background: rgba(178, 34, 52, 0.10);
+  color: var(--color-accent);
+  font-weight: 600;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.privatnost-callout {
+  padding: var(--space-4);
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-md);
+}
+
+.privatnost-table-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--space-6);
+}
+
+.privatnost-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  min-width: 640px;
+}
+
+.privatnost-table th,
+.privatnost-table td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: top;
+}
+
+.privatnost-table th {
+  background: var(--color-bg-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.privatnost-version {
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--color-neutral);
+  font-size: var(--font-size-sm);
+}
