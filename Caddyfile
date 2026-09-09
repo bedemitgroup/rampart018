@@ -1,0 +1,31 @@
+# Reverse proxy + TLS for the whole site. SITE_DOMAIN comes from the compose env
+# (e.g. bedem.rs). Caddy obtains and renews the Let's Encrypt certificate itself.
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# API, realtime hub, and uploaded media all live on the backend container.
+	# Caddy upgrades WebSocket connections for /hubs automatically.
+	@backend path /api/* /hubs/* /uploads/*
+	handle @backend {
+		reverse_proxy bedem-api:5000
+	}
+
+	# Everything else is the static SPA. Unknown paths fall back to index.html
+	# so a browser refresh on a client-side route still loads the app.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		# Uploaded files are served from our own origin; stop the browser from
+		# reinterpreting an image as HTML/script.
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

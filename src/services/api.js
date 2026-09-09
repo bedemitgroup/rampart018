@@ -1,4 +1,7 @@
-export const BASE = 'http://localhost:5000';
+// Empty in production: the frontend is served from the same origin as the API,
+// so every path below resolves against the current host. Set VITE_API_BASE for
+// local development, where Vite and the API run on different ports.
+export const BASE = import.meta.env.VITE_API_BASE ?? '';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('bedem_token');
