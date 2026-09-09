@@ -188,6 +188,15 @@ else
 
 app.MapControllers();
 
+// Liveness + database reachability, for the deploy script and uptime checks.
+// Anonymous and unthrottled; it reveals nothing beyond "the app can reach PG".
+app.MapGet("/api/health", async (AppDbContext db) =>
+        await db.Database.CanConnectAsync()
+            ? Results.Ok(new { status = "ok" })
+            : Results.Json(new { status = "degraded" }, statusCode: StatusCodes.Status503ServiceUnavailable))
+   .AllowAnonymous()
+   .DisableRateLimiting();
+
 // Mapped after UseAuthorization so the hub's [Authorize] sees a populated
 // principal. Rate limiting is switched off on it explicitly: a hub connection
 // is one long-lived request, so a limiter would strangle the transport rather

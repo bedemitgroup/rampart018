@@ -16,11 +16,17 @@ menja se i ovaj dokument.
 
 | Stavka | Vrednost |
 |---|---|
-| Naziv | `[POPUNITI: pun naziv udruženja iz APR-a]` |
-| Sedište | `[POPUNITI: adresa]` |
-| Matični broj | `[POPUNITI]` |
-| Kontakt za zaštitu podataka | `[POPUNITI: email]` |
+| Naziv | Udruženje Građana Bedem (APR/companywall: „BEDEM 018") |
+| Sedište | Ilindenska 66, 18103 Niš (Pantelej) |
+| Matični broj | 28419635 (PIB 115867202) |
+| Kontakt za zaštitu podataka | bedem018@gmail.com |
 | Lice za zaštitu podataka (čl. 56) | Nije određeno — obrada posebnih vrsta podataka nije osnovna delatnost udruženja i nije velikih razmera. Preispitati ako broj potpisa značajno poraste. |
+| Obrađivač (čl. 45) | **Hetzner Online GmbH**, Nemačka — hosting servera (aplikacija, baza, otpremljeni fajlovi). Potpisati ugovor o obradi podataka (DPA) pre puštanja u rad; Hetzner nudi standardni DPA. |
+
+> **Iznošenje iz zemlje.** Serveri su u Nemačkoj. Nemačka je članica EU i na listi
+> država/teritorija sa obezbeđenim primerenim nivoom zaštite (čl. 64 ZZPL i Odluka
+> Vlade), pa prenos **ne zahteva poseban osnov ni odobrenje Poverenika** — dovoljan je
+> ugovor o obradi sa Hetznerom. Ovo važi za sve radnje obrade niže.
 
 ---
 
@@ -32,8 +38,8 @@ menja se i ovaj dokument.
 | **Kategorije lica** | Registrovani posetioci, članovi, osoblje udruženja |
 | **Kategorije podataka** | Korisničko ime, email adresa, kriptovana lozinka (bcrypt), rola, datum registracije, status naloga |
 | **Pravni osnov** | Izvršenje ugovora o korišćenju usluge (čl. 12 st. 1 tač. 2) |
-| **Primaoci** | Nema. Podaci ne napuštaju sistem. |
-| **Iznošenje iz zemlje** | `[POPUNITI: zavisi od lokacije hosting provajdera]` |
+| **Primaoci** | Nema, osim obrađivača (Hetzner) kao hostinga. Podaci se ne dele sa trećim licima. |
+| **Iznošenje iz zemlje** | Nemačka (Hetzner) — vidi napomenu kod Rukovaoca. Ne zahteva poseban osnov. |
 | **Rok čuvanja** | Dok postoji nalog |
 | **Tabela** | `Users` |
 
@@ -135,11 +141,16 @@ menja se i ovaj dokument.
 
 ## Otvorene stavke pre puštanja u rad
 
-1. Popuniti sve oznake `[POPUNITI]` u ovom dokumentu i u `src/pages/PolitikaPrivatnosti.jsx`.
-2. **Rotirati JWT ključ i lozinku baze.** Fajl `.env` je komitovan u repozitorijum, a
-   `appsettings.json` sadrži hardkodovan rezervni JWT ključ i `Password=postgres`. Dok se to ne
-   reši, baza posebnih vrsta podataka nije obezbeđena.
-3. Definisati rokove čuvanja za prijave problema, zahteve za članstvo i zapise o automatskim
+1. Popuniti preostale oznake `[POPUNITI]` (rokovi čuvanja) u ovom dokumentu i u
+   `src/pages/PolitikaPrivatnosti.jsx` (hosting provajder = Hetzner / Nemačka).
+2. **Rotirati JWT ključ i lozinku baze na produkciji.** ~~`appsettings.json` je sadržao
+   hardkodovan JWT ključ~~ — rešeno: tajne su izbačene iz koda, a `Program.cs` prekida
+   pokretanje ako je ključ prazan, prekratak ili jednak iscurelom ključu iz git istorije
+   (vidi `docs/deployment.md`). Ostaje: generisati svež `JWT_SECRET` i `POSTGRES_PASSWORD`
+   samo na serveru (`deploy/README.md`, korak 4). Iscureli ključ u git istoriji postaje
+   bezvredan čim produkcija radi sa novim.
+3. Potpisati ugovor o obradi (DPA) sa Hetznerom.
+4. Definisati rokove čuvanja za prijave problema, zahteve za članstvo i zapise o automatskim
    prijavama.
-4. Ispraviti podrazumevano štikliran `Newsletter` na formi za članstvo.
-5. Preispitati potrebu za procenom uticaja (čl. 54) kada broj potpisa postane značajan.
+5. Ispraviti podrazumevano štikliran `Newsletter` na formi za članstvo.
+6. Preispitati potrebu za procenom uticaja (čl. 54) kada broj potpisa postane značajan.

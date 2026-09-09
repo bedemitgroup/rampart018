@@ -126,4 +126,15 @@ rm -f /opt/bedem/dump/bedem-$ts.sql.gz
 
 ## Runbook
 
-_(Dopuniti nakon prvog deploya: restore procedura, kako se deployuje nova verzija, gde su logovi.)_
+Skripte i korak-po-korak uputstvo su u [`../deploy/`](../deploy/):
+
+| Fajl | Šta |
+|---|---|
+| `deploy/README.md` | Ceo redosled: kreiranje servera → hardening → DNS → clone → prvi deploy → smoke test |
+| `deploy/bootstrap.sh` | Jednokratno na svežem serveru: ne-root korisnik, SSH lockdown, `ufw`, `fail2ban`, auto-updates, Docker |
+| `deploy/deploy.sh` | Deploy/update: `git pull` + `compose up -d --build` + health check |
+| `deploy/backup-setup.md` | Storage Box + `restic` + nedeljni cron (jednokratno) |
+| `deploy/backup.sh` | Nedeljni backup: `pg_dump` + upload fajlovi → `restic` |
+| `deploy/restore.md` | Restore procedura (baza, fajlovi, ceo server) |
+
+Health endpoint: `GET /api/health` → `{"status":"ok"}` (anoniman, bez rate limita).
