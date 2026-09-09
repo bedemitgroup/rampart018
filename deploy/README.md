@@ -35,14 +35,19 @@ Hetzner Cloud Console → **Add Server**:
 
 | Field | Value |
 |---|---|
-| Location | Falkenstein or Nuremberg (EU) |
-| Image | Ubuntu 24.04 |
-| Type | **CX22** (shared vCPU, 2 / 4 GB / 40 GB) |
+| Location | Nuremberg / Falkenstein / Helsinki (EU) |
+| Image | **Ubuntu 24.04 LTS** |
+| Type | **CPX12** (1 vCPU / 2 GB / 40 GB, ~€11.49). If the cheaper CX22 (Intel, 4 GB, ~€4.51) or CAX21 (Arm, 8 GB) is in stock, take that instead — nothing else changes. |
 | SSH key | add yours |
 | Backups | **enable** (+20%, daily full-server images) |
 | Name | `bedem` |
 
 Note the public IP.
+
+> On the 2 GB CPX12, `bootstrap.sh` adds a 3 GB swapfile so a container image
+> build does not OOM. Runtime footprint of the stack is ~700 MB–1 GB. If load
+> grows, rescale to CPX22 (2 vCPU / 4 GB) from the console — same line, keeps the
+> disk, no migration.
 
 ## 2. Harden + install Docker
 

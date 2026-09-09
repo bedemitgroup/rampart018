@@ -35,8 +35,8 @@
 | Stavka | Vrednost |
 |---|---|
 | Provajder | Hetzner Cloud |
-| Lokacija | Falkenstein ili Nürnberg (Nemačka, EU) |
-| Server | CX22 — 2 vCPU, 4 GB RAM, 40 GB disk (~€4.5/mo sa IPv4 + PDV) |
+| Lokacija | Nürnberg (Nemačka, EU) |
+| Server | **CPX12** — 1 vCPU, 2 GB RAM, 40 GB disk (~€11.49/mo + €0.50 IPv4 + €2.30 backups). CX22 (Intel, 4 GB, ~€4.5) je bio nedostupan pri kreiranju; preći na njega ili na CPX22 ako zatreba. `bootstrap.sh` dodaje 3 GB swap za build na 2 GB. |
 | Orkestracija | Docker Compose |
 | Servisi | Caddy (reverse proxy + automatski TLS) → static frontend + `bedem-api` + `bedem-db` |
 | Domen | `bedem018.rs` (RNIDS) — frontend i API na **istom origin-u** → nema CORS-a |
@@ -48,7 +48,7 @@ Urađeno puno poređenje troškova i kompromisa. Sažetak (realan mesečni troš
 
 | Opcija | Trošak/mo | Održavanje | Napomena |
 |---|---|---|---|
-| **Hetzner (izabrano)** | **€10–11** (sa oba sloja backup-a) | ~1–2 h/mesec | 2–3× jeftinije, EU, puna kontrola |
+| **Hetzner (izabrano)** | **~€18** CPX12 + backups + Storage Box (sa CX22: ~€10) | ~1–2 h/mesec | i dalje jeftinije od svega ispod, EU, puna kontrola |
 | Railway | $20–30 | ~0 | Najbolja managed opcija, ali skuplje; usage može da raste |
 | Render | $16–30 | malo | Free Postgres ističe za 30 dana; free web servis se gasi (ubija hosted service + SignalR) |
 | Fly.io | $18–40 | srednje | Managed Postgres skup (~$30); nemanaged = isti posao kao Hetzner ali skuplje |
