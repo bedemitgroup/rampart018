@@ -29,6 +29,20 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y ca-certificates curl gnupg ufw fail2ban unattended-upgrades
 
+echo ">>> Swap"
+# The 2 GB plans have no headroom for a container image build (dotnet publish,
+# vite build) while Postgres is running. A swapfile absorbs the spikes; on a
+# box with more RAM it simply stays unused. Skip if swap already exists.
+if [[ ! -f /swapfile && "$(swapon --show --noheadings | wc -l)" -eq 0 ]]; then
+    fallocate -l 3G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=3072
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    sysctl -w vm.swappiness=10
+    echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
+fi
+
 echo ">>> User: $NEW_USER"
 if ! id "$NEW_USER" &>/dev/null; then
     adduser --disabled-password --gecos "" "$NEW_USER"
