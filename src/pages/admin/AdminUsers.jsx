@@ -273,7 +273,7 @@ export default function AdminUsers() {
             onChange={(e) => setDraft({ ...draft, email: e.target.value })}
             required
             autoComplete="off"
-            placeholder="marko@bedem.rs"
+            placeholder="marko@bedem018.rs"
           />
         </div>
 

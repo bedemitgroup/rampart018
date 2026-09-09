@@ -39,7 +39,7 @@
 | Server | CX22 — 2 vCPU, 4 GB RAM, 40 GB disk (~€4.5/mo sa IPv4 + PDV) |
 | Orkestracija | Docker Compose |
 | Servisi | Caddy (reverse proxy + automatski TLS) → static frontend + `bedem-api` + `bedem-db` |
-| Domen | Jedan (npr. `bedem.rs`) — frontend i API na **istom origin-u** → nema CORS-a |
+| Domen | `bedem018.rs` (RNIDS) — frontend i API na **istom origin-u** → nema CORS-a |
 | Rutiranje | Caddy: `/api/*` i `/hubs/*` → backend; sve ostalo → statički fajlovi |
 
 ### Zašto Hetzner, a ne alternative
@@ -91,7 +91,7 @@ rm -f /opt/bedem/dump/bedem-$ts.sql.gz
 
 ---
 
-## Priprema koda — urađeno (Faza 1)
+## Priprema koda — urađeno (Faza 1 + 2)
 
 | Promena | Fajl |
 |---|---|
@@ -100,8 +100,11 @@ rm -f /opt/bedem/dump/bedem-$ts.sql.gz
 | `UseForwardedHeaders` (X-Forwarded-Proto/For, 1 hop) — Caddy terminira TLS | `Program.cs` |
 | **Tajne izvučene iz `appsettings.json`** — `SecretKey`/connection string prazni; dolaze iz env-a | `appsettings.json` |
 | **Fail-fast na startu**: prekida boot ako je JWT ključ prazan, kraći od 48 bajtova, ili jednak iscurelom ključu iz git istorije | `Program.cs` |
+| **Seedovani admin (`admin`/`Admin123!`)**: na prvom boot-u API menja lozinku i email iz `SeedAdmin__Password`/`SeedAdmin__Email`; radi samo dok je još na seed lozinci | `Program.cs`, `docker-compose.prod.yml`, `.env.example` |
+| `GET /api/health` (anoniman, provera konekcije ka bazi) | `Program.cs` |
 | Dev vrednosti (throwaway JWT ključ, localhost baza) izmeštene u `appsettings.Development.json` | `appsettings.Development.json` |
-| Prod infra: `Dockerfile.web` (build SPA + Caddy), `Caddyfile`, `docker-compose.prod.yml`, `.dockerignore` | (novi) |
+| Prod infra: `Dockerfile.web` (build SPA + Caddy), `Caddyfile`, `docker-compose.prod.yml`, `.dockerignore`, `.gitattributes` | (novi) |
+| Deploy skripte + runbook | `deploy/` |
 | Lokalni `.env` dobio svež dev JWT ključ (stari iscureli više ne prolazi validaciju) | `.env` (gitignored) |
 
 ### Rutiranje u Caddy-ju
@@ -115,11 +118,14 @@ rm -f /opt/bedem/dump/bedem-$ts.sql.gz
 
 ## TODO pre deploya
 
-- [x] JWT ključ: validacija + izbacivanje iz koda. **Ostaje:** generisati svež prod ključ i staviti ga samo u `/opt/bedem/.env` na serveru + password manager.
-- [ ] Generisati prod `POSTGRES_PASSWORD` i `JWT_SECRET` (`openssl rand -base64 48`), upisati u server `.env` + password manager.
-- [ ] `evidencija-radnji-obrade.md`: popuniti „Iznošenje iz zemlje" = Nemačka (EU); popuniti APR podatke rukovaoca.
-- [ ] Registrovati `.rs` domen (RNIDS, ~1.600 RSD/god) i postaviti `A` zapis na IP servera.
-- [ ] (opciono) Očistiti iscureli JWT ključ iz git istorije (`git filter-repo`) — nije nužno jer prod koristi nov ključ; istorijski ključ postaje bezvredan čim se prod rotira.
+- [x] JWT ključ: validacija + izbacivanje iz koda.
+- [x] Seedovani admin: override lozinke/emaila iz env-a na prvom boot-u.
+- [x] `evidencija-radnji-obrade.md`: APR podaci rukovaoca + iznošenje u EU (Hetzner/Nemačka).
+- [x] Registrovan domen: **`bedem018.rs`** (RNIDS).
+- [ ] Na serveru generisati `JWT_SECRET`, `POSTGRES_PASSWORD`, `SEED_ADMIN_PASSWORD` (`deploy/README.md` korak 4), upisati u password manager.
+- [ ] Postaviti `A` zapis `bedem018.rs` → IP servera.
+- [ ] Potpisati DPA sa Hetznerom.
+- [ ] (opciono) Očistiti iscureli JWT ključ iz git istorije (`git filter-repo`) — nije nužno jer prod koristi nov ključ.
 - [ ] Odlučiti o slanju email-a (potvrde registracije) — trenutno nije u kodu.
 
 ---

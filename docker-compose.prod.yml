@@ -34,6 +34,8 @@ services:
       JwtSettings__SecretKey: ${JWT_SECRET}
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
+      SeedAdmin__Email: ${SEED_ADMIN_EMAIL}
+      SeedAdmin__Password: ${SEED_ADMIN_PASSWORD}
     volumes:
       - news_uploads:/app/wwwroot/uploads
     # No ports: only Caddy talks to it, over the internal network.

@@ -165,6 +165,33 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+
+    // The schema seeds an admin with a well-known password ("Admin123!"). On a
+    // real deployment, replace it with the value from configuration. This runs
+    // only while the account still carries the seed password: once it has been
+    // changed - here or later from the UI - it is never touched again.
+    var seedAdminPassword = app.Configuration["SeedAdmin:Password"];
+    if (!string.IsNullOrWhiteSpace(seedAdminPassword))
+    {
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        if (admin is not null && BCrypt.Net.BCrypt.Verify("Admin123!", admin.PasswordHash))
+        {
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedAdminPassword);
+
+            var seedAdminEmail = app.Configuration["SeedAdmin:Email"];
+            if (!string.IsNullOrWhiteSpace(seedAdminEmail))
+                admin.Email = seedAdminEmail;
+
+            await db.SaveChangesAsync();
+            app.Logger.LogInformation("Seeded admin credentials replaced from configuration.");
+        }
+    }
+    else if (app.Environment.IsProduction())
+    {
+        app.Logger.LogWarning(
+            "SeedAdmin:Password is not set. The admin account may still use the " +
+            "well-known seed password. Set SeedAdmin__Password or change it in the UI.");
+    }
 }
 
 // First in the pipeline: every later component that reads the scheme or the
