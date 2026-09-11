@@ -85,33 +85,49 @@ export default function ONama() {
             <h2 className="onama-mission__title">Zašto postoji Bedem</h2>
             <div className="divider divider--left"></div>
             <p>
-              Bedem je nastao iz frustracije i nade — frustracije zbog sistema koji
-              često okrenuće leđa najranjivijim građanima, i nade da organizovana
-              zajednica može da promeni pravila igre.
+              Bedem 018 je zid koji čine ljudi željni pravde, istine i povratka
+              moralnih i patriotskih vrednosti u društvo.
             </p>
             <p className="mt-4">
-              Naše ime nije slučajno. Bedem — zid koji štiti, struktura koja izdržava
-              pritisak — to je ono što želimo da budemo za naše sugrađane. Čvrst,
-              pouzdan, uvek prisutan.
+              U želji da živimo u zdravom i uređenom okruženju, počeli smo da
+              gradimo zid od ljudi – ljudi koji žele da iza sebe ostave društvo
+              u kojem su lični interes i korist postali životni moto.
             </p>
             <p className="mt-4">
-              Ne primamo novac od državnih institucija ni od korporacija. Finansiramo
-              se isključivo od članarina i donacija građana koji veruju u našu misiju.
-              To nam daje slobodu da govorimo istinu moći.
+              Želimo da zajedno izgradimo društvo u kojem ćemo uzdignute glave
+              stajati na zdravim i čvrstim temeljima, iz kojih će se razvijati
+              sve sfere života, uz poštovanje osnovnih moralnih načela.
+            </p>
+            <p className="mt-4">
+              Nismo potkupljivi jer su naši finansijeri slobodni građani koji
+              žele promenu i koji veruju da se truo sistem može menjati samo
+              zajedničkim delovanjem. Upravo zato možemo da stojimo uspravno i
+              slobodno, i imamo moć da jasno i glasno iznesemo svoj stav o
+              svakom problemu i zauzmemo se za njegovo rešavanje.
+            </p>
+            <p className="mt-4">
+              Račune polažemo isključivo građanima kroz transparentnost u
+              radu, dostupnost informacija na našem sajtu, kao i kroz
+              prikazivanje rezultata akcija koje sprovodimo.
+            </p>
+            <p className="mt-4">
+              Samo zajedno možemo izgraditi čvrste i zdrave temelje.
+              <br />
+              Budimo zajedno Bedem našeg društva.
             </p>
           </div>
           <div className="onama-mission__cards">
             <div className="onama-mission__card onama-mission__card--primary">
               <div className="onama-mission__card-label">Misija</div>
-              <p>Zaštititi prava svakog građana kroz pravnu pomoć, javno zagovaranje i organizovanu akciju.</p>
+              <p>Zaštita prava i interesa svih građana kroz pravnu podršku, javno zagovaranje i organizovanu zajedničku akciju.</p>
             </div>
             <div className="onama-mission__card onama-mission__card--secondary">
               <div className="onama-mission__card-label">Vizija</div>
-              <p>Srbija u kojoj institucije služe građanima, a ne obrnuto — gde su pravda i jednakost stvarnost, ne ideal.</p>
+              <p>Zdravo, pravedno i uređeno društvo čvrstih moralnih temelja, u kome su institucije u službi naroda, a jednakost i transparentnost osnovni standardi života.</p>
             </div>
             <div className="onama-mission__card onama-mission__card--accent">
               <div className="onama-mission__card-label">Pristup</div>
-              <p>Spajamo pravnu ekspertizu, građanski aktivizam i digitalnu transparentnost u jedinstven model delovanja.</p>
+              <p>Spajamo stručno pravno znanje, nepokolebljiv građanski aktivizam i potpunu digitalnu transparentnost u jedinstven i nezavisan model delovanja.</p>
             </div>
           </div>
         </div>
