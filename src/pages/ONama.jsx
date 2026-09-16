@@ -30,36 +30,19 @@ const team = [
 
 const milestones = [
   {
-    year: '2021',
+    year: '23.06.2026.',
     title: 'Osnivanje Bedema',
-    desc: 'Grupa od 12 građana osniva udruženje nakon niza slučajeva kršenja prava u lokalnoj samoupravi.',
+    desc: 'Grupa od 12 građana osniva udruženje Bedem, nastalo iz frustracije i nade - frustracije zbog sistema koji često okreće leđa najranjivijim građanima, i nade da organizovana zajednica može da promeni pravila igre.',
   },
   {
-    year: '2022',
-    title: 'Prva pravna pobeda',
-    desc: 'Uspešno osporavamo nezakonitu odluku gradske uprave. Presuda postaje presedan za slične slučajeve.',
+    year: '06.09.2026.',
+    title: 'Pomoć studentima',
+    desc: 'Naša grupa građana nudi pomoć studentima - jer pametniji ne popušta, pametniji se organizuje!',
   },
   {
-    year: '2023',
-    title: 'Regionalno proširenje',
-    desc: 'Otvaramo koordianatorske kancelarije u Beogradu, Nišu i Kragujevcu. Baza članova dostiže 500.',
-  },
-  {
-    year: '2024',
-    title: 'Platforma za prijave',
-    desc: 'Lansiramo digitalnu platformu za anonimne prijave kršenja prava. Primamo 200+ prijava mesečno.',
-  },
-  {
-    year: '2025',
-    title: 'Međunarodno priznanje',
-    desc: 'Bedem dobija nagradu Mreže za demokratizaciju Balkana za doprinos civilnom društvu.',
-  },
-  {
-    year: '2026',
-    title: 'Danas',
-    // No membership figure here on purpose: the live one is on the front page,
-    // and a second number written into prose is a second number to keep true.
-    desc: 'Rastuće članstvo, 48 uspešnih akcija i svakodnevna podrška građanima.',
+    year: '09.09.2026.',
+    title: 'Izlazi naš sajt',
+    desc: 'Pokrećemo sajt Bedema na kome ćemo objavljivati sve što je aktuelno.',
   },
 ];
 
@@ -85,33 +68,49 @@ export default function ONama() {
             <h2 className="onama-mission__title">Zašto postoji Bedem</h2>
             <div className="divider divider--left"></div>
             <p>
-              Bedem je nastao iz frustracije i nade — frustracije zbog sistema koji
-              često okrenuće leđa najranjivijim građanima, i nade da organizovana
-              zajednica može da promeni pravila igre.
+              Bedem 018 je zid koji čine ljudi željni pravde, istine i povratka
+              moralnih i patriotskih vrednosti u društvo.
             </p>
             <p className="mt-4">
-              Naše ime nije slučajno. Bedem — zid koji štiti, struktura koja izdržava
-              pritisak — to je ono što želimo da budemo za naše sugrađane. Čvrst,
-              pouzdan, uvek prisutan.
+              U želji da živimo u zdravom i uređenom okruženju, počeli smo da
+              gradimo zid od ljudi – ljudi koji žele da iza sebe ostave društvo
+              u kojem su lični interes i korist postali životni moto.
             </p>
             <p className="mt-4">
-              Ne primamo novac od državnih institucija ni od korporacija. Finansiramo
-              se isključivo od članarina i donacija građana koji veruju u našu misiju.
-              To nam daje slobodu da govorimo istinu moći.
+              Želimo da zajedno izgradimo društvo u kojem ćemo uzdignute glave
+              stajati na zdravim i čvrstim temeljima, iz kojih će se razvijati
+              sve sfere života, uz poštovanje osnovnih moralnih načela.
+            </p>
+            <p className="mt-4">
+              Nismo potkupljivi jer su naši finansijeri slobodni građani koji
+              žele promenu i koji veruju da se truo sistem može menjati samo
+              zajedničkim delovanjem. Upravo zato možemo da stojimo uspravno i
+              slobodno, i imamo moć da jasno i glasno iznesemo svoj stav o
+              svakom problemu i zauzmemo se za njegovo rešavanje.
+            </p>
+            <p className="mt-4">
+              Račune polažemo isključivo građanima kroz transparentnost u
+              radu, dostupnost informacija na našem sajtu, kao i kroz
+              prikazivanje rezultata akcija koje sprovodimo.
+            </p>
+            <p className="mt-4">
+              Samo zajedno možemo izgraditi čvrste i zdrave temelje.
+              <br />
+              Budimo zajedno Bedem našeg društva.
             </p>
           </div>
           <div className="onama-mission__cards">
             <div className="onama-mission__card onama-mission__card--primary">
               <div className="onama-mission__card-label">Misija</div>
-              <p>Zaštititi prava svakog građana kroz pravnu pomoć, javno zagovaranje i organizovanu akciju.</p>
+              <p>Zaštita prava i interesa svih građana kroz pravnu podršku, javno zagovaranje i organizovanu zajedničku akciju.</p>
             </div>
             <div className="onama-mission__card onama-mission__card--secondary">
               <div className="onama-mission__card-label">Vizija</div>
-              <p>Srbija u kojoj institucije služe građanima, a ne obrnuto — gde su pravda i jednakost stvarnost, ne ideal.</p>
+              <p>Zdravo, pravedno i uređeno društvo čvrstih moralnih temelja, u kome su institucije u službi naroda, a jednakost i transparentnost osnovni standardi života.</p>
             </div>
             <div className="onama-mission__card onama-mission__card--accent">
               <div className="onama-mission__card-label">Pristup</div>
-              <p>Spajamo pravnu ekspertizu, građanski aktivizam i digitalnu transparentnost u jedinstven model delovanja.</p>
+              <p>Spajamo stručno pravno znanje, nepokolebljiv građanski aktivizam i potpunu digitalnu transparentnost u jedinstven i nezavisan model delovanja.</p>
             </div>
           </div>
         </div>
@@ -122,7 +121,7 @@ export default function ONama() {
         <div className="container">
           <div className="section__header">
             <span className="badge badge--primary">Naš put</span>
-            <h2 className="section__title">Pet godina borbe</h2>
+            <h2 className="section__title">Prva godina borbe</h2>
             <div className="divider"></div>
           </div>
           <div className="onama-timeline">
