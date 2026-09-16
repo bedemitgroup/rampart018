@@ -30,36 +30,19 @@ const team = [
 
 const milestones = [
   {
-    year: '2021',
+    year: '23.06.2026.',
     title: 'Osnivanje Bedema',
-    desc: 'Grupa od 12 građana osniva udruženje nakon niza slučajeva kršenja prava u lokalnoj samoupravi.',
+    desc: 'Grupa od 12 građana osniva udruženje Bedem, nastalo iz frustracije i nade - frustracije zbog sistema koji često okreće leđa najranjivijim građanima, i nade da organizovana zajednica može da promeni pravila igre.',
   },
   {
-    year: '2022',
-    title: 'Prva pravna pobeda',
-    desc: 'Uspešno osporavamo nezakonitu odluku gradske uprave. Presuda postaje presedan za slične slučajeve.',
+    year: '06.09.2026.',
+    title: 'Pomoć studentima',
+    desc: 'Naša grupa građana nudi pomoć studentima - jer pametniji ne popušta, pametniji se organizuje!',
   },
   {
-    year: '2023',
-    title: 'Regionalno proširenje',
-    desc: 'Otvaramo koordianatorske kancelarije u Beogradu, Nišu i Kragujevcu. Baza članova dostiže 500.',
-  },
-  {
-    year: '2024',
-    title: 'Platforma za prijave',
-    desc: 'Lansiramo digitalnu platformu za anonimne prijave kršenja prava. Primamo 200+ prijava mesečno.',
-  },
-  {
-    year: '2025',
-    title: 'Međunarodno priznanje',
-    desc: 'Bedem dobija nagradu Mreže za demokratizaciju Balkana za doprinos civilnom društvu.',
-  },
-  {
-    year: '2026',
-    title: 'Danas',
-    // No membership figure here on purpose: the live one is on the front page,
-    // and a second number written into prose is a second number to keep true.
-    desc: 'Rastuće članstvo, 48 uspešnih akcija i svakodnevna podrška građanima.',
+    year: '09.09.2026.',
+    title: 'Izlazi naš sajt',
+    desc: 'Pokrećemo sajt Bedema na kome ćemo objavljivati sve što je aktuelno.',
   },
 ];
 
@@ -138,7 +121,7 @@ export default function ONama() {
         <div className="container">
           <div className="section__header">
             <span className="badge badge--primary">Naš put</span>
-            <h2 className="section__title">Pet godina borbe</h2>
+            <h2 className="section__title">Prva godina borbe</h2>
             <div className="divider"></div>
           </div>
           <div className="onama-timeline">
