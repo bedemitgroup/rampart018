@@ -1,6 +1,10 @@
 # Reverse proxy + TLS for the whole site. SITE_DOMAIN comes from the compose env
 # (bedem018.rs). Caddy obtains and renews the Let's Encrypt certificate itself.
 
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
 {$SITE_DOMAIN} {
 	encode zstd gzip
 
