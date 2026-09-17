@@ -149,9 +149,9 @@ export default function Home() {
               value: activeMembers === null ? '—' : memberFormat.format(activeMembers),
               label: 'Aktivnih članova',
             },
-            { value: '48', label: 'Uspešnih akcija' },
+            { value: '1000', label: 'Ciljanih članova' },
             { value: '5',  label: 'Godina borbe' },
-            { value: '12', label: 'Opština' },
+            { value: '0',  label: 'Ljudi iz političkih stranaka' },
           ].map(({ value, label }) => (
             <div key={label} className="home-stats__item">
               <span className="home-stats__value">{value}</span>

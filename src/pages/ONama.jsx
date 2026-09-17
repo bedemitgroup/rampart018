@@ -1,31 +1,28 @@
 import { Link } from 'react-router-dom';
 import './ONama.css';
 
-const team = [
-  {
-    name: 'Marija Petrović',
-    role: 'Predsednica udruženja',
-    bio: 'Pravnica sa 15 godina iskustva u oblasti ljudskih prava. Bivša savetnica Poverenika za zaštitu ravnopravnosti.',
-    emoji: '👩‍⚖️',
-  },
-  {
-    name: 'Nikola Jovanović',
-    role: 'Koordinator akcija',
-    bio: 'Sociolog i aktivista. Organizovao je više od 30 mirnih protesta i javnih skupova širom Srbije.',
-    emoji: '👨‍💼',
-  },
-  {
-    name: 'Ana Đorđević',
-    role: 'Finansijska direktorka',
-    bio: 'Ovlašćeni revizor sa iskustvom u neprofitnom sektoru. Odgovorna za transparentnost finansijskog poslovanja.',
-    emoji: '👩‍💻',
-  },
-  {
-    name: 'Stefan Milošević',
-    role: 'Pravni savetnik',
-    bio: 'Advokat specijalizovan za upravno i ustavno pravo. Zastupa građane pred sudovima i institucijama.',
-    emoji: '👨‍⚖️',
-  },
+const founders = [
+  { name: 'Filip Milosavljević' },
+  { name: 'Miljana Milojković' },
+  { name: 'Nenad Veličković' },
+];
+
+const gradskiOdbor = [
+  'Vuk Živković',
+  'Anastasija Mitrović',
+  'Biljana Dimitrijević',
+  'Bratislav Čukić',
+  'Dušan Kostić',
+  'Jelena Rakić',
+  'Jelena Veličković',
+  'Marija Mitrović',
+  'Jovana Mišić',
+  'Marina Momčilović',
+  'Milan Mutavdžić',
+  'Mirjana Mohenski',
+  'Saša Živković',
+  'Snežana Đorđević',
+  'Slaviša Mitrović',
 ];
 
 const milestones = [
@@ -45,6 +42,13 @@ const milestones = [
     desc: 'Pokrećemo sajt Bedema na kome ćemo objavljivati sve što je aktuelno.',
   },
 ];
+
+function initials(fullName) {
+  return fullName
+    .split(' ')
+    .map((part) => part[0])
+    .join('');
+}
 
 export default function ONama() {
   return (
@@ -150,15 +154,36 @@ export default function ONama() {
               Volonteri i profesionalci ujedinjeni zajedničkim ciljem — boljim životom za sve.
             </p>
           </div>
-          <div className="onama-team__grid">
-            {team.map(({ name, role, bio, emoji }) => (
-              <div key={name} className="card onama-team__card">
-                <div className="onama-team__avatar">{emoji}</div>
-                <h3 className="onama-team__name">{name}</h3>
-                <span className="badge badge--secondary onama-team__role">{role}</span>
-                <p className="onama-team__bio">{bio}</p>
-              </div>
-            ))}
+
+          <div className="onama-founders">
+            <span className="onama-founders__label">Osnivači</span>
+            <div className="onama-founders__grid">
+              {founders.map(({ name }, i) => (
+                <div
+                  key={name}
+                  className="onama-founder"
+                  style={{ '--i': i }}
+                >
+                  <div className="onama-founder__avatar">
+                    <div className="onama-founder__avatar-inner">
+                      {initials(name)}
+                    </div>
+                  </div>
+                  <span className="onama-founder__name">{name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="onama-odbor">
+            <span className="onama-odbor__label">Gradski odbor</span>
+            <div className="onama-odbor__wall">
+              {gradskiOdbor.map((name) => (
+                <span key={name} className="onama-odbor__brick">
+                  {name}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
