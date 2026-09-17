@@ -160,47 +160,182 @@
   line-height: 1.7;
 }
 
-/* Team */
-.onama-team__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-6);
+/* Founders */
+.onama-founders {
+  margin-bottom: var(--space-12);
+  padding-bottom: var(--space-12);
+  border-bottom: 1px solid var(--color-bg-light);
 }
 
-.onama-team__card {
+.onama-founders__label {
+  display: block;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.onama-founders__grid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: var(--space-12);
+}
+
+.onama-founder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 160px;
+  opacity: 0;
+  animation: onama-founder-in 0.6s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.12s);
 }
 
-.onama-team__avatar {
-  width: 80px;
-  height: 80px;
+.onama-founder__avatar {
+  position: relative;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
-  background: var(--color-bg-light);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+
+.onama-founder__avatar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    var(--color-primary),
+    var(--color-secondary),
+    var(--color-accent2),
+    var(--color-primary)
+  );
+}
+
+.onama-founder__avatar-inner {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.onama-team__name {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-primary);
 }
 
-.onama-team__role {
-  margin: 0;
+.onama-founder:hover .onama-founder__avatar {
+  transform: scale(1.08);
+  box-shadow: var(--shadow-lg);
 }
 
-.onama-team__bio {
+.onama-founder__name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary) 35%,
+    var(--color-secondary) 50%,
+    var(--color-primary) 65%,
+    var(--color-primary) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: onama-name-shine 3.5s linear infinite;
+}
+
+.onama-founder__name::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 2px;
+  margin: var(--space-2) auto 0;
+  background: var(--color-secondary);
+  transition: width var(--transition-base);
+}
+
+.onama-founder:hover .onama-founder__name::after {
+  width: 60%;
+}
+
+@keyframes onama-founder-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes onama-name-shine {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Gradski odbor */
+.onama-odbor__label {
+  display: block;
+  text-align: center;
   font-size: var(--font-size-sm);
-  color: var(--color-text);
-  line-height: 1.7;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.onama-odbor__wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+  max-width: 900px;
+  margin: 0 auto;
+  opacity: 0;
+  animation: onama-founder-in 0.6s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+.onama-odbor__brick {
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.onama-odbor__brick:nth-child(even) {
+  background: var(--color-secondary);
+}
+
+.onama-odbor__brick:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 /* CTA */
@@ -212,12 +347,6 @@
 }
 
 /* Responsive */
-@media (max-width: 1100px) {
-  .onama-team__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 900px) {
   .onama-mission {
     grid-template-columns: 1fr;
@@ -255,7 +384,67 @@
 }
 
 @media (max-width: 640px) {
-  .onama-team__grid {
-    grid-template-columns: 1fr;
+  .onama-founders__grid {
+    gap: var(--space-4);
+  }
+
+  .onama-founder__avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .onama-founder__name {
+    font-size: var(--font-size-base);
+  }
+
+  .onama-odbor__wall {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+  }
+
+  .onama-odbor__brick {
+    padding: var(--space-2) var(--space-2);
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .onama-founders__grid {
+    gap: var(--space-2);
+  }
+
+  .onama-founder__avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .onama-founder__avatar-inner {
+    font-size: var(--font-size-base);
+  }
+
+  .onama-founder__name {
+    font-size: var(--font-size-sm);
+  }
+
+  .onama-odbor__brick {
+    font-size: 0.6875rem;
+    padding: var(--space-1) var(--space-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onama-founder {
+    animation: none;
+    opacity: 1;
+  }
+
+  .onama-founder__name {
+    animation: none;
+    background-position: 0 0;
+  }
+
+  .onama-odbor__wall {
+    animation: none;
+    opacity: 1;
   }
 }

@@ -61,6 +61,7 @@ export default function Finansije() {
   const [selectedYear, setSelectedYear] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeMembers, setActiveMembers] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +85,16 @@ export default function Finansije() {
 
     return () => { cancelled = true; };
   }, [selectedYear]);
+
+  // Same live roll as the homepage stat, so this card never drifts from what
+  // the site states elsewhere. Replaces the per-year admin-entered figure for now.
+  useEffect(() => {
+    let cancelled = false;
+    api.getPublicStats()
+      .then((stats) => { if (!cancelled) setActiveMembers(stats.activeMembers); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const summary = overview?.summary;
   const quarters = overview?.quarters ?? [];
@@ -192,7 +203,9 @@ export default function Finansije() {
                 </div>
                 <div className="finansije-summary__card finansije-summary__card--members">
                   <div className="finansije-summary__label">Aktivni članovi</div>
-                  <div className="finansije-summary__value">{formatAmount(summary.memberCount)}</div>
+                  <div className="finansije-summary__value">
+                    {activeMembers === null ? '—' : formatAmount(activeMembers)}
+                  </div>
                   <div className="finansije-summary__sub">koji plaćaju članarinu</div>
                 </div>
               </div>
