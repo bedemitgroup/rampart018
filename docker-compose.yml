@@ -40,6 +40,8 @@ services:
       JwtSettings__SecretKey: ${JWT_SECRET}
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
+      AccountSecurity__PasswordChangeCode: ${PASSWORD_CHANGE_CODE}
+      Cors__AllowedOrigins__0: http://localhost:5173
     ports:
       - "5000:5000"
     volumes:

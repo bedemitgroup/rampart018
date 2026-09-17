@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using BedemApi.Data;
 using BedemApi.Hubs;
@@ -43,6 +44,20 @@ var jwtAudience = jwtSettings["Audience"];
 if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience))
     throw new InvalidOperationException("JwtSettings:Issuer and JwtSettings:Audience are required.");
 
+// Shared secret required alongside the current password to change it (or the
+// account's email). Not a per-user factor - just a coarse extra gate a stolen
+// token cannot satisfy on its own. Different per environment: "reset" locally,
+// something real in production. Failing loudly here beats silently locking
+// the feature behind a blank value nobody can ever type.
+var passwordChangeCode = builder.Configuration["AccountSecurity:PasswordChangeCode"];
+if (string.IsNullOrWhiteSpace(passwordChangeCode))
+{
+    throw new InvalidOperationException(
+        "AccountSecurity:PasswordChangeCode is missing. Set the " +
+        "AccountSecurity__PasswordChangeCode environment variable (or the " +
+        "Development appsettings for local work).");
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -78,6 +93,32 @@ builder.Services.AddAuthentication(options =>
             }
 
             return Task.CompletedTask;
+        },
+
+        // The token itself is stateless and would otherwise stay valid for the
+        // full 7 days no matter what happens to the account afterwards. This
+        // is the one point where every authenticated request touches the
+        // database, so it is also where a password/email change (which
+        // rotates SecurityStamp) and an admin deactivation actually take
+        // effect immediately instead of waiting out the token's lifetime.
+        OnTokenValidated = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirstValue("userId");
+            var stampClaim = context.Principal?.FindFirstValue("sstamp");
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                context.Fail("Token is missing its user id.");
+                return;
+            }
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var user = await db.Users.FindAsync(userId);
+
+            if (user is null || !user.IsActive || user.SecurityStamp != stampClaim)
+            {
+                context.Fail("Token has been revoked.");
+            }
         }
     };
 });

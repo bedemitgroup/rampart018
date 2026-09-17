@@ -39,8 +39,26 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  // Both endpoints return a fresh AuthResponse - old tokens on other devices
+  // are revoked server-side, but this session gets a new one immediately so
+  // there is no forced re-login here.
+  function applyAuthResponse(data) {
+    localStorage.setItem('bedem_token', data.token);
+    setUser({ id: data.id, username: data.username, email: data.email, role: data.role });
+  }
+
+  async function changePassword(currentPassword, newPassword, changeCode) {
+    const data = await api.changePassword({ currentPassword, newPassword, changeCode });
+    applyAuthResponse(data);
+  }
+
+  async function changeEmail(currentPassword, newEmail, changeCode) {
+    const data = await api.changeEmail({ currentPassword, newEmail, changeCode });
+    applyAuthResponse(data);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, changePassword, changeEmail }}>
       {!loading && children}
     </AuthContext.Provider>
   );

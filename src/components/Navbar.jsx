@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ROLES, roleLabel, canAccessAdmin, adminLandingPath } from '../constants/roles';
 import AuthModal from './AuthModal';
+import AccountModal from './AccountModal';
 import './Navbar.css';
 
 const navLinks = [
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -36,6 +38,7 @@ export default function Navbar() {
   return (
     <>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showAccount && <AccountModal onClose={() => setShowAccount(false)} />}
 
       <header className={`navbar${scrolled ? ' navbar--scrolled' : ''}`}>
         <div className="container navbar__inner">
@@ -69,12 +72,16 @@ export default function Navbar() {
             <div className="navbar__auth">
               {user ? (
                 <>
-                  <span className="navbar__user">
+                  <button
+                    type="button"
+                    className="navbar__user navbar__user--btn"
+                    onClick={() => setShowAccount(true)}
+                  >
                     <span className="navbar__username">{user.username}</span>
                     {user.role && user.role !== ROLES.VISITOR && (
                       <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                     )}
-                  </span>
+                  </button>
                   {canAccessAdmin(user) && (
                     <Link to={adminLandingPath(user)} className="btn btn--outline navbar__btn">Admin</Link>
                   )}
@@ -151,12 +158,16 @@ export default function Navbar() {
         <div className="navbar__drawer-auth">
           {user ? (
             <>
-              <div className="navbar__drawer-user">
+              <button
+                type="button"
+                className="navbar__drawer-user navbar__drawer-user--btn"
+                onClick={() => { setShowAccount(true); closeMenu(); }}
+              >
                 <span className="navbar__username">{user.username}</span>
                 {user.role && user.role !== ROLES.VISITOR && (
                   <span className="navbar__role-badge">{roleLabel(user.role)}</span>
                 )}
-              </div>
+              </button>
               {canAccessAdmin(user) && (
                 <Link to={adminLandingPath(user)} className="btn btn--outline navbar__drawer-btn" onClick={closeMenu}>
                   Admin

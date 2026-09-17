@@ -70,6 +70,8 @@ export const ACTION_LABELS = {
   'User.ChangeRole': 'Promenio rolu',
   'User.Deactivate': 'Deaktivirao nalog',
   'User.Activate': 'Aktivirao nalog',
+  'User.ChangeOwnPassword': 'Promenio sopstvenu lozinku',
+  'User.ChangeOwnEmail': 'Promenio sopstveni email',
 };
 
 export const ENTITY_LABELS = {

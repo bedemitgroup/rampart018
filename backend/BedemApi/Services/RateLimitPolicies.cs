@@ -33,6 +33,13 @@ public static class RateLimitPolicies
     /// </summary>
     public const string PetitionSign = "petition-sign";
 
+    /// <summary>
+    /// Changing your own password or email. Partitioned by user first: a
+    /// stolen token still needs the current password (or change code) to do
+    /// anything here, and this bounds how many guesses it gets.
+    /// </summary>
+    public const string AccountSecurity = "account-security";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         Register,
@@ -43,6 +50,7 @@ public static class RateLimitPolicies
         Votes,
         AdminWrites,
         AssemblyLive,
-        PetitionSign
+        PetitionSign,
+        AccountSecurity
     };
 }

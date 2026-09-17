@@ -99,6 +99,18 @@
   gap: var(--space-2);
 }
 
+.navbar__user--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.navbar__user--btn:hover {
+  opacity: 0.8;
+}
+
 .navbar__username {
   color: rgba(255,255,255,0.9);
   font-size: var(--font-size-sm);
@@ -273,6 +285,14 @@
   align-items: center;
   gap: var(--space-2);
   padding-bottom: var(--space-2);
+}
+
+.navbar__drawer-user--btn {
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
 }
 
 .navbar__drawer-btn {
