@@ -114,6 +114,10 @@ public static class AuditActions
     public const string UserDeactivate = "User.Deactivate";
     public const string UserActivate = "User.Activate";
 
+    /// <summary>A member changing their own credentials, not an admin acting on someone else.</summary>
+    public const string UserChangeOwnPassword = "User.ChangeOwnPassword";
+    public const string UserChangeOwnEmail = "User.ChangeOwnEmail";
+
     public static readonly IReadOnlyList<string> All = new[]
     {
         NewsCreate, NewsUpdate, NewsPublish, NewsUnpublish, NewsDelete,
@@ -134,7 +138,8 @@ public static class AuditActions
         PetitionPurgeSignatures, PetitionSignaturesExport,
         CommentBanUser, CommentUnbanUser,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
-        UserDeactivate, UserActivate
+        UserDeactivate, UserActivate,
+        UserChangeOwnPassword, UserChangeOwnEmail
     };
 }
 

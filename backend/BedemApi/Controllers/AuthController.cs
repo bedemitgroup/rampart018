@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using BedemApi.Data;
 using BedemApi.DTOs;
 using BedemApi.Models;
@@ -15,18 +16,40 @@ namespace BedemApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
+    // Stricter than public registration on purpose: these accounts already
+    // exist and are protecting themselves, not signing up for the first time.
+    private const int MinPasswordLength = 8;
+
     private readonly AppDbContext _db;
     private readonly TokenService _tokenService;
     private readonly IHoneypotGuard _honeypot;
+    private readonly IAuditLogger _audit;
+    private readonly string _passwordChangeCode;
 
     public AuthController(
         AppDbContext db,
         TokenService tokenService,
-        IHoneypotGuard honeypot)
+        IHoneypotGuard honeypot,
+        IAuditLogger audit,
+        IConfiguration config)
     {
         _db = db;
         _tokenService = tokenService;
         _honeypot = honeypot;
+        _audit = audit;
+        // Presence is already enforced at startup (Program.cs) - see there.
+        _passwordChangeCode = config["AccountSecurity:PasswordChangeCode"]!;
+    }
+
+    /// <summary>
+    /// Constant-time so a caller cannot learn the code one byte at a time by
+    /// timing repeated attempts.
+    /// </summary>
+    private bool IsValidChangeCode(string? code)
+    {
+        var supplied = Encoding.UTF8.GetBytes(code ?? string.Empty);
+        var expected = Encoding.UTF8.GetBytes(_passwordChangeCode);
+        return CryptographicOperations.FixedTimeEquals(supplied, expected);
     }
 
     /// <summary>Register a new user account.</summary>
@@ -123,5 +146,97 @@ public class AuthController : ControllerBase
         if (user == null) return NotFound();
 
         return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt, user.IsActive });
+    }
+
+    /// <summary>Change the current user's own password.</summary>
+    [HttpPut("password")]
+    [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.AccountSecurity)]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(request.NewPassword))
+            return BadRequest(new { message = "All fields are required." });
+
+        if (request.NewPassword.Length < MinPasswordLength)
+            return BadRequest(new
+            {
+                message = $"Password must be at least {MinPasswordLength} characters."
+            });
+
+        if (!IsValidChangeCode(request.ChangeCode))
+            return Unauthorized(new { message = "Nevažeći kod za promenu." });
+
+        // userId always comes from the token, never from the body - a caller
+        // can only ever change their own password.
+        var userId = int.Parse(User.FindFirstValue("userId")!);
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return Unauthorized(new { message = "Pogrešna trenutna lozinka." });
+
+        if (BCrypt.Net.BCrypt.Verify(request.NewPassword, user.PasswordHash))
+            return BadRequest(new { message = "Nova lozinka mora biti različita od trenutne." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        // Every other token this account holds - on any other device - stops
+        // working on its next request. This session gets a fresh one below.
+        user.SecurityStamp = Guid.NewGuid().ToString("N");
+
+        _audit.Record(AuditActions.UserChangeOwnPassword, AuditEntityTypes.User, user.Id.ToString(), user.Username);
+        await _db.SaveChangesAsync();
+
+        var (token, expiresAt) = _tokenService.GenerateToken(user);
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+    }
+
+    /// <summary>Change the current user's own email address.</summary>
+    [HttpPut("email")]
+    [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.AccountSecurity)]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(request.NewEmail))
+            return BadRequest(new { message = "All fields are required." });
+
+        var normalizedEmail = ContactNormalizer.NormalizeEmail(request.NewEmail);
+        if (!ContactNormalizer.IsValidEmail(normalizedEmail))
+            return BadRequest(new { message = "Unesite ispravnu email adresu." });
+
+        if (!IsValidChangeCode(request.ChangeCode))
+            return Unauthorized(new { message = "Nevažeći kod za promenu." });
+
+        var userId = int.Parse(User.FindFirstValue("userId")!);
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return Unauthorized(new { message = "Pogrešna trenutna lozinka." });
+
+        if (await _db.Users.AnyAsync(u => u.Email == normalizedEmail && u.Id != userId))
+            return Conflict(new { message = "Email already in use." });
+
+        var oldEmail = user.Email;
+        user.Email = normalizedEmail;
+        user.SecurityStamp = Guid.NewGuid().ToString("N");
+
+        _audit.Record(
+            AuditActions.UserChangeOwnEmail, AuditEntityTypes.User,
+            user.Id.ToString(), $"{oldEmail} → {normalizedEmail}");
+        await _db.SaveChangesAsync();
+
+        var (token, expiresAt) = _tokenService.GenerateToken(user);
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
     }
 }

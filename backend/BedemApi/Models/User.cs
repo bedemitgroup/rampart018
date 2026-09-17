@@ -11,6 +11,11 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
 
+    // Rotated whenever the account's credentials change (password or email).
+    // Carried in the JWT as "sstamp" and checked on every request, so rotating
+    // it is how a stateless token gets revoked without a blacklist table.
+    public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
+
     // Set by a Moderator/Admin when this account breaks the comment rules. While
     // it sits in the future, CreateComment refuses. Null — or a past date —
     // means the account may comment normally. A comment ban is narrower than
