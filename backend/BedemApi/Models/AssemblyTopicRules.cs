@@ -76,6 +76,27 @@ public static class AssemblyTopicRules
             : "Predlog o kome je Skupština već odlučila se ne menja.";
     }
 
+    /// <summary>
+    /// Who may write down what the room agreed on this point. The assigned
+    /// zapisničar normally holds the pen; the chair (which, unlike topic text,
+    /// includes an Admin here) can always step in — the sitting still needs
+    /// minutes if the zapisničar is unreachable. Anyone else, even the
+    /// proposer, is refused: this is the record of what the room decided, not
+    /// a description he is entitled to write.
+    /// </summary>
+    public static string? WhyCannotEditMinutes(AssemblyTopic topic, bool isChair, bool isZapisnicar)
+    {
+        if (topic.SessionId is null)
+            return "Tema nije na dnevnom redu nijedne sednice.";
+
+        if (topic.Session?.Status == AssemblySessionStatus.Cancelled)
+            return "Sednica je otkazana — zapisnik se ne vodi.";
+
+        return isChair || isZapisnicar
+            ? null
+            : "Zapisnik teme vodi predsedavajući ili zapisničar dodeljen ovoj sednici.";
+    }
+
     /// <summary>Accepting or rejecting a proposal.</summary>
     public static string? WhyCannotReview(AssemblyTopic topic) =>
         topic.VotingStatus != AssemblyVotingStatus.NotOpened

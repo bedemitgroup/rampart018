@@ -57,8 +57,13 @@ export function AuthProvider({ children }) {
     applyAuthResponse(data);
   }
 
+  async function changeUsername(currentPassword, newUsername) {
+    const data = await api.changeUsername({ currentPassword, newUsername });
+    applyAuthResponse(data);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, changePassword, changeEmail }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, changePassword, changeEmail, changeUsername }}>
       {!loading && children}
     </AuthContext.Provider>
   );

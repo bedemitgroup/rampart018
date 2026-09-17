@@ -652,6 +652,33 @@
 
 .agenda-item__mine { color: var(--color-secondary); font-weight: 600; }
 
+.agenda-item__minutes {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-secondary);
+}
+
+.agenda-item__minutes-title {
+  margin: 0 0 var(--space-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a92a0;
+}
+
+.agenda-item__minutes textarea {
+  margin-bottom: var(--space-2);
+}
+
+.agenda__zapisnicar select {
+  width: auto;
+  display: inline-block;
+  margin-left: var(--space-2);
+}
+
 .agenda-item__actions {
   display: flex;
   flex-wrap: wrap;

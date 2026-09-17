@@ -76,6 +76,11 @@ export const canManageUsers = (user) => holds(user, ROLES.ADMIN);
 export const canVoteInAssembly = (user) =>
   holds(user, ROLES.MEMBER, ROLES.MODERATOR, ROLES.FINANCE, ROLES.ASSEMBLY);
 
+// Unlike the roles above, this is not a global grant — it is whoever the chair
+// or an Admin assigned to take the minutes for one particular sitting.
+export const isZapisnicar = (user, session) =>
+  !!user && !!session && session.zapisnicarUserId === user.id;
+
 // Reading the panel and writing in it are separate: everyone the organisation
 // admitted may look at what the others are doing, but only his own section
 // gets buttons. Accounts and the audit log are the exception — those are about

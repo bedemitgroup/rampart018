@@ -73,5 +73,13 @@ public class AssemblyTopic
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    /// <summary>What the room agreed on this point. Written by the sitting's
+    /// zapisničar, or by the chair as a fallback — see
+    /// <see cref="AssemblyTopicRules.WhyCannotEditMinutes"/>.</summary>
+    public string? MinutesText { get; set; }
+    public DateTime? MinutesUpdatedAt { get; set; }
+    public int? MinutesUpdatedByUserId { get; set; }
+    public User? MinutesUpdatedByUser { get; set; }
+
     public ICollection<AssemblyVote> Votes { get; set; } = new List<AssemblyVote>();
 }

@@ -5,6 +5,7 @@ import { roleLabel } from '../../constants/roles';
 import {
   OUTCOME,
   SESSION_STATUS,
+  TOPIC_STATUS,
   VOTE_CHOICE,
   VOTE_TONES,
   formatSessionDateTime,
@@ -27,10 +28,14 @@ export default function AdminAssemblyRecord() {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState('');
   const [record, setRecord] = useState(null);
+  const [agendaTopics, setAgendaTopics] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [recordError, setRecordError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [minutesEditingId, setMinutesEditingId] = useState(null);
+  const [minutesDraft, setMinutesDraft] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,6 +62,7 @@ export default function AdminAssemblyRecord() {
   useEffect(() => {
     if (!sessionId) {
       setRecord(null);
+      setAgendaTopics([]);
       return undefined;
     }
 
@@ -64,8 +70,20 @@ export default function AdminAssemblyRecord() {
     (async () => {
       setRecordError('');
       try {
-        const data = await api.getAssemblySessionRecord(sessionId);
-        if (!cancelled) setRecord(data);
+        const [data, topics] = await Promise.all([
+          api.getAssemblySessionRecord(sessionId),
+          api.getAssemblyTopics({ sessionId }),
+        ]);
+        if (!cancelled) {
+          setRecord(data);
+          // The vote roll-call below only ever covers what was put to a
+          // ballot; plenty of agenda items are discussed and settled without
+          // one, so the minutes need the whole accepted agenda, not that slice.
+          setAgendaTopics(
+            topics
+              .filter((t) => t.status === TOPIC_STATUS.ACCEPTED)
+              .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id));
+        }
       } catch (err) {
         if (!cancelled) setRecordError(err.message);
       }
@@ -73,6 +91,27 @@ export default function AdminAssemblyRecord() {
 
     return () => { cancelled = true; };
   }, [sessionId]);
+
+  const startMinutes = (topic) => {
+    setMinutesEditingId(topic.id);
+    setMinutesDraft(topic.minutesText ?? '');
+  };
+
+  const cancelMinutes = () => setMinutesEditingId(null);
+
+  const saveMinutes = async (id) => {
+    setBusy(true);
+    setRecordError('');
+    try {
+      const updated = await api.updateAssemblyTopicMinutes(id, minutesDraft.trim() || null);
+      setAgendaTopics((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      setMinutesEditingId(null);
+    } catch (err) {
+      setRecordError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (loading) return <p className="admin-news__loading">Učitavanje...</p>;
 
@@ -98,7 +137,7 @@ export default function AdminAssemblyRecord() {
           <h2 className="agenda-section__title">Zapisnik sednice</h2>
         </div>
         <p className="agenda-section__hint">
-          Ko je kako glasao o kojoj tački, i koliko je ko dobio poena.
+          Šta je dogovoreno po tačkama, ko je kako glasao, i koliko je ko dobio poena.
         </p>
 
         {sessions.length === 0 ? (
@@ -125,7 +164,20 @@ export default function AdminAssemblyRecord() {
         )}
 
         {recordError && <p className="admin-news__error">{recordError}</p>}
-        {record && <SessionRecord record={record} currentUserId={user?.id} />}
+        {record && (
+          <SessionRecord
+            record={record}
+            currentUserId={user?.id}
+            agendaTopics={agendaTopics}
+            busy={busy}
+            minutesEditingId={minutesEditingId}
+            minutesDraft={minutesDraft}
+            setMinutesDraft={setMinutesDraft}
+            startMinutes={startMinutes}
+            cancelMinutes={cancelMinutes}
+            saveMinutes={saveMinutes}
+          />
+        )}
       </section>
     </div>
   );
@@ -207,7 +259,10 @@ function Standings({ standings, year, onYear, currentUserId }) {
   );
 }
 
-function SessionRecord({ record, currentUserId }) {
+function SessionRecord({
+  record, currentUserId, agendaTopics, busy,
+  minutesEditingId, minutesDraft, setMinutesDraft, startMinutes, cancelMinutes, saveMinutes,
+}) {
   const { session, points, topics } = record;
 
   return (
@@ -215,6 +270,57 @@ function SessionRecord({ record, currentUserId }) {
       <h3 className="record__title">
         {session.title} — {formatSessionDateTime(session.scheduledAt)}
       </h3>
+
+      <h4 className="record__heading">Zapisnik po tačkama</h4>
+      {agendaTopics.length === 0 ? (
+        <p className="admin-news__empty">Nijedna tema nije bila na dnevnom redu.</p>
+      ) : (
+        agendaTopics.map((t) => (
+          <article className="record__topic" key={t.id}>
+            <h5 className="record__topic-title">{t.title}</h5>
+            <p className="record__topic-body">{t.description}</p>
+
+            {minutesEditingId === t.id ? (
+              <>
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  value={minutesDraft}
+                  onChange={(e) => setMinutesDraft(e.target.value)}
+                  placeholder="Šta je dogovoreno o ovoj tački..."
+                />
+                <div className="agenda-item__actions">
+                  <button type="button" className="admin-news__action-btn" disabled={busy} onClick={() => saveMinutes(t.id)}>
+                    Sačuvaj zapisnik
+                  </button>
+                  <button type="button" className="admin-news__action-btn" onClick={cancelMinutes}>
+                    Odustani
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {t.minutesText ? (
+                  <p className="record__topic-body">{t.minutesText}</p>
+                ) : (
+                  <p className="record__none">Zapisnik još nije unet.</p>
+                )}
+                {t.minutesUpdatedByUsername && (
+                  <p className="agenda-item__meta">
+                    Zapisao {t.minutesUpdatedByUsername}
+                    {t.minutesUpdatedAt && ` · ${formatSessionDateTime(t.minutesUpdatedAt)}`}
+                  </p>
+                )}
+                {t.canEditMinutes && (
+                  <button type="button" className="admin-news__action-btn" onClick={() => startMinutes(t)}>
+                    {t.minutesText ? 'Izmeni zapisnik' : 'Unesi zapisnik'}
+                  </button>
+                )}
+              </>
+            )}
+          </article>
+        ))
+      )}
 
       <h4 className="record__heading">Prisustvo</h4>
       {points.length === 0 ? (

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import './AuthModal.css';
 
 export default function AccountModal({ onClose }) {
-  const { user, changePassword, changeEmail } = useAuth();
+  const { user, changePassword, changeEmail, changeUsername } = useAuth();
   const [tab, setTab] = useState('password');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,6 +19,10 @@ export default function AccountModal({ onClose }) {
     currentPassword: '',
     newEmail: '',
     changeCode: '',
+  });
+  const [usernameForm, setUsernameForm] = useState({
+    currentPassword: '',
+    newUsername: '',
   });
 
   useEffect(() => {
@@ -66,6 +70,20 @@ export default function AccountModal({ onClose }) {
     }
   }
 
+  async function handleUsernameSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await changeUsername(usernameForm.currentPassword, usernameForm.newUsername);
+      setSuccess('Korisničko ime je promenjeno.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="auth-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
@@ -92,6 +110,12 @@ export default function AccountModal({ onClose }) {
                 onClick={() => switchTab('email')}
               >
                 Email
+              </button>
+              <button
+                className={`auth-tab${tab === 'username' ? ' auth-tab--active' : ''}`}
+                onClick={() => switchTab('username')}
+              >
+                Korisničko ime
               </button>
             </div>
 
@@ -188,6 +212,37 @@ export default function AccountModal({ onClose }) {
                 {error && <p className="auth-error">{error}</p>}
                 <button className="auth-submit" type="submit" disabled={loading}>
                   {loading ? 'Čuvanje...' : 'Promeni email'}
+                </button>
+              </form>
+            )}
+
+            {tab === 'username' && (
+              <form className="auth-form" onSubmit={handleUsernameSubmit}>
+                <label className="auth-label">
+                  Trenutna lozinka
+                  <input
+                    className="auth-input"
+                    type="password"
+                    value={usernameForm.currentPassword}
+                    onChange={(e) => setUsernameForm({ ...usernameForm, currentPassword: e.target.value })}
+                    required
+                    placeholder="••••••••"
+                  />
+                </label>
+                <label className="auth-label">
+                  Novo korisničko ime
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={usernameForm.newUsername}
+                    onChange={(e) => setUsernameForm({ ...usernameForm, newUsername: e.target.value })}
+                    required
+                    placeholder="vase_ime"
+                  />
+                </label>
+                {error && <p className="auth-error">{error}</p>}
+                <button className="auth-submit" type="submit" disabled={loading}>
+                  {loading ? 'Čuvanje...' : 'Promeni korisničko ime'}
                 </button>
               </form>
             )}
