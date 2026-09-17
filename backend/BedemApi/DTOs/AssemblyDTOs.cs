@@ -27,6 +27,9 @@ public record UpdateAssemblySessionRequest(
 /// <summary>Status is one of AssemblySessionStatus.</summary>
 public record SetAssemblySessionStatusRequest(string Status);
 
+/// <summary>Null clears the assignment.</summary>
+public record SetZapisnicarRequest(int? UserId);
+
 public record AssemblySessionResponse(
     int Id,
     string Title,
@@ -36,6 +39,8 @@ public record AssemblySessionResponse(
     string? Description,
     string Status,
     string CreatedByUsername,
+    int? ZapisnicarUserId,
+    string? ZapisnicarUsername,
     DateTime? OpenedAt,
     DateTime? ClosedAt,
     DateTime CreatedAt,
@@ -108,6 +113,9 @@ public record CreateAssemblyTopicRequest(string Title, string Description, int? 
 
 public record UpdateAssemblyTopicRequest(string Title, string Description);
 
+/// <summary>Null clears the minutes text.</summary>
+public record UpdateTopicMinutesRequest(string? Text);
+
 /// <summary>Status is Prihvacena or Odbijena; Note is the reason, shown back to the proposer.</summary>
 public record ReviewAssemblyTopicRequest(string Status, string? Note);
 
@@ -139,7 +147,11 @@ public record AssemblyTopicResponse(
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     bool CanEdit,
-    bool CanDelete
+    bool CanDelete,
+    string? MinutesText,
+    DateTime? MinutesUpdatedAt,
+    string? MinutesUpdatedByUsername,
+    bool CanEditMinutes
 );
 
 // ---------------------------------------------------------------------------
@@ -278,7 +290,8 @@ public record AssemblyTopicRecordResponse(
     int Against,
     int Abstained,
     bool QuorumMet,
-    IReadOnlyList<AssemblyRollCallEntry> RollCall
+    IReadOnlyList<AssemblyRollCallEntry> RollCall,
+    string? MinutesText
 );
 
 public record AssemblyRollCallEntry(int UserId, string Username, string Choice);

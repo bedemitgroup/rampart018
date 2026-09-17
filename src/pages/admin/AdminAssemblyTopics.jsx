@@ -24,6 +24,7 @@ export default function AdminAssemblyTopics() {
   const [topics, setTopics] = useState([]);
   const [backlog, setBacklog] = useState([]);
   const [tallies, setTallies] = useState({});
+  const [roster, setRoster] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -33,6 +34,8 @@ export default function AdminAssemblyTopics() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState(emptyDraft);
+  const [minutesEditingId, setMinutesEditingId] = useState(null);
+  const [minutesDraft, setMinutesDraft] = useState('');
 
   const sessionId = session?.id ?? null;
 
@@ -54,12 +57,21 @@ export default function AdminAssemblyTopics() {
       const decided = forSession.filter((t) => t.votingStatus !== VOTING_STATUS.NOT_OPENED);
       const results = await Promise.all(decided.map((t) => api.getAssemblyTally(t.id)));
       setTallies(Object.fromEntries(results.map((r) => [r.topicId, r])));
+
+      // Who could be handed the pen: the hall roster already carries exactly
+      // the roll the chair is allowed to pick a zapisničar from.
+      if (current && isChair) {
+        const hall = await api.getAssemblyHall(current.id);
+        setRoster(hall.seats);
+      } else {
+        setRoster([]);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isChair]);
 
   useEffect(() => {
     load();
@@ -164,6 +176,22 @@ export default function AdminAssemblyTopics() {
     setBacklog((prev) => prev.filter((t) => t.id !== topic.id));
   });
 
+  const setZapisnicar = (userId) => act(async () => {
+    setSession(await api.setAssemblyZapisnicar(session.id, userId));
+  });
+
+  const startMinutes = (topic) => {
+    setMinutesEditingId(topic.id);
+    setMinutesDraft(topic.minutesText ?? '');
+  };
+
+  const cancelMinutes = () => setMinutesEditingId(null);
+
+  const saveMinutes = (id) => act(async () => {
+    mergeTopic(await api.updateAssemblyTopicMinutes(id, minutesDraft.trim() || null));
+    setMinutesEditingId(null);
+  });
+
   const byStatus = (list, status) => list
     .filter((t) => t.status === status)
     .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
@@ -194,6 +222,12 @@ export default function AdminAssemblyTopics() {
     withdraw,
     remove,
     currentUserId: user?.id,
+    minutesEditingId,
+    minutesDraft,
+    setMinutesDraft,
+    startMinutes,
+    cancelMinutes,
+    saveMinutes,
   };
 
   if (loading) return <p className="admin-news__loading">Učitavanje...</p>;
@@ -231,6 +265,16 @@ export default function AdminAssemblyTopics() {
             <span className="agenda__stale"> · veza sa serverom je prekinuta, osveži stranicu</span>
           )}
         </p>
+      )}
+
+      {session && (
+        <ZapisnicarLine
+          session={session}
+          roster={roster}
+          isChair={isChair}
+          busy={busy}
+          onSave={setZapisnicar}
+        />
       )}
 
       {showForm && (
@@ -316,6 +360,32 @@ export default function AdminAssemblyTopics() {
   );
 }
 
+function ZapisnicarLine({ session, roster, isChair, busy, onSave }) {
+  if (!isChair) {
+    return session.zapisnicarUsername ? (
+      <p className="agenda__for">Zapisničar: <strong>{session.zapisnicarUsername}</strong></p>
+    ) : null;
+  }
+
+  return (
+    <p className="agenda__for agenda__zapisnicar">
+      <label htmlFor="zapisnicar-select">Zapisničar: </label>
+      <select
+        id="zapisnicar-select"
+        className="form-input"
+        value={session.zapisnicarUserId ?? ''}
+        disabled={busy}
+        onChange={(e) => onSave(e.target.value ? Number(e.target.value) : null)}
+      >
+        <option value="">— nije dodeljen —</option>
+        {roster.map((u) => (
+          <option key={u.userId} value={u.userId}>{u.username}</option>
+        ))}
+      </select>
+    </p>
+  );
+}
+
 function TopicSection({
   title, hint, topics, empty, ordered = false,
   onMove, onAssign, assignLabel, ...card
@@ -355,6 +425,7 @@ function TopicCard({
   editingId, editDraft, setEditingId, setEditDraft, saveEdit,
   review, withdraw, remove,
   onMoveUp, onMoveDown, onAssign, assignLabel,
+  minutesEditingId, minutesDraft, setMinutesDraft, startMinutes, cancelMinutes, saveMinutes,
 }) {
   const isEditing = editingId === topic.id;
   const isMine = topic.proposedByUserId === currentUserId;
@@ -412,6 +483,51 @@ function TopicCard({
           {tally.outcome} — za {tally.for}, protiv {tally.against}, uzdržano {tally.abstained}
           {!tally.quorumMet && <span className="agenda-item__no-quorum">bez kvoruma</span>}
         </p>
+      )}
+
+      {(topic.minutesText || topic.canEditMinutes) && (
+        <div className="agenda-item__minutes">
+          <h4 className="agenda-item__minutes-title">Zapisnik</h4>
+
+          {minutesEditingId === topic.id ? (
+            <>
+              <textarea
+                className="form-input"
+                rows={3}
+                value={minutesDraft}
+                onChange={(e) => setMinutesDraft(e.target.value)}
+                placeholder="Šta je dogovoreno o ovoj tački..."
+              />
+              <div className="agenda-item__actions">
+                <button type="button" className="admin-news__action-btn" disabled={busy} onClick={() => saveMinutes(topic.id)}>
+                  Sačuvaj zapisnik
+                </button>
+                <button type="button" className="admin-news__action-btn" onClick={cancelMinutes}>
+                  Odustani
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {topic.minutesText ? (
+                <p className="agenda-item__body">{topic.minutesText}</p>
+              ) : (
+                <p className="record__none">Zapisnik još nije unet.</p>
+              )}
+              {topic.minutesUpdatedByUsername && (
+                <p className="agenda-item__meta">
+                  Zapisao {topic.minutesUpdatedByUsername}
+                  {topic.minutesUpdatedAt && ` · ${formatSessionDateTime(topic.minutesUpdatedAt)}`}
+                </p>
+              )}
+              {topic.canEditMinutes && (
+                <button type="button" className="admin-news__action-btn" onClick={() => startMinutes(topic)}>
+                  {topic.minutesText ? 'Izmeni zapisnik' : 'Unesi zapisnik'}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       <div className="agenda-item__actions">

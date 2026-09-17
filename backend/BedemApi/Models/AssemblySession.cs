@@ -39,6 +39,14 @@ public class AssemblySession
     public int CreatedByUserId { get; set; }
     public User CreatedByUser { get; set; } = null!;
 
+    /// <summary>
+    /// Who takes the minutes for this sitting. Assigned by the chair or an
+    /// Admin, not a global role — the same person rarely wants to both run the
+    /// room and write down what it decided.
+    /// </summary>
+    public int? ZapisnicarUserId { get; set; }
+    public User? ZapisnicarUser { get; set; }
+
     public DateTime? OpenedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
 

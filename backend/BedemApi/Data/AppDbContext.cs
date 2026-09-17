@@ -149,6 +149,12 @@ public class AppDbContext : DbContext
              .HasForeignKey(x => x.CreatedByUserId)
              .OnDelete(DeleteBehavior.Restrict);
 
+            e.HasOne(x => x.ZapisnicarUser)
+             .WithMany()
+             .HasForeignKey(x => x.ZapisnicarUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
             e.HasIndex(x => x.ScheduledAt);
 
             // At most one sitting may be in progress. The hall, the presence
@@ -198,6 +204,12 @@ public class AppDbContext : DbContext
             e.HasOne(x => x.ReviewedByUser)
              .WithMany()
              .HasForeignKey(x => x.ReviewedByUserId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(x => x.MinutesUpdatedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.MinutesUpdatedByUserId)
              .IsRequired(false)
              .OnDelete(DeleteBehavior.Restrict);
 

@@ -44,9 +44,13 @@ public static class AuditActions
     public const string AssemblySessionCancel = "Assembly.Session.Cancel";
     public const string AssemblySessionDelete = "Assembly.Session.Delete";
 
+    /// <summary>Who takes the minutes for a sitting, set or changed.</summary>
+    public const string AssemblySessionSetZapisnicar = "Assembly.Session.SetZapisnicar";
+
     // Skupstina - agenda topics
     public const string AssemblyTopicPropose = "Assembly.Topic.Propose";
     public const string AssemblyTopicUpdate = "Assembly.Topic.Update";
+    public const string AssemblyTopicMinutesUpdate = "Assembly.Topic.MinutesUpdate";
     public const string AssemblyTopicApprove = "Assembly.Topic.Approve";
     public const string AssemblyTopicReject = "Assembly.Topic.Reject";
     public const string AssemblyTopicWithdraw = "Assembly.Topic.Withdraw";
@@ -128,7 +132,9 @@ public static class AuditActions
         FinanceYearSave, FinanceQuarterSetStatus,
         AssemblySessionCreate, AssemblySessionUpdate, AssemblySessionOpen,
         AssemblySessionClose, AssemblySessionCancel, AssemblySessionDelete,
-        AssemblyTopicPropose, AssemblyTopicUpdate, AssemblyTopicApprove,
+        AssemblySessionSetZapisnicar,
+        AssemblyTopicPropose, AssemblyTopicUpdate, AssemblyTopicMinutesUpdate,
+        AssemblyTopicApprove,
         AssemblyTopicReject, AssemblyTopicWithdraw, AssemblyTopicAssign,
         AssemblyTopicDelete, AssemblyTopicMoveUp, AssemblyTopicMoveDown,
         AssemblyVotingOpen, AssemblyVotingClose,

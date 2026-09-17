@@ -15,6 +15,7 @@ namespace BedemApi.Controllers;
 public class AssemblyController : ControllerBase
 {
     private const int MaxTitleLength = 200;
+    private const int MaxMinutesLength = 4000;
 
     private readonly AppDbContext _db;
     private readonly IAuditLogger _audit;
@@ -59,6 +60,7 @@ public class AssemblyController : ControllerBase
 
         var sessions = await query
             .Include(s => s.CreatedByUser)
+            .Include(s => s.ZapisnicarUser)
             .Include(s => s.Attendances)
             .Include(s => s.Topics)
             .OrderByDescending(s => s.ScheduledAt)
@@ -84,6 +86,7 @@ public class AssemblyController : ControllerBase
     {
         var sessions = await _db.AssemblySessions.AsNoTracking()
             .Include(s => s.CreatedByUser)
+            .Include(s => s.ZapisnicarUser)
             .Include(s => s.Attendances)
             .Include(s => s.Topics)
             .ToListAsync();
@@ -235,6 +238,43 @@ public class AssemblyController : ControllerBase
         session.UpdatedAt = DateTime.UtcNow;
 
         _audit.Record(AuditActions.AssemblySessionUpdate,
+            AuditEntityTypes.AssemblySession, session.Id.ToString(), Describe(session));
+
+        await _db.SaveChangesAsync();
+
+        return Ok(await BroadcastSessionAsync(id));
+    }
+
+    /// <summary>
+    /// Assign who takes the minutes for this sitting, or clear the assignment.
+    /// The chair does not have to be the one writing them down.
+    /// </summary>
+    [HttpPut("sessions/{id:int}/zapisnicar")]
+    [Authorize(Roles = Roles.ManageAssembly)]
+    [EnableRateLimiting(RateLimitPolicies.AdminWrites)]
+    [ProducesResponseType(typeof(AssemblySessionResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> SetZapisnicar(int id, [FromBody] SetZapisnicarRequest request)
+    {
+        var session = await _db.AssemblySessions.FindAsync(id);
+        if (session is null) return NotFound();
+
+        if (request.UserId is int userId)
+        {
+            var member = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.IsActive, u.Role })
+                .FirstOrDefaultAsync();
+
+            if (member is null || !AssemblyEligibility.CanTakePart(member.IsActive, member.Role))
+                return BadRequest(new { message = "Zapisničar mora biti aktivan član skupštine." });
+        }
+
+        session.ZapisnicarUserId = request.UserId;
+        session.UpdatedAt = DateTime.UtcNow;
+
+        _audit.Record(AuditActions.AssemblySessionSetZapisnicar,
             AuditEntityTypes.AssemblySession, session.Id.ToString(), Describe(session));
 
         await _db.SaveChangesAsync();
@@ -429,6 +469,7 @@ public class AssemblyController : ControllerBase
             .Include(t => t.Session)
             .Include(t => t.ProposedByUser)
             .Include(t => t.ReviewedByUser)
+            .Include(t => t.MinutesUpdatedByUser)
             .AsQueryable();
 
         if (backlog)
@@ -521,6 +562,46 @@ public class AssemblyController : ControllerBase
         topic.UpdatedAt = DateTime.UtcNow;
 
         _audit.Record(AuditActions.AssemblyTopicUpdate,
+            AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
+
+        await _db.SaveChangesAsync();
+
+        var dto = await ReloadTopicAsync(id);
+        await NotifyTopicAsync(dto);
+        return Ok(dto);
+    }
+
+    /// <summary>
+    /// Write down what the room agreed on this point. Open to the whole panel
+    /// at the attribute level — unlike the wording endpoints above, an Admin is
+    /// deliberately allowed through here, since <see cref="IsChair"/> covers
+    /// him too and the sitting still needs minutes if the assigned zapisničar
+    /// cannot write them; <see cref="AssemblyTopicRules.WhyCannotEditMinutes"/>
+    /// does the real narrowing.
+    /// </summary>
+    [HttpPut("topics/{id:int}/minutes")]
+    [Authorize(Roles = Roles.ViewPanel)]
+    [EnableRateLimiting(RateLimitPolicies.AssemblyLive)]
+    [ProducesResponseType(typeof(AssemblyTopicResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateTopicMinutes(int id, [FromBody] UpdateTopicMinutesRequest request)
+    {
+        var topic = await _db.AssemblyTopics.Include(t => t.Session).FirstOrDefaultAsync(t => t.Id == id);
+        if (topic is null) return NotFound();
+
+        var isZapisnicar = topic.Session?.ZapisnicarUserId == CurrentUserId;
+        var denied = AssemblyTopicRules.WhyCannotEditMinutes(topic, IsChair, isZapisnicar);
+        if (denied != null) return BadRequest(new { message = denied });
+
+        if (request.Text != null && request.Text.Trim().Length > MaxMinutesLength)
+            return BadRequest(new { message = $"Zapisnik ne sme biti duži od {MaxMinutesLength} znakova." });
+
+        topic.MinutesText = Blank(request.Text);
+        topic.MinutesUpdatedAt = DateTime.UtcNow;
+        topic.MinutesUpdatedByUserId = CurrentUserId;
+
+        _audit.Record(AuditActions.AssemblyTopicMinutesUpdate,
             AuditEntityTypes.AssemblyTopic, topic.Id.ToString(), topic.Title);
 
         await _db.SaveChangesAsync();
@@ -945,7 +1026,7 @@ public class AssemblyController : ControllerBase
             topics.Add(new AssemblyTopicRecordResponse(
                 topic.Id, topic.Title, topic.Description, topic.VotingStatus,
                 tally.Outcome, tally.For, tally.Against, tally.Abstained,
-                tally.QuorumMet, rollCall));
+                tally.QuorumMet, rollCall, topic.MinutesText));
         }
 
         var eligibleCount = await AssemblyEligibility.Roll(_db).CountAsync();
@@ -1311,6 +1392,7 @@ public class AssemblyController : ControllerBase
     private Task<AssemblySession?> LoadSessionAsync(int id) =>
         _db.AssemblySessions.AsNoTracking()
             .Include(s => s.CreatedByUser)
+            .Include(s => s.ZapisnicarUser)
             .Include(s => s.Attendances)
             .Include(s => s.Topics)
             .FirstOrDefaultAsync(s => s.Id == id);
@@ -1416,6 +1498,7 @@ public class AssemblyController : ControllerBase
             .Include(t => t.Session)
             .Include(t => t.ProposedByUser)
             .Include(t => t.ReviewedByUser)
+            .Include(t => t.MinutesUpdatedByUser)
             .FirstAsync(t => t.Id == id);
 
         return ToResponse(topic, IsChair, CurrentUserId);
@@ -1427,6 +1510,7 @@ public class AssemblyController : ControllerBase
                 .Include(t => t.Session)
                 .Include(t => t.ProposedByUser)
                 .Include(t => t.ReviewedByUser)
+                .Include(t => t.MinutesUpdatedByUser)
                 .Where(t => t.SessionId == sessionId && t.Status == status))
             .ToListAsync();
 
@@ -1456,8 +1540,11 @@ public class AssemblyController : ControllerBase
         return null;
     }
 
-    private static AssemblyTopicResponse ToResponse(AssemblyTopic t, bool isChair, int currentUserId) =>
-        new(
+    private static AssemblyTopicResponse ToResponse(AssemblyTopic t, bool isChair, int currentUserId)
+    {
+        var isZapisnicar = t.Session?.ZapisnicarUserId == currentUserId;
+
+        return new(
             t.Id,
             t.SessionId,
             t.Session?.Title,
@@ -1474,7 +1561,12 @@ public class AssemblyController : ControllerBase
             t.CreatedAt,
             t.UpdatedAt,
             AssemblyTopicRules.WhyCannotEdit(t, isChair, currentUserId) is null,
-            AssemblyTopicRules.WhyCannotDelete(t, isChair, currentUserId) is null);
+            AssemblyTopicRules.WhyCannotDelete(t, isChair, currentUserId) is null,
+            t.MinutesText,
+            t.MinutesUpdatedAt,
+            t.MinutesUpdatedByUser?.Username,
+            AssemblyTopicRules.WhyCannotEditMinutes(t, isChair, isZapisnicar) is null);
+    }
 
     private static string? ValidateSession(string? title, string? onlineUrl)
     {
@@ -1551,6 +1643,8 @@ public class AssemblyController : ControllerBase
             s.Description,
             s.Status,
             s.CreatedByUser?.Username ?? "?",
+            s.ZapisnicarUserId,
+            s.ZapisnicarUser?.Username,
             s.OpenedAt,
             s.ClosedAt,
             s.CreatedAt,
