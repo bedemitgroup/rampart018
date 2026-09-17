@@ -72,6 +72,7 @@ export const ACTION_LABELS = {
   'User.Activate': 'Aktivirao nalog',
   'User.ChangeOwnPassword': 'Promenio sopstvenu lozinku',
   'User.ChangeOwnEmail': 'Promenio sopstveni email',
+  'User.ChangeOwnUsername': 'Promenio sopstveno korisničko ime',
 };
 
 export const ENTITY_LABELS = {

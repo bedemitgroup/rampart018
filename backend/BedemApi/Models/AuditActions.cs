@@ -121,6 +121,7 @@ public static class AuditActions
     /// <summary>A member changing their own credentials, not an admin acting on someone else.</summary>
     public const string UserChangeOwnPassword = "User.ChangeOwnPassword";
     public const string UserChangeOwnEmail = "User.ChangeOwnEmail";
+    public const string UserChangeOwnUsername = "User.ChangeOwnUsername";
 
     public static readonly IReadOnlyList<string> All = new[]
     {
@@ -145,7 +146,7 @@ public static class AuditActions
         CommentBanUser, CommentUnbanUser,
         UserCreateAccount, UserCreateModerator, UserChangeRole,
         UserDeactivate, UserActivate,
-        UserChangeOwnPassword, UserChangeOwnEmail
+        UserChangeOwnPassword, UserChangeOwnEmail, UserChangeOwnUsername
     };
 }
 

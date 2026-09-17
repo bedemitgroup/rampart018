@@ -33,6 +33,7 @@ export const api = {
   me: () => request('/api/auth/me'),
   changePassword: (data) => request('/api/auth/password', { method: 'PUT', body: JSON.stringify(data) }),
   changeEmail: (data) => request('/api/auth/email', { method: 'PUT', body: JSON.stringify(data) }),
+  changeUsername: (data) => request('/api/auth/username', { method: 'PUT', body: JSON.stringify(data) }),
   getUsers: () => request('/api/users'),
   createStaffAccount: (data) => request('/api/users/staff', { method: 'POST', body: JSON.stringify(data) }),
   changeUserRole: (id, role) => request(`/api/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),

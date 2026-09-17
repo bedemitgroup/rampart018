@@ -195,6 +195,52 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
     }
 
+    /// <summary>
+    /// Change the current user's own display username. Lower-stakes than the
+    /// password/email endpoints - it is not a login credential (login is by
+    /// email) or a recovery path, just the name attached to comments, votes
+    /// and audit rows going forward - so it skips the change code and does not
+    /// rotate SecurityStamp. It still asks for the current password (a member
+    /// away from an unlocked session should not have it renamed under them)
+    /// and reissues the token so the "username" claim is not stale.
+    /// </summary>
+    [HttpPut("username")]
+    [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.AccountSecurity)]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(429)]
+    public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameRequest request)
+    {
+        var newUsername = request.NewUsername?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(newUsername))
+            return BadRequest(new { message = "All fields are required." });
+
+        var userId = int.Parse(User.FindFirstValue("userId")!);
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return Unauthorized(new { message = "Pogrešna trenutna lozinka." });
+
+        if (await _db.Users.AnyAsync(u => u.Username == newUsername && u.Id != userId))
+            return Conflict(new { message = "Username already taken." });
+
+        var oldUsername = user.Username;
+        user.Username = newUsername;
+
+        _audit.Record(
+            AuditActions.UserChangeOwnUsername, AuditEntityTypes.User,
+            user.Id.ToString(), $"{oldUsername} → {newUsername}");
+        await _db.SaveChangesAsync();
+
+        var (token, expiresAt) = _tokenService.GenerateToken(user);
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+    }
+
     /// <summary>Change the current user's own email address.</summary>
     [HttpPut("email")]
     [Authorize]
