@@ -1063,9 +1063,9 @@ namespace BedemApi.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
                             IsActive = true,
-                            PasswordHash = "$2a$11$22Eblq67o//87U5tRixpPeOzrAI73IOG9EUcMm7QYwuwKshOkoRoe",
+                            PasswordHash = "$2a$11$BTbqNCoOAWfp9uJ2.Ln5ce3DnF4HzeW8dSYNfal7uMCBX8jZ2Rwpa",
                             Role = "Admin",
-                            SecurityStamp = "f37a660c896d45c780acf66326f43bb2",
+                            SecurityStamp = "9785a3de82cb411a96bd6d81708cb9f2",
                             Username = "admin"
                         });
                 });
