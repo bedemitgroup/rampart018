@@ -25,6 +25,25 @@ const gradskiOdbor = [
   'Slaviša Mitrović',
 ];
 
+const decisionSteps = [
+  {
+    title: 'Predlog',
+    desc: 'Svaki član ili Gradski odbor može da iznese predlog ili inicijativu.',
+  },
+  {
+    title: 'Rasprava na sednici',
+    desc: 'Predlog se otvoreno razmatra na sednici Gradskog odbora, uz mogućnost da prisustvuju i drugi članovi.',
+  },
+  {
+    title: 'Glasanje',
+    desc: 'Odluka se donosi glasanjem, većinom glasova prisutnih članova odbora.',
+  },
+  {
+    title: 'Transparentno objavljivanje',
+    desc: 'Doneta odluka i zapisnik sa sednice postaju dostupni svim članovima.',
+  },
+];
+
 const milestones = [
   {
     year: '23.06.2026.',
@@ -188,14 +207,48 @@ export default function ONama() {
         </div>
       </section>
 
+      {/* Kako donosimo odluke */}
+      <section className="section">
+        <div className="container">
+          <div className="section__header">
+            <span className="badge badge--secondary">Naš proces</span>
+            <h2 className="section__title">Kako donosimo odluke</h2>
+            <div className="divider"></div>
+            <p className="section__subtitle">
+              Nijedna odluka se ne donosi iza zatvorenih vrata — evo kako Bedem funkcioniše.
+            </p>
+          </div>
+          <div className="onama-decisions__steps">
+            {decisionSteps.map(({ title, desc }, i) => (
+              <div key={title} className="onama-decisions__step">
+                <span className="onama-decisions__step-num">{i + 1}</span>
+                <h3 className="onama-decisions__step-title">{title}</h3>
+                <p className="onama-decisions__step-desc">{desc}</p>
+              </div>
+            ))}
+          </div>
+          <figure className="onama-decisions__figure">
+            <img
+              src="/skupstina-sala.png"
+              alt="Prikaz sale sa evidencijom prisustva na sednici Gradskog odbora"
+              className="onama-decisions__image"
+              loading="lazy"
+            />
+            <figcaption className="onama-decisions__caption">
+              Sednica Gradskog odbora — ovako u praksi izgleda evidencija prisustva i glasanje.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="section section--light">
         <div className="container text-center">
-          <h2 className="section__title">Postani deo Bedema</h2>
+          <h2 className="section__title">Pridruži se, preuzmi svoju sudbinu u svoje ruke</h2>
           <div className="divider"></div>
           <p className="section__subtitle mb-8">
-            Svaki novi član jača naš bedem. Pridruži se i pomozi nam da zaštitimo
-            prava svakog građana.
+            Svaki novi član jača naš bedem. Ne čekaj da neko drugi promeni pravila igre —
+            pridruži se i postani deo rešenja.
           </p>
           <div className="onama-cta__actions">
             <Link to="/pridruzi-se" className="btn btn--primary btn--lg">
