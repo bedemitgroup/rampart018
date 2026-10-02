@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /moji-potpisi
+
+Sitemap: https://bedem018.rs/sitemap.xml

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Static pages only. /vest/:slug and /peticije/:slug are per-item and change
+  as news and petitions are published - listing them here would mean editing
+  this file by hand for every post, so they are left for Google to discover
+  by crawling the links on / and /peticije instead. If that turns out too
+  slow, the fix is a backend endpoint that generates this file from the DB,
+  not more manual entries.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://bedem018.rs/</loc><priority>1.0</priority></url>
+  <url><loc>https://bedem018.rs/o-nama</loc></url>
+  <url><loc>https://bedem018.rs/finansije</loc></url>
+  <url><loc>https://bedem018.rs/peticije</loc></url>
+  <url><loc>https://bedem018.rs/problem</loc></url>
+  <url><loc>https://bedem018.rs/pridruzi-se</loc></url>
+  <url><loc>https://bedem018.rs/politika-privatnosti</loc></url>
+</urlset>
