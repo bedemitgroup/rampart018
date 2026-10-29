@@ -898,6 +898,9 @@ namespace BedemApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -918,7 +921,7 @@ namespace BedemApi.Migrations
                     b.Property<DateTime>("SignedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1025,8 +1028,16 @@ namespace BedemApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1062,10 +1073,12 @@ namespace BedemApi.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@bedem.rs",
+                            FirstName = "",
                             IsActive = true,
-                            PasswordHash = "$2a$11$BTbqNCoOAWfp9uJ2.Ln5ce3DnF4HzeW8dSYNfal7uMCBX8jZ2Rwpa",
+                            LastName = "",
+                            PasswordHash = "$2a$11$2nqmzz1pl1Ig8G59xtYG3.hEauPA0BdaLB16xfcZIkTRh/OMPBmCu",
                             Role = "Admin",
-                            SecurityStamp = "9785a3de82cb411a96bd6d81708cb9f2",
+                            SecurityStamp = "ecf3d286616d4f8490d5ffbc261d02f7",
                             Username = "admin"
                         });
                 });
@@ -1289,8 +1302,7 @@ namespace BedemApi.Migrations
                     b.HasOne("BedemApi.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Petition");
 

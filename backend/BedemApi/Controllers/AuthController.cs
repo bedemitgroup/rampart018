@@ -79,13 +79,17 @@ public class AuthController : ControllerBase
                 decoyToken,
                 request.Username ?? string.Empty,
                 request.Email ?? string.Empty,
+                string.Empty,
+                string.Empty,
                 Roles.Visitor,
                 DateTime.UtcNow.AddDays(7)));
         }
 
         if (string.IsNullOrWhiteSpace(request.Username) ||
             string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
+            string.IsNullOrWhiteSpace(request.Password) ||
+            string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName))
             return BadRequest(new { message = "All fields are required." });
 
         if (await _db.Users.AnyAsync(u => u.Email == request.Email))
@@ -98,6 +102,8 @@ public class AuthController : ControllerBase
         {
             Username = request.Username,
             Email = request.Email,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             // Registering is not membership: a fresh account may comment and
             // like, nothing more. An admin promotes it to Member by hand.
@@ -108,7 +114,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return CreatedAtAction(nameof(Me), new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+        return CreatedAtAction(nameof(Me), new AuthResponse(user.Id, token, user.Username, user.Email, user.FirstName, user.LastName, user.Role, expiresAt));
     }
 
     /// <summary>Authenticate and receive a JWT token.</summary>
@@ -131,7 +137,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Account is deactivated." });
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.FirstName, user.LastName, user.Role, expiresAt));
     }
 
     /// <summary>Get the currently authenticated user's profile.</summary>
@@ -145,7 +151,7 @@ public class AuthController : ControllerBase
         var user = await _db.Users.FindAsync(userId);
         if (user == null) return NotFound();
 
-        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt, user.IsActive });
+        return Ok(new { user.Id, user.Username, user.Email, user.FirstName, user.LastName, user.Role, user.CreatedAt, user.IsActive });
     }
 
     /// <summary>Change the current user's own password.</summary>
@@ -192,7 +198,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.FirstName, user.LastName, user.Role, expiresAt));
     }
 
     /// <summary>
@@ -238,7 +244,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.FirstName, user.LastName, user.Role, expiresAt));
     }
 
     /// <summary>Change the current user's own email address.</summary>
@@ -283,6 +289,6 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var (token, expiresAt) = _tokenService.GenerateToken(user);
-        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.Role, expiresAt));
+        return Ok(new AuthResponse(user.Id, token, user.Username, user.Email, user.FirstName, user.LastName, user.Role, expiresAt));
     }
 }

@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('bedem_token', data.token);
     // id comes along because the assembly hall is built on "which seat is
     // mine"; without it user.id stays undefined until the next page load.
-    setUser({ id: data.id, username: data.username, email: data.email, role: data.role });
+    setUser({ id: data.id, username: data.username, email: data.email, firstName: data.firstName, lastName: data.lastName, role: data.role });
   }
 
   // Takes the whole payload so the honeypot field rides along without becoming
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
   // there is no forced re-login here.
   function applyAuthResponse(data) {
     localStorage.setItem('bedem_token', data.token);
-    setUser({ id: data.id, username: data.username, email: data.email, role: data.role });
+    setUser({ id: data.id, username: data.username, email: data.email, firstName: data.firstName, lastName: data.lastName, role: data.role });
   }
 
   async function changePassword(currentPassword, newPassword, changeCode) {

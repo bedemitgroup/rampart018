@@ -77,7 +77,7 @@ export default function PolitikaPrivatnosti() {
               <tbody>
                 <tr>
                   <td>Nalog na sajtu</td>
-                  <td>Korisničko ime, email adresa, šifrovana lozinka</td>
+                  <td>Ime, prezime, korisničko ime, email adresa, šifrovana lozinka</td>
                   <td>Izvršenje ugovora o korišćenju usluge</td>
                   <td>Dok postoji nalog</td>
                 </tr>
@@ -89,7 +89,7 @@ export default function PolitikaPrivatnosti() {
                 </tr>
                 <tr>
                   <td><strong>Potpisivanje peticije</strong></td>
-                  <td>Ime, prezime, grad, nalog, vreme potpisa, tekst saglasnosti</td>
+                  <td>Ime, prezime, grad, vreme potpisa, tekst saglasnosti; nalog (za registrovane) ili email adresa (za anonimne potpisnike, čuva se samo radi provere duplikata)</td>
                   <td><strong>Izričit pristanak</strong> (posebna vrsta podataka)</td>
                   <td>12 meseci od zatvaranja peticije</td>
                 </tr>
@@ -97,13 +97,13 @@ export default function PolitikaPrivatnosti() {
                   <td>Prijava problema</td>
                   <td>Ime, email, telefon, lokacija, opis (ili anonimno)</td>
                   <td>Pristanak</td>
-                  <td><Placeholder>[POPUNITI: rok]</Placeholder></td>
+                  <td>2 godine od prijema</td>
                 </tr>
                 <tr>
                   <td>Zahtev za članstvo</td>
                   <td>Ime, prezime, email, telefon, grad, zanimanje, motivacija</td>
                   <td>Pristanak / preduzimanje radnji pre zaključenja članstva</td>
-                  <td><Placeholder>[POPUNITI: rok]</Placeholder></td>
+                  <td>1 godina od odluke; za primljene članove dok je lice član udruženja</td>
                 </tr>
                 <tr>
                   <td>Dnevnik izmena u admin panelu</td>
@@ -115,7 +115,7 @@ export default function PolitikaPrivatnosti() {
                   <td>Zaštita od automatskih prijava</td>
                   <td>IP adresa, podaci o pregledaču, sadržaj pokušaja</td>
                   <td>Legitimni interes — bezbednost sajta</td>
-                  <td><Placeholder>[POPUNITI: rok]</Placeholder></td>
+                  <td>90 dana</td>
                 </tr>
               </tbody>
             </table>
@@ -137,7 +137,15 @@ export default function PolitikaPrivatnosti() {
             nije prepreka za potpisivanje.
           </p>
           <p>
-            Pristanak možete povući u svakom trenutku na stranici{' '}
+            Potpisati peticiju možete i bez naloga, samo sa imenom, prezimenom,
+            gradom i email adresom. U tom slučaju email adresa se čuva isključivo radi
+            sprečavanja duplih potpisa i nikad se ne prikazuje javno.{' '}
+            <strong>Bez naloga pristanak nije moguće naknadno povući</strong> —
+            zahtev za brisanje potpisa tada šaljete na{' '}
+            {CONTROLLER.email}.
+          </p>
+          <p>
+            Registrovani korisnici mogu povući pristanak u svakom trenutku na stranici{' '}
             <Link to="/moji-potpisi">Moji potpisi</Link>. Povlačenjem se vaš potpis{' '}
             <strong>briše</strong> — ne označava kao povučen, nego briše — i prestaje
             da se broji.
@@ -157,8 +165,9 @@ export default function PolitikaPrivatnosti() {
           <h2>4. Kome dostavljamo podatke</h2>
           <p>
             Vaše podatke ne prodajemo i ne ustupamo trećim licima u marketinške svrhe.
-            Podaci se nalaze na serverima našeg pružaoca usluge hostinga:{' '}
-            <Placeholder>[POPUNITI: naziv i država hosting provajdera]</Placeholder>.
+            Podaci se nalaze na serverima našeg pružaoca usluge hostinga:
+            Hetzner Cloud GmbH, Industriestr. 25, 91710 Gunzenhausen, Nemačka
+            (Evropska unija).
           </p>
           <p>
             Podacima pristupaju samo ovlašćena lica u udruženju, i to samo u obimu
