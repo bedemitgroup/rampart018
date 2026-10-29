@@ -54,6 +54,10 @@ public class PetitionsController : ControllerBase
     private bool CanSeeDrafts => User.IsIn(Roles.ViewPanel);
 
     private int CurrentUserId => int.Parse(User.FindFirstValue("userId")!);
+    private int? CurrentUserIdOrNull =>
+        User.Identity?.IsAuthenticated == true ? int.Parse(User.FindFirstValue("userId")!) : null;
+
+    private const int MaxEmailLength = 200;
 
     // -----------------------------------------------------------------------
     // Reading petitions
@@ -384,11 +388,12 @@ public class PetitionsController : ControllerBase
     }
 
     /// <summary>
-    /// Sign a petition. Requires an account — that account is what makes the
-    /// signature attributable and what lets the signer withdraw it later.
+    /// Sign a petition. Authenticated users sign with their account (and can
+    /// later withdraw). Anonymous signers provide an email address instead —
+    /// it is stored only for deduplication and is never shown publicly. Without
+    /// an account the signature cannot be withdrawn.
     /// </summary>
     [HttpPost("{id:int}/signatures")]
-    [Authorize]
     [EnableRateLimiting(RateLimitPolicies.PetitionSign)]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
@@ -398,23 +403,36 @@ public class PetitionsController : ControllerBase
     [ProducesResponseType(429)]
     public async Task<IActionResult> Sign(int id, [FromBody] SignPetitionRequest request)
     {
-        var userId = CurrentUserId;
+        var userId = CurrentUserIdOrNull;
 
-        // Ahead of everything else, so a bot gets the same answer whether or not
-        // the rest of its body was well formed.
         if (await _honeypot.IsBotAsync(
-                HttpContext, "petition-signatures", request.ContactReference, request, userId))
+                HttpContext, "petition-signatures", request.ContactReference, request, userId ?? 0))
         {
             return StatusCode(201, new { message = "Hvala, vaš potpis je zabeležen." });
         }
 
-        // The token lives seven days and carries whatever the account was then.
-        // A signature written for a since-deactivated account would be a name on
-        // a list nobody can answer for, so the row is read fresh — the same
-        // reason AssemblyHub re-checks before letting anyone into the room.
-        var signer = await _db.Users.FindAsync(userId);
-        if (signer is null || !signer.IsActive)
-            return StatusCode(403, new { message = "Vaš nalog nije aktivan." });
+        // Authenticated path: verify the account is still active.
+        if (userId.HasValue)
+        {
+            var signer = await _db.Users.FindAsync(userId.Value);
+            if (signer is null || !signer.IsActive)
+                return StatusCode(403, new { message = "Vaš nalog nije aktivan." });
+        }
+
+        // Anonymous path: email is required and must be valid.
+        string? normalizedEmail = null;
+        if (!userId.HasValue)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest(new { message = "E-mail adresa je obavezna." });
+
+            normalizedEmail = ContactNormalizer.NormalizeEmail(request.Email);
+            if (!ContactNormalizer.IsValidEmail(normalizedEmail))
+                return BadRequest(new { message = "Unesite ispravnu e-mail adresu." });
+
+            if (normalizedEmail.Length > MaxEmailLength)
+                return BadRequest(new { message = "E-mail adresa je predugačka." });
+        }
 
         var petition = await _db.Petitions.FindAsync(id);
         if (petition == null) return NotFound();
@@ -425,24 +443,24 @@ public class PetitionsController : ControllerBase
         var error = ValidateSignature(request);
         if (error != null) return BadRequest(new { message = error });
 
-        var already = await _db.PetitionSignatures
-            .AnyAsync(s => s.PetitionId == id && s.UserId == userId);
+        // Deduplication: by account for authenticated, by email for anonymous.
+        var already = userId.HasValue
+            ? await _db.PetitionSignatures.AnyAsync(s => s.PetitionId == id && s.UserId == userId.Value)
+            : await _db.PetitionSignatures.AnyAsync(s => s.PetitionId == id && s.Email == normalizedEmail);
 
         if (already)
-            return Conflict(new { message = "Već ste potpisali ovu peticiju." });
+            return Conflict(new { message = "Ova peticija je već potpisana sa ovog naloga/e-maila." });
 
         var signature = new PetitionSignature
         {
             PetitionId = petition.Id,
             UserId = userId,
+            Email = normalizedEmail,
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
             City = request.City.Trim(),
             PublicDisplay = request.PublicDisplay,
 
-            // The server's own wording, never the client's. This is the record
-            // that proves what was consented to (čl. 15 st. 1 ZZPL), and a
-            // record written by the other party proves nothing.
             ConsentText = PetitionConsent.CurrentText,
             ConsentVersion = PetitionConsent.CurrentVersion,
             PublicDisplayConsentText = request.PublicDisplay
@@ -559,7 +577,7 @@ public class PetitionsController : ControllerBase
             .Take(pageSize)
             .Select(s => new AdminSignatureResponse(
                 s.Id, s.FirstName, s.LastName, s.City,
-                s.User.Username, s.PublicDisplay, s.ConsentVersion, s.SignedAt))
+                s.User != null ? s.User.Username : null, s.PublicDisplay, s.ConsentVersion, s.SignedAt))
             .ToListAsync();
 
         return Ok(new AdminSignaturePageResponse(items, total, page, pageSize));
@@ -587,7 +605,7 @@ public class PetitionsController : ControllerBase
             .OrderByDescending(s => s.SignedAt)
             .Select(s => new AdminSignatureResponse(
                 s.Id, s.FirstName, s.LastName, s.City,
-                s.User.Username, s.PublicDisplay, s.ConsentVersion, s.SignedAt))
+                s.User != null ? s.User.Username : null, s.PublicDisplay, s.ConsentVersion, s.SignedAt))
             .ToListAsync();
 
         await _audit.RecordAsync(

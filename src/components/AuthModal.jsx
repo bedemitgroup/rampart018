@@ -11,6 +11,8 @@ export default function AuthModal({ onClose }) {
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
+    first_name: '',
+    last_name: '',
     username: '',
     email: '',
     password: '',
@@ -114,6 +116,30 @@ export default function AuthModal({ onClose }) {
 
         {tab === 'register' && (
           <form className="auth-form" onSubmit={handleRegister}>
+            <label className="auth-label">
+              Ime
+              <input
+                className="auth-input"
+                type="text"
+                value={registerForm.first_name}
+                onChange={(e) => setRegisterForm({ ...registerForm, first_name: e.target.value })}
+                required
+                placeholder="Vaše ime"
+                autoComplete="given-name"
+              />
+            </label>
+            <label className="auth-label">
+              Prezime
+              <input
+                className="auth-input"
+                type="text"
+                value={registerForm.last_name}
+                onChange={(e) => setRegisterForm({ ...registerForm, last_name: e.target.value })}
+                required
+                placeholder="Vaše prezime"
+                autoComplete="family-name"
+              />
+            </label>
             <label className="auth-label">
               Korisničko ime
               <input

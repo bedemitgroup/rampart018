@@ -44,6 +44,7 @@ public record SignPetitionRequest(
     string City,
     bool Consent,
     bool PublicDisplay,
+    string? Email = null,
     [property: JsonPropertyName("contact_reference")] string? ContactReference = null);
 
 // ---------------------------------------------------------------------------
@@ -113,7 +114,7 @@ public record AdminSignatureResponse(
     string FirstName,
     string LastName,
     string City,
-    string Username,
+    string? Username,
     bool PublicDisplay,
     string ConsentVersion,
     DateTime SignedAt);

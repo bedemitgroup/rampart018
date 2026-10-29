@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import AuthModal from './AuthModal';
 import HoneypotField, { HONEYPOT_NAME } from './HoneypotField';
 
 /**
@@ -21,9 +20,10 @@ export default function PetitionSignForm({ petition, onSigned }) {
   const { user } = useAuth();
 
   const initialForm = {
-    firstName: '',
-    lastName: '',
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
     city: '',
+    email: '',
     consent: false,
     publicDisplay: false,
     [HONEYPOT_NAME]: '',
@@ -33,7 +33,6 @@ export default function PetitionSignForm({ petition, onSigned }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -53,6 +52,11 @@ export default function PetitionSignForm({ petition, onSigned }) {
     if (!form.city.trim()) errs.city = 'Grad je obavezan';
     else if (form.city.trim().length > 80) errs.city = 'Naziv grada je predugačak';
 
+    if (!user) {
+      if (!form.email.trim()) errs.email = 'E-mail je obavezan';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Unesite ispravnu e-mail adresu';
+    }
+
     if (!form.consent) errs.consent = 'Bez ovog pristanka potpis ne možemo zabeležiti';
 
     return errs;
@@ -60,11 +64,6 @@ export default function PetitionSignForm({ petition, onSigned }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!user) {
-      setShowAuth(true);
-      return;
-    }
 
     const errs = validate();
     if (Object.keys(errs).length > 0) {
@@ -76,14 +75,17 @@ export default function PetitionSignForm({ petition, onSigned }) {
     setErrors({});
 
     try {
-      const data = await api.signPetition(petition.id, {
+      const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         city: form.city.trim(),
         consent: form.consent,
         publicDisplay: form.publicDisplay,
         [HONEYPOT_NAME]: form[HONEYPOT_NAME],
-      });
+      };
+      if (!user) payload.email = form.email.trim();
+
+      const data = await api.signPetition(petition.id, payload);
 
       setSigned(true);
       onSigned?.(data?.signatureCount);
@@ -99,12 +101,20 @@ export default function PetitionSignForm({ petition, onSigned }) {
       <div className="peticija-sign peticija-sign--done">
         <div className="peticija-sign__icon">✅</div>
         <h3 className="peticija-sign__title">Hvala, vaš potpis je zabeležen.</h3>
-        <p className="peticija-sign__text">
-          Pristanak možete povući u svakom trenutku — potpis se tada briše.
-        </p>
-        <Link to="/moji-potpisi" className="btn btn--secondary btn--sm">
-          Moji potpisi
-        </Link>
+        {user ? (
+          <>
+            <p className="peticija-sign__text">
+              Pristanak možete povući u svakom trenutku — potpis se tada briše.
+            </p>
+            <Link to="/moji-potpisi" className="btn btn--secondary btn--sm">
+              Moji potpisi
+            </Link>
+          </>
+        ) : (
+          <p className="peticija-sign__text">
+            Vaš potpis je evidentiran. Bez naloga nije moguće naknadno povući potpis.
+          </p>
+        )}
       </div>
     );
   }
@@ -115,8 +125,9 @@ export default function PetitionSignForm({ petition, onSigned }) {
 
       {!user && (
         <p className="peticija-sign__note">
-          Potpisivanje zahteva nalog — tako znamo da iza svakog potpisa stoji jedna
-          osoba, i tako kasnije možete povući svoj pristanak.
+          Potpis možete ostaviti i bez naloga. E-mail adresa se čuva samo radi
+          provere da iste podatke niste već poslali — nikad se ne prikazuje javno.
+          Bez naloga <strong>ne možete naknadno povući potpis</strong>.
         </p>
       )}
 
@@ -174,6 +185,25 @@ export default function PetitionSignForm({ petition, onSigned }) {
           {errors.city && <span className="form-error">{errors.city}</span>}
         </div>
 
+        {!user && (
+          <div className="form-group">
+            <label className="form-label" htmlFor="peticija-email">
+              E-mail <span className="required-star">*</span>
+            </label>
+            <input
+              id="peticija-email"
+              className={`form-input${errors.email ? ' form-input--error' : ''}`}
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
+              placeholder="vas@email.com"
+            />
+            {errors.email && <span className="form-error">{errors.email}</span>}
+          </div>
+        )}
+
         {/* Required. The text is the server's, so what is agreed to here is
             literally what gets stored on the signature. */}
         <div className="form-group">
@@ -213,13 +243,12 @@ export default function PetitionSignForm({ petition, onSigned }) {
         {errors.submit && <p className="form-error peticija-sign__error">{errors.submit}</p>}
 
         <button className="btn btn--primary btn--lg peticija-sign__submit" type="submit" disabled={submitting}>
-          {submitting ? 'Beležimo potpis...' : user ? 'Potpiši peticiju' : 'Prijavi se i potpiši'}
+          {submitting ? 'Beležimo potpis...' : 'Potpiši peticiju'}
         </button>
 
         <p className="peticija-sign__legal">{petition.legalEffectNotice}</p>
       </form>
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }

@@ -17,12 +17,18 @@ public class PetitionSignature
     public Petition Petition { get; set; } = null!;
 
     /// <summary>
-    /// Who signed. Kept so one account signs once, so the signer can withdraw,
-    /// and so the panel can answer "did I sign this". Restrict on the FK: an
-    /// account cannot be deleted out from under its own signature.
+    /// Who signed. Null for anonymous signers (no account). For authenticated
+    /// signers: keeps one-per-account, enables withdrawal, answers "did I sign".
+    /// FK is restricted when set: an account cannot be deleted under its own signature.
     /// </summary>
-    public int UserId { get; set; }
-    public User User { get; set; } = null!;
+    public int? UserId { get; set; }
+    public User? User { get; set; }
+
+    /// <summary>
+    /// Email for anonymous signers only — used for deduplication (one email per
+    /// petition) and never shown publicly. Null when UserId is set.
+    /// </summary>
+    public string? Email { get; set; }
 
     public string FirstName { get; set; } = string.Empty;
 
