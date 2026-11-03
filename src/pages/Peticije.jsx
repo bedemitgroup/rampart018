@@ -77,7 +77,7 @@ export default function Peticije() {
 
           <p className="page-hero__subtitle">
             Peticija je najjednostavniji način da se vidi koliko nas ima iza jednog
-            zahteva. Potpisivanje traje minut i zahteva nalog na sajtu.
+            zahteva. Potpisivanje traje minut i ne zahteva nalog na sajtu.
           </p>
         </div>
       </section>

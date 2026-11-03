@@ -31,7 +31,8 @@ public class PublicStatsController : ControllerBase
     public async Task<IActionResult> GetStats()
     {
         var activeMembers = await AssemblyEligibility.Roll(_db).CountAsync();
+        var totalPetitions = await _db.Petitions.CountAsync();
 
-        return Ok(new PublicStatsResponse(activeMembers));
+        return Ok(new PublicStatsResponse(activeMembers, totalPetitions));
     }
 }

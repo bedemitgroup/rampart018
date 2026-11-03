@@ -216,7 +216,7 @@ public record AssemblyTallyResponse(
 /// assembly sits on, so the front page cannot claim one number while the
 /// chamber shows another.
 /// </summary>
-public record PublicStatsResponse(int ActiveMembers);
+public record PublicStatsResponse(int ActiveMembers, int TotalPetitions);
 
 // ---------------------------------------------------------------------------
 // The rules this association decides by
