@@ -48,6 +48,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [activeMembers, setActiveMembers] = useState(null);
   const [notice, setNotice] = useState('');
+  const [totalPetitions, setTotalPetitions] = useState(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,12 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
     api.getPublicStats()
-      .then((stats) => { if (!cancelled) setActiveMembers(stats.activeMembers); })
+      .then((stats) => {
+         if (!cancelled) {
+            setActiveMembers(stats.activeMembers);
+            setTotalPetitions(stats.totalPetitions);
+         }
+           })
       .catch(() => { /* the tile stays a dash; nothing else on the page cares */ });
 
     return () => { cancelled = true; };
@@ -151,7 +157,7 @@ export default function Home() {
             },
             { value: '1000', label: 'Ciljanih članova' },
             { value: '5',  label: 'Godina borbe' },
-            { value: '0',  label: 'Ljudi iz političkih stranaka' },
+            { value: totalPetitions === null ? '-' : memberFormat.format(totalPetitions),  label: 'Pokrenutih peticija' },
           ].map(({ value, label }) => (
             <div key={label} className="home-stats__item">
               <span className="home-stats__value">{value}</span>
