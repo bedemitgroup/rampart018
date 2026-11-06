@@ -420,33 +420,30 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .onama-timeline::before {
+.onama-timeline::before {
     left: 20px;
+    bottom: auto;
+    height: calc(100% - 40px);
   }
 
   .onama-timeline__item {
     grid-template-columns: 40px 1fr;
     gap: var(--space-4);
+    align-items: start;
   }
 
-  .onama-timeline__item .onama-timeline__content {
-    grid-column: 2;
-    text-align: left;
-  }
-
-  .onama-timeline__item .onama-timeline__dot {
-    grid-column: 1;
-  }
-
+  .onama-timeline__item .onama-timeline__content,
   .onama-timeline__item--right .onama-timeline__content {
     grid-column: 2;
     grid-row: 1;
     text-align: left;
   }
 
+  .onama-timeline__item .onama-timeline__dot,
   .onama-timeline__item--right .onama-timeline__dot {
     grid-column: 1;
     grid-row: 1;
+    margin-top: var(--space-4);
   }
 }
 
@@ -518,4 +515,25 @@
     animation: none;
     opacity: 1;
   }
+}
+
+/* Mission subtitle */
+.onama-mission__subtitle {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  border-left: 3px solid var(--color-accent);
+  padding-left: var(--space-3);
+}
+
+/* Text block for standalone text sections */
+.onama-text-block {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.onama-text-block p {
+  font-size: var(--font-size-base);
+  line-height: 1.8;
+  color: var(--color-text);
 }
