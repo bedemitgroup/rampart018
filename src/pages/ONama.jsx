@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import './ONama.css';
 
 const founders = [
-  { name: 'Filip Milosavljević' },
   { name: 'Miljana Milojković' },
-  { name: 'Nenad Veličković' },
+  { name: 'Filip Milosavljević' },
+  { name: 'Mirjana Mohenski' },
 ];
 
 const gradskiOdbor = [
@@ -19,7 +19,7 @@ const gradskiOdbor = [
   'Jovana Mišić',
   'Marina Momčilović',
   'Milan Mutavdžić',
-  'Mirjana Mohenski',
+  'Filip Dimitrijević',
   'Saša Živković',
   'Snežana Đorđević',
   'Slaviša Mitrović',
@@ -88,38 +88,56 @@ export default function ONama() {
         <div className="container onama-mission">
           <div className="onama-mission__text">
             <span className="badge badge--secondary">Naša priča</span>
-            <h2 className="onama-mission__title">Zašto postoji Bedem</h2>
+            <h2 className="onama-mission__title">Nastanak</h2>
             <div className="divider divider--left"></div>
             <p>
-              Bedem 018 je zid koji čine ljudi željni pravde, istine i povratka
-              moralnih i patriotskih vrednosti u društvo.
+              Bedem je nastao iz zajedničke ideje grupe ljudi koji veruju da se
+              problemi u našem gradu ne rešavaju sami od sebe i da su za promene
+              potrebni aktivni građani.
             </p>
             <p className="mt-4">
-              U želji da živimo u zdravom i uređenom okruženju, počeli smo da
-              gradimo zid od ljudi – ljudi koji žele da iza sebe ostave društvo
-              u kojem su lični interes i korist postali životni moto.
+              Potreba za osnivanjem udruženja postojala je duže vreme, a konkretnu
+              formu dobila je pre oko pola godine, kada su se ljudi sličnih stavova
+              i vrednosti okupili sa željom da svoje iskustvo, energiju i dosadašnje
+              angažovanje usmere ka rešavanju lokalnih problema i izgradnji boljeg
+              društva za sve građane Niša.
+            </p>
+
+            <h3 className="onama-mission__subtitle mt-8">Naši ljudi</h3>
+            <p className="mt-2">
+              Deo članova Bedema čine bivši članovi pokreta Kreni-Promeni, koji su
+              zajedno sa drugim istomišljenicima odlučili da nastave građansko
+              delovanje kroz novo udruženje i fokusiraju se na probleme našeg grada.
             </p>
             <p className="mt-4">
-              Želimo da zajedno izgradimo društvo u kojem ćemo uzdignute glave
-              stajati na zdravim i čvrstim temeljima, iz kojih će se razvijati
-              sve sfere života, uz poštovanje osnovnih moralnih načela.
+              Iako je Bedem formalno osnovan relativno skoro, ljudi koji ga čine su
+              već više godina aktivni učesnici u građanskim inicijativama, protestima
+              i akcijama usmerenim na ukazivanje na probleme u društvu i njihovo
+              rešavanje. Naše osnivanje nije motivisano političkom dobiti ili ličnim
+              interesima, već željom za dugoročnim i odgovornim delovanjem u
+              interesu građana.
+            </p>
+
+            <h3 className="onama-mission__subtitle mt-8">Zašto postojimo</h3>
+            <p className="mt-2">
+              Bedem vidimo kao prostor za okupljanje, zajedničko delovanje i
+              uključivanje svih koji žele da preuzmu odgovornost za sredinu u kojoj
+              žive.
             </p>
             <p className="mt-4">
-              Nismo potkupljivi jer su naši finansijeri slobodni građani koji
-              žele promenu i koji veruju da se truo sistem može menjati samo
-              zajedničkim delovanjem. Upravo zato možemo da stojimo uspravno i
-              slobodno, i imamo moć da jasno i glasno iznesemo svoj stav o
-              svakom problemu i zauzmemo se za njegovo rešavanje.
+              Naš cilj je da saslušamo sugrađane, ukažemo na ono što ne funkcioniše,
+              tražimo odgovore od nadležnih i učestvujemo u pronalaženju konkretnih
+              rešenja.
             </p>
             <p className="mt-4">
-              Račune polažemo isključivo građanima kroz transparentnost u
-              radu, dostupnost informacija na našem sajtu, kao i kroz
-              prikazivanje rezultata akcija koje sprovodimo.
+              Verujemo da bolji Niš može nastati samo uz aktivne građane, međusobnu
+              saradnju i borbu za zajednički interes.
             </p>
             <p className="mt-4">
-              Samo zajedno možemo izgraditi čvrste i zdrave temelje.
-              <br />
-              Budimo zajedno Bedem našeg društva.
+              Godinama pasivnosti skupo smo platili, prepustili smo drugima da
+              odlučuju umesto nas. Ne želimo da se to ponovi. Bedem je tu da budemo
+              ujedinjeni, glasni i aktivni, jer budućnost Niša, i generacija koje
+              dolaze, treba da oblikujemo mi sami.
             </p>
           </div>
           <div className="onama-mission__cards">
@@ -135,6 +153,87 @@ export default function ONama() {
               <div className="onama-mission__card-label">Pristup</div>
               <p>Spajamo stručno pravno znanje, nepokolebljiv građanski aktivizam i potpunu digitalnu transparentnost u jedinstven i nezavisan model delovanja.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Podrška studentskoj listi */}
+      <section className="section section--light">
+        <div className="container">
+          <div className="section__header">
+            <span className="badge badge--primary">Naše delovanje</span>
+            <h2 className="section__title">Podrška studentskoj listi</h2>
+            <div className="divider"></div>
+          </div>
+          <div className="onama-text-block">
+            <p>
+              Pojava studentske liste otvorila je prostor za nove ideje i aktivnije
+              učešće građana u društvenim i političkim procesima. Članovi udruženja
+              Bedem od početka su prepoznali značaj studentskog angažovanja i podržali
+              ideju da studenti preuzmu aktivnu ulogu u promenama u Srbiji.
+            </p>
+            <p className="mt-4">
+              Tu podršku pokazali smo konkretnim delovanjem. Naši članovi stavili su
+              svoje vreme, znanje i ljudske resurse na raspolaganje studentskoj listi
+              tokom parlamentarnih izbora. Učestvovali smo u predizbornim
+              aktivnostima, a na dan izbora bili angažovani u timovima kontrolora i
+              mobilnim timovima.
+            </p>
+            <p className="mt-4">
+              Bedem će i u narednim izbornim procesima nastaviti da pruža podršku
+              studentskoj listi, uz poštovanje autonomije studenata i spremnost da
+              svoje aktivnosti usklađuje sa njihovim dogovorima i odlukama.
+            </p>
+            <p className="mt-4">
+              Verujemo u društvo u kojem se glas građana čuje, institucije odgovorno
+              rade, a javni interes bude u središtu donošenja odluka. Želimo da
+              ostanemo aktivni učesnici tog procesa i svojim delovanjem doprinesemo
+              izgradnji boljeg društva.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Za grad u interesu građana */}
+      <section className="section">
+        <div className="container">
+          <div className="section__header">
+            <span className="badge badge--secondary">Naš stav</span>
+            <h2 className="section__title">Za grad u interesu građana</h2>
+            <div className="divider"></div>
+          </div>
+          <div className="onama-text-block">
+            <p>
+              Javni interes nije apstraktna fraza, to su bezbedne ulice, škole koje
+              funkcionišu, čist vazduh, zelene površine i novac koji se troši tamo
+              gde treba. I odgovornost prema deci koja dolaze posle nas.
+            </p>
+            <p className="mt-4">
+              To podrazumeva odgovorno i transparentno donošenje odluka, raspolaganje
+              javnim novcem i imovinom u interesu građana i pravo javnosti da zna šta
+              se planira i kako te odluke utiču na svakodnevni život.
+            </p>
+            <p className="mt-4">
+              Ne želimo da budemo samo oni koji ukazuju na probleme i kritikuju.
+              Razgovaraćemo sa građanima, proveravati informacije, prikupljati
+              dokumentaciju, pratiti rad institucija i zahtevati odgovornost za odluke
+              koje utiču na sve nas.
+            </p>
+            <p className="mt-4">
+              Podržavaćemo svaku inicijativu koja je u interesu građana Niša, to je
+              jedini kriterijum koji nam je bitan. Oslanjaćemo se na činjenice,
+              stručna mišljenja i argumentovan razgovor.
+            </p>
+            <p className="mt-4">
+              Nismo nepogrešivi i ne pravimo se da jesmo. Kad ne znamo nešto,
+              pitamo. Kad pogrešimo, kažemo i ispravljamo. Kad se ne slažemo,
+              razgovaramo.
+            </p>
+            <p className="mt-4">
+              Ne želimo da budemo samo posmatrači promena u našem gradu. Želimo da
+              učestvujemo u njegovom oblikovanju i da svojim radom doprinesemo boljem
+              Nišu.
+            </p>
           </div>
         </div>
       </section>

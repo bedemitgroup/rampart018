@@ -73,7 +73,7 @@ export default function Peticije() {
         <div className="container page-hero__content">
           <span className="page-hero__badge">Peticije</span>
 
-          <h1 className="page-hero__title">Potpiši ono što tražimo</h1>
+          <h1 className="page-hero__title">Zajedno možemo da pokrenemo promene!</h1>
 
           <p className="page-hero__subtitle">
             Peticija je najjednostavniji način da se vidi koliko nas ima iza jednog
