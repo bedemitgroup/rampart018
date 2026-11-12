@@ -685,7 +685,7 @@ export default function PridruziSe() {
                   <span>
                     Saglasan/na sam sa{' '}
                     <a
-                      href="#"
+                      href="/statut"
                       className="problem-form__link"
                     >
                       Statutom udruženja
