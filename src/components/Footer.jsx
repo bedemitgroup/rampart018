@@ -45,6 +45,13 @@ export default function Footer() {
               <li><Link to="/peticije">Peticije</Link></li>
               <li><Link to="/problem">Podeli problem</Link></li>
               <li><Link to="/pridruzi-se">Pridruži se</Link></li>
+            </ul>
+          </div>
+
+          <div className="footer__col">
+            <h3 className="footer__heading">Dokumenta</h3>
+            <ul className="footer__links">
+              <li><Link to="/statut">Statut udruženja</Link></li>
               <li><Link to="/politika-privatnosti">Politika privatnosti</Link></li>
             </ul>
           </div>

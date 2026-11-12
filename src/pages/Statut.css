@@ -1,0 +1,145 @@
+.statut-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-10);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .statut-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Table of contents */
+.statut-toc {
+  position: sticky;
+  top: var(--space-6);
+  background: var(--color-bg-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .statut-toc {
+    position: static;
+  }
+}
+
+.statut-toc__heading {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-size-xs);
+}
+
+.statut-toc__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: none;
+}
+
+.statut-toc__list li {
+  margin-bottom: var(--space-1);
+}
+
+.statut-toc__list a {
+  color: var(--color-neutral);
+  text-decoration: none;
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+
+.statut-toc__list a:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-primary);
+}
+
+/* Main content */
+.statut-content {
+  max-width: 720px;
+}
+
+.statut-uvod {
+  color: var(--color-neutral);
+  font-style: italic;
+  margin-bottom: var(--space-2);
+  line-height: 1.7;
+}
+
+.statut-naslov-akta {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: var(--space-10);
+  padding-bottom: var(--space-6);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+/* Individual articles */
+.statut-clan {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  scroll-margin-top: var(--space-6);
+}
+
+.statut-clan:last-of-type {
+  border-bottom: none;
+}
+
+.statut-clan__naslov {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-1);
+}
+
+.statut-clan__broj {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-4);
+}
+
+.statut-content p {
+  line-height: 1.8;
+  margin-bottom: var(--space-3);
+}
+
+.statut-lista {
+  padding-left: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.statut-lista li {
+  line-height: 1.8;
+  margin-bottom: var(--space-2);
+}
+
+/* Signature block */
+.statut-potpis {
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  color: var(--color-neutral);
+}
+
+.statut-potpis p {
+  margin-bottom: var(--space-6);
+}
+
+.statut-potpis__linija {
+  width: 200px;
+  height: 1px;
+  background: currentColor;
+}

@@ -13,6 +13,7 @@ import Peticije from './pages/Peticije';
 import Peticija from './pages/Peticija';
 import MojiPotpisi from './pages/MojiPotpisi';
 import PolitikaPrivatnosti from './pages/PolitikaPrivatnosti';
+import Statut from './pages/Statut';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminNews from './pages/admin/AdminNews';
 import AdminNewsForm from './pages/admin/AdminNewsForm';
@@ -65,6 +66,7 @@ export default function App() {
               do, so a shared link never dead-ends on a redirect. */}
           <Route path="/moji-potpisi" element={<MojiPotpisi />} />
           <Route path="/politika-privatnosti" element={<PolitikaPrivatnosti />} />
+          <Route path="/statut" element={<Statut />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminIndex />} />
 
