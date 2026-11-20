@@ -22,7 +22,7 @@ const CONTROLLER = {
   name: 'Udruženje građana „BEDEM 018"',
   address: 'Ilindenska 66, 18103 Niš',
   registrationNumber: '28419635',
-  email: 'bedem018@gmail.com',
+  email: 'info@bedem018.rs',
 };
 
 function Placeholder({ children }) {
