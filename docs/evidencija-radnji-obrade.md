@@ -19,7 +19,7 @@ menja se i ovaj dokument.
 | Naziv | Udruženje Građana Bedem (APR/companywall: „BEDEM 018") |
 | Sedište | Ilindenska 66, 18103 Niš (Pantelej) |
 | Matični broj | 28419635 (PIB 115867202) |
-| Kontakt za zaštitu podataka | bedem018@gmail.com |
+| Kontakt za zaštitu podataka | info@bedem018.rs |
 | Lice za zaštitu podataka (čl. 56) | Nije određeno — obrada posebnih vrsta podataka nije osnovna delatnost udruženja i nije velikih razmera. Preispitati ako broj potpisa značajno poraste. |
 | Obrađivač (čl. 45) | **Hetzner Online GmbH**, Nemačka — hosting servera (aplikacija, baza, otpremljeni fajlovi). Potpisati ugovor o obradi podataka (DPA) pre puštanja u rad; Hetzner nudi standardni DPA. |
 
